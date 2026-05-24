@@ -1,0 +1,67 @@
+# Database & Lock Files (STRICTLY PRIVATE & CONFIDENTIAL)
+*.accdb
+*.laccdb
+*.db
+*.sqlite
+*.sqlite3
+*.bak
+
+# Environment variables & secrets
+*.env
+.env.*
+secrets/
+
+# Python compiled & cache
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+app_movil/build/
+app_movil/.dart_tool/
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.orig
+
+# Windows temporary & Office lock files
+~$*
+Thumbs.db
+Desktop.ini
+
+# Logs
+logs/
+*.log
