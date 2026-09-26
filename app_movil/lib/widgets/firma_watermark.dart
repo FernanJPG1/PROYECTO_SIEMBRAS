@@ -10,17 +10,18 @@ class FirmaWatermark extends StatelessWidget {
 
   const FirmaWatermark({
     super.key,
-    this.width = 50.0,
-    this.opacity = 0.22,
-    this.left = 10.0,
-    this.bottom = 10.0,
+    this.width = 58.0,
+    this.opacity = 0.30,
+    this.left = 14.0,
+    this.bottom = 12.0,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     return Positioned(
       left: left,
-      bottom: bottom,
+      bottom: bottom + bottomInset,
       child: IgnorePointer(
         child: Opacity(
           opacity: opacity,
@@ -28,6 +29,10 @@ class FirmaWatermark extends StatelessWidget {
             'assets/images/firma_caballo.png',
             width: width,
             fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              debugPrint('Error al cargar firma_caballo.png: $error');
+              return const SizedBox.shrink();
+            },
           ),
         ),
       ),

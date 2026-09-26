@@ -38,12 +38,7 @@ class SiembrasApp extends StatelessWidget {
         return Stack(
           children: [
             child ?? const SizedBox.shrink(),
-            const FirmaWatermark(
-              width: 50.0,
-              opacity: 0.22,
-              left: 10.0,
-              bottom: 10.0,
-            ),
+            const FirmaWatermark(),
           ],
         );
       },
