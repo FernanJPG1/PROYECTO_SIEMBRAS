@@ -1,0 +1,3061 @@
+[
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "1",
+    "lote": "7165",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "1",
+    "lote": "7173",
+    "variedad": "BOTERO BN",
+    "variedad_id": 2520
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "1",
+    "lote": "7398",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "1",
+    "lote": "7462",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "1",
+    "lote": "7556",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "1",
+    "lote": "7582",
+    "variedad": "COMPETITION BN",
+    "variedad_id": 2223
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "1",
+    "lote": "7597",
+    "variedad": "COMPETITION BN",
+    "variedad_id": 2223
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "1",
+    "lote": "7720",
+    "variedad": "COMPETITION BN",
+    "variedad_id": 2223
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "1",
+    "lote": "9385",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "1",
+    "lote": "9385",
+    "variedad": "SARONNO BV",
+    "variedad_id": 2270
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "10",
+    "lote": "4100",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "10",
+    "lote": "4363",
+    "variedad": "MURANO BN",
+    "variedad_id": 2528
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "10",
+    "lote": "4991",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "10",
+    "lote": "5064",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "10",
+    "lote": "5757",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "10",
+    "lote": "6297",
+    "variedad": "CRYSTAL_BLANCA BN",
+    "variedad_id": 1923
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "10",
+    "lote": "6395",
+    "variedad": "CRYSTAL_BLANCA BN",
+    "variedad_id": 1923
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "10",
+    "lote": "6395",
+    "variedad": "PREMIUM BLOND BN",
+    "variedad_id": 2529
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "10",
+    "lote": "6416",
+    "variedad": "PREMIUM BLOND BN",
+    "variedad_id": 2529
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "10",
+    "lote": "6440",
+    "variedad": "VALLETA BN",
+    "variedad_id": 2530
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "4044",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "4055",
+    "variedad": "INDIAN SUMMERSET BN PREB 2",
+    "variedad_id": 2496
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "4055",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "4189",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "4309",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "4351",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "5541",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "5829",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "5872",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "6171",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "6280",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "11",
+    "lote": "6395",
+    "variedad": "PREMIUM BLOND BN",
+    "variedad_id": 2529
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "13",
+    "lote": "4104",
+    "variedad": "LEXINGTON BN",
+    "variedad_id": 1917
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "13",
+    "lote": "4333",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "13",
+    "lote": "4562",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "13",
+    "lote": "4756",
+    "variedad": "RICHMOND BN",
+    "variedad_id": 2008
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "13",
+    "lote": "4764",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "13",
+    "lote": "5352",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "13",
+    "lote": "6143",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "13",
+    "lote": "6171",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "13",
+    "lote": "6340",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "13",
+    "lote": "6446",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "15",
+    "lote": "4044",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "15",
+    "lote": "4047",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "15",
+    "lote": "4100",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "15",
+    "lote": "4168",
+    "variedad": "HOUSTON BN",
+    "variedad_id": 2010
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "15",
+    "lote": "4261",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "15",
+    "lote": "4468",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "15",
+    "lote": "4704",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "16",
+    "lote": "4041",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "16",
+    "lote": "4168",
+    "variedad": "HOUSTON BN",
+    "variedad_id": 2010
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "16",
+    "lote": "4261",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "16",
+    "lote": "4562",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "16",
+    "lote": "4756",
+    "variedad": "RICHMOND BN",
+    "variedad_id": 2008
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "16",
+    "lote": "4764",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "16",
+    "lote": "5046",
+    "variedad": "RICHMOND BN",
+    "variedad_id": 2008
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "16",
+    "lote": "5454",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "16",
+    "lote": "6169",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "4041",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "4047",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "4100",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "4163",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "4168",
+    "variedad": "HOUSTON BN",
+    "variedad_id": 2010
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "4168",
+    "variedad": "HOUSTON BN PREBR",
+    "variedad_id": 2082
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "4261",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "4589",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "4761",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "4933",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "5454",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "6143",
+    "variedad": "SARONNO BN PREBR",
+    "variedad_id": 2327
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "6169",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "17",
+    "lote": "6169",
+    "variedad": "SARONNO BN PREBR",
+    "variedad_id": 2327
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "18",
+    "lote": "4261",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "18",
+    "lote": "4271",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "18",
+    "lote": "4313",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "18",
+    "lote": "4510",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "18",
+    "lote": "4761",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "18",
+    "lote": "4795",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "20",
+    "lote": "4111",
+    "variedad": "LEXINGTON BN",
+    "variedad_id": 1917
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "20",
+    "lote": "4163",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "20",
+    "lote": "4510",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "20",
+    "lote": "5175",
+    "variedad": "RICHMOND BN",
+    "variedad_id": 2008
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "20",
+    "lote": "5199",
+    "variedad": "RICHMOND BN",
+    "variedad_id": 2008
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "20",
+    "lote": "5453",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "20",
+    "lote": "6061",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "20",
+    "lote": "6061",
+    "variedad": "SARONNO BN PREBR",
+    "variedad_id": 2327
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "21",
+    "lote": "4104",
+    "variedad": "LEXINGTON BN",
+    "variedad_id": 1917
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "21",
+    "lote": "4111",
+    "variedad": "LEXINGTON BN",
+    "variedad_id": 1917
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "21",
+    "lote": "4168",
+    "variedad": "HOUSTON BN",
+    "variedad_id": 2010
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "21",
+    "lote": "6061",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "22",
+    "lote": "4111",
+    "variedad": "LEXINGTON BN",
+    "variedad_id": 1917
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "22",
+    "lote": "4167",
+    "variedad": "HOUSTON BN",
+    "variedad_id": 2010
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "22",
+    "lote": "4167",
+    "variedad": "HOUSTON BN PREBR",
+    "variedad_id": 2082
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "22",
+    "lote": "4168",
+    "variedad": "HOUSTON BN",
+    "variedad_id": 2010
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "22",
+    "lote": "4168",
+    "variedad": "HOUSTON BN PREBR",
+    "variedad_id": 2082
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "22",
+    "lote": "4795",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "22",
+    "lote": "5197",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "22",
+    "lote": "6013",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "22",
+    "lote": "6013",
+    "variedad": "SARONNO BN PREBR",
+    "variedad_id": 2327
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "4041",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "4111",
+    "variedad": "LEXINGTON BN",
+    "variedad_id": 1917
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "4168",
+    "variedad": "HOUSTON BN",
+    "variedad_id": 2010
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "4313",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "4354",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "4434",
+    "variedad": "BOTERO BN",
+    "variedad_id": 2520
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "4763",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "4795",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "5197",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "5199",
+    "variedad": "RICHMOND BN",
+    "variedad_id": 2008
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "5452",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "5453",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "23",
+    "lote": "5626",
+    "variedad": "KESLA BN",
+    "variedad_id": 2518
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "24",
+    "lote": "4168",
+    "variedad": "HOUSTON BN",
+    "variedad_id": 2010
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "24",
+    "lote": "5199",
+    "variedad": "RICHMOND BN",
+    "variedad_id": 2008
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "24",
+    "lote": "5782",
+    "variedad": "ERINOME BN",
+    "variedad_id": 2519
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "24",
+    "lote": "7005",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "24",
+    "lote": "7106",
+    "variedad": "LEXINGTON BN",
+    "variedad_id": 1917
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "24",
+    "lote": "7321",
+    "variedad": "HOUSTON BN",
+    "variedad_id": 2010
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "3",
+    "lote": "4983",
+    "variedad": "ZAMBESI BN",
+    "variedad_id": 1926
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "4682",
+    "variedad": "ZAMBESI BN",
+    "variedad_id": 1926
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "4709",
+    "variedad": "TIRRENO BN",
+    "variedad_id": 1915
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "5125",
+    "variedad": "TIRRENO BN",
+    "variedad_id": 1915
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "7057",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "7062",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "7080",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "7127",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "7555",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "8111",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "8147",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "8154",
+    "variedad": "LEXINGTON BN",
+    "variedad_id": 1917
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "4",
+    "lote": "8781",
+    "variedad": "BATALEON BN",
+    "variedad_id": 2586
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "5",
+    "lote": "4057",
+    "variedad": "LEXINGTON BN",
+    "variedad_id": 1917
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "5",
+    "lote": "4189",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "5",
+    "lote": "4409",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "5",
+    "lote": "4511",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "5",
+    "lote": "5217",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "5",
+    "lote": "5892",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "5",
+    "lote": "6068",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "5",
+    "lote": "6297",
+    "variedad": "CRYSTAL_BLANCA BN",
+    "variedad_id": 1923
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "6",
+    "lote": "4057",
+    "variedad": "LEXINGTON BN",
+    "variedad_id": 1917
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "6",
+    "lote": "4074",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "6",
+    "lote": "4811",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "6",
+    "lote": "4898",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "6",
+    "lote": "5676",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "6",
+    "lote": "6068",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "6",
+    "lote": "6280",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "6",
+    "lote": "6281",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "6",
+    "lote": "6294",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "6",
+    "lote": "6337",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "4047",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "4100",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "4351",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "4434",
+    "variedad": "BOTERO BN",
+    "variedad_id": 2520
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "4898",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "5211",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "5668",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "5670",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "5677",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "5757",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "5782",
+    "variedad": "ERINOME BN",
+    "variedad_id": 2519
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "6297",
+    "variedad": "CRYSTAL_BLANCA BN",
+    "variedad_id": 1923
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "6337",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "C. STEENVOORDEN B.V",
+    "contenedor": "8",
+    "lote": "6423",
+    "variedad": "KESLA BN",
+    "variedad_id": 2518
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "12",
+    "lote": "420202",
+    "variedad": "BATAVUS BN",
+    "variedad_id": 2521
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "12",
+    "lote": "427996",
+    "variedad": "FOREVER BN",
+    "variedad_id": 2551
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "12",
+    "lote": "429194",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "12",
+    "lote": "433636",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "12",
+    "lote": "434682",
+    "variedad": "EYELINER BN",
+    "variedad_id": 2043
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "12",
+    "lote": "435620",
+    "variedad": "EYELINER BN",
+    "variedad_id": 2043
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "12",
+    "lote": "436592",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "12",
+    "lote": "437087",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "12",
+    "lote": "437894",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "12",
+    "lote": "439481",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "12",
+    "lote": "440875",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "14",
+    "lote": "420202",
+    "variedad": "BATAVUS BN",
+    "variedad_id": 2521
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "14",
+    "lote": "428038",
+    "variedad": "PACIANO BN",
+    "variedad_id": 2221
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "14",
+    "lote": "433274",
+    "variedad": "PACIANO BN",
+    "variedad_id": 2221
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "14",
+    "lote": "433636",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "14",
+    "lote": "434539",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "14",
+    "lote": "437537",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "14",
+    "lote": "439481",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "15",
+    "lote": "420202",
+    "variedad": "BATAVUS BN",
+    "variedad_id": 2521
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "15",
+    "lote": "427996",
+    "variedad": "FOREVER BN",
+    "variedad_id": 2551
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "15",
+    "lote": "428009",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "15",
+    "lote": "429439",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "15",
+    "lote": "433636",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "15",
+    "lote": "433980",
+    "variedad": "ZANELLA BN",
+    "variedad_id": 1925
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "15",
+    "lote": "437674",
+    "variedad": "RICHMOND BN",
+    "variedad_id": 2008
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "15",
+    "lote": "439481",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "17",
+    "lote": "420202",
+    "variedad": "BATAVUS BN",
+    "variedad_id": 2521
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "17",
+    "lote": "427085",
+    "variedad": "HINAULT BN",
+    "variedad_id": 2017
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "17",
+    "lote": "428009",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "17",
+    "lote": "429439",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "17",
+    "lote": "433980",
+    "variedad": "ZANELLA BN",
+    "variedad_id": 1925
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "17",
+    "lote": "434003",
+    "variedad": "HINAULT BN",
+    "variedad_id": 2017
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "17",
+    "lote": "437674",
+    "variedad": "RICHMOND BN",
+    "variedad_id": 2008
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "17",
+    "lote": "438229",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "17",
+    "lote": "438396",
+    "variedad": "HINAULT BN",
+    "variedad_id": 2017
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "420202",
+    "variedad": "BATAVUS BN",
+    "variedad_id": 2521
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "427417",
+    "variedad": "EYELINER BN",
+    "variedad_id": 2043
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "429199",
+    "variedad": "ZANELLA BN",
+    "variedad_id": 1925
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "429382",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "433980",
+    "variedad": "ZANELLA BN",
+    "variedad_id": 1925
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "434539",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "435274",
+    "variedad": "RICHMOND BN",
+    "variedad_id": 2008
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "437674",
+    "variedad": "RICHMOND BN",
+    "variedad_id": 2008
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "438098",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "439283",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "440702",
+    "variedad": "ZANELLA BN",
+    "variedad_id": 1925
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "18",
+    "lote": "442695",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "23",
+    "lote": "427489",
+    "variedad": "BATAVUS BN",
+    "variedad_id": 2521
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "23",
+    "lote": "429199",
+    "variedad": "ZANELLA BN",
+    "variedad_id": 1925
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "23",
+    "lote": "429382",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "23",
+    "lote": "433982",
+    "variedad": "HINAULT BN",
+    "variedad_id": 2017
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "528220",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "528432",
+    "variedad": "BATAVUS BN",
+    "variedad_id": 2521
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "529580",
+    "variedad": "GOLDEN PASS BN",
+    "variedad_id": 2540
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "529655",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "531387",
+    "variedad": "MALDANO BN",
+    "variedad_id": 2546
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "531387",
+    "variedad": "MALDANO BV PREBR",
+    "variedad_id": 2381
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "533003",
+    "variedad": "MALDANO BN",
+    "variedad_id": 2546
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "534704",
+    "variedad": "CEVENNES BN",
+    "variedad_id": 1702
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "535736",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "537723",
+    "variedad": "LOWLAND BN",
+    "variedad_id": 2515
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "538455",
+    "variedad": "FOREVER BN",
+    "variedad_id": 2551
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "542116",
+    "variedad": "ZAMBESI BN",
+    "variedad_id": 1926
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "542318",
+    "variedad": "SHIMLA BN",
+    "variedad_id": 2012
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "3",
+    "lote": "543770",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "9",
+    "lote": "424076",
+    "variedad": "PUMA BN",
+    "variedad_id": 2252
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "9",
+    "lote": "433656",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "9",
+    "lote": "436592",
+    "variedad": "PAVIA BN",
+    "variedad_id": 1911
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "9",
+    "lote": "437087",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "9",
+    "lote": "437939",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "9",
+    "lote": "438318",
+    "variedad": "FLEMINGTON BN",
+    "variedad_id": 2447
+  },
+  {
+    "proveedor": "DE JONG LELIES",
+    "contenedor": "9",
+    "lote": "439685",
+    "variedad": "PUMA BN",
+    "variedad_id": 2252
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "16",
+    "lote": "428578",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "16",
+    "lote": "437537",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "16",
+    "lote": "438779",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "16",
+    "lote": "438780",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "16",
+    "lote": "438839",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "19",
+    "lote": "428578",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "19",
+    "lote": "437604",
+    "variedad": "ZAMBESI BN",
+    "variedad_id": 1926
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "19",
+    "lote": "438536",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "19",
+    "lote": "438779",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "19",
+    "lote": "442465",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "20",
+    "lote": "428578",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "20",
+    "lote": "437537",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "20",
+    "lote": "438536",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "20",
+    "lote": "442465",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "21",
+    "lote": "428578",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "21",
+    "lote": "430484",
+    "variedad": "ZAMBESI BN",
+    "variedad_id": 1926
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "21",
+    "lote": "436650",
+    "variedad": "ZAMBESI BN",
+    "variedad_id": 1926
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "21",
+    "lote": "437604",
+    "variedad": "ZAMBESI BN",
+    "variedad_id": 1926
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "21",
+    "lote": "438819",
+    "variedad": "ZAMBESI BN",
+    "variedad_id": 1926
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "22",
+    "lote": "428578",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "22",
+    "lote": "430484",
+    "variedad": "ZAMBESI BN",
+    "variedad_id": 1926
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "22",
+    "lote": "437537",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "22",
+    "lote": "438536",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "22",
+    "lote": "438819",
+    "variedad": "ZAMBESI BN",
+    "variedad_id": 1926
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "22",
+    "lote": "438840",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "24",
+    "lote": "438536",
+    "variedad": "EL_DIVO BN",
+    "variedad_id": 2335
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "6",
+    "lote": "428320",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "6",
+    "lote": "436650",
+    "variedad": "ZAMBESI BN",
+    "variedad_id": 1926
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "6",
+    "lote": "437087",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "6",
+    "lote": "437837",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "6",
+    "lote": "438400",
+    "variedad": "HINAULT BN",
+    "variedad_id": 2017
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "6",
+    "lote": "438400",
+    "variedad": "HINAULT BN PREBR",
+    "variedad_id": 2100
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "6",
+    "lote": "438780",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "JAN DE WIT",
+    "contenedor": "6",
+    "lote": "438839",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "428959c",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "429194",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "430024",
+    "variedad": "BAROLO BN",
+    "variedad_id": 2493
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "430033D",
+    "variedad": "QWIC BN",
+    "variedad_id": 2450
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "434795L",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "435179c",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "435913E",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "435996E",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "436302C",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "436305",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "437560",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "437847c",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "439356C",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "10",
+    "lote": "439356c",
+    "variedad": "LOWLAND BN",
+    "variedad_id": 2515
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "420221",
+    "variedad": "ERINOME BN",
+    "variedad_id": 2519
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "428959c",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "433641c",
+    "variedad": "NASHVILLE BN",
+    "variedad_id": 2019
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "434228G",
+    "variedad": "BESENO BN",
+    "variedad_id": 2539
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "435393",
+    "variedad": "FRONTERA BN",
+    "variedad_id": 2547
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "436302C",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "436908J",
+    "variedad": "CRYSTAL_BLANCA BN",
+    "variedad_id": 1923
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "436947c",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "437504C",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "437596",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "437596C",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "11",
+    "lote": "439306d",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "12",
+    "lote": "429474C",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "12",
+    "lote": "432559E",
+    "variedad": "CRYSTAL_BLANCA BN",
+    "variedad_id": 1923
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "12",
+    "lote": "435179C",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "427746D",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "428959c",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "432559E",
+    "variedad": "CRYSTAL_BLANCA BN",
+    "variedad_id": 1923
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "433619C",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "433641c",
+    "variedad": "NASHVILLE BN",
+    "variedad_id": 2019
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "435179C",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "435913E",
+    "variedad": "INDIAN SUMMERSET BN PREB 2",
+    "variedad_id": 2496
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "435913E",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "436908J",
+    "variedad": "CRYSTAL_BLANCA BN",
+    "variedad_id": 1923
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "437596",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "440702C",
+    "variedad": "ZANELLA BN",
+    "variedad_id": 1925
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "13",
+    "lote": "440702g",
+    "variedad": "ZANELLA BN",
+    "variedad_id": 1925
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "14",
+    "lote": "427746D",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "14",
+    "lote": "428299C",
+    "variedad": "COMPETITION BN",
+    "variedad_id": 2223
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "14",
+    "lote": "429070",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "14",
+    "lote": "429394",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "14",
+    "lote": "433274G",
+    "variedad": "PACIANO BN",
+    "variedad_id": 2221
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "14",
+    "lote": "433568C",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "14",
+    "lote": "434795H",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "14",
+    "lote": "436874H",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "14",
+    "lote": "437236D",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "14",
+    "lote": "437943D",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "14",
+    "lote": "443554C",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "15",
+    "lote": "427746D",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "15",
+    "lote": "428299C",
+    "variedad": "COMPETITION BN",
+    "variedad_id": 2223
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "15",
+    "lote": "433274C",
+    "variedad": "PACIANO BN",
+    "variedad_id": 2221
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "15",
+    "lote": "433274G",
+    "variedad": "PACIANO BN",
+    "variedad_id": 2221
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "15",
+    "lote": "436298C",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "15",
+    "lote": "436302C",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "15",
+    "lote": "443554C",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "16",
+    "lote": "428038D",
+    "variedad": "PACIANO BN",
+    "variedad_id": 2221
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "16",
+    "lote": "433274C",
+    "variedad": "PACIANO BN",
+    "variedad_id": 2221
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "16",
+    "lote": "434795C",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "16",
+    "lote": "437944",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "17",
+    "lote": "428299C",
+    "variedad": "COMPETITION BN",
+    "variedad_id": 2223
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "17",
+    "lote": "434795C",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "17",
+    "lote": "437512D",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "17",
+    "lote": "443554C",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "17",
+    "lote": "443554C",
+    "variedad": "SARONNO BN PREBR",
+    "variedad_id": 2327
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "18",
+    "lote": "427746D",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "18",
+    "lote": "428038U",
+    "variedad": "PACIANO BN",
+    "variedad_id": 2221
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "18",
+    "lote": "428299C",
+    "variedad": "COMPETITION BN",
+    "variedad_id": 2223
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "18",
+    "lote": "430033D",
+    "variedad": "QWIC BN",
+    "variedad_id": 2450
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "18",
+    "lote": "433568C",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "18",
+    "lote": "443554C",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "18",
+    "lote": "443554C",
+    "variedad": "SARONNO BN PREBR",
+    "variedad_id": 2327
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "19",
+    "lote": "427746D",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "19",
+    "lote": "433354D",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "19",
+    "lote": "433568C",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "19",
+    "lote": "438753E",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "19",
+    "lote": "438753K",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "2",
+    "lote": "520957G",
+    "variedad": "BESENO BN",
+    "variedad_id": 2539
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "2",
+    "lote": "520957H",
+    "variedad": "BESENO BN",
+    "variedad_id": 2539
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "2",
+    "lote": "531283C",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "2",
+    "lote": "533026G",
+    "variedad": "COMPETITION BN",
+    "variedad_id": 2223
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "2",
+    "lote": "537362",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "2",
+    "lote": "537724C",
+    "variedad": "LOWLAND BN",
+    "variedad_id": 2515
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "2",
+    "lote": "542457E",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "2",
+    "lote": "542457E",
+    "variedad": "MONTENEU BV",
+    "variedad_id": 1770
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "21",
+    "lote": "428191E",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "21",
+    "lote": "438753E",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "22",
+    "lote": "420221",
+    "variedad": "ERINOME BN",
+    "variedad_id": 2519
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "22",
+    "lote": "423749",
+    "variedad": "NILUS BN",
+    "variedad_id": 2543
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "22",
+    "lote": "428191E",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "22",
+    "lote": "433354D",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "22",
+    "lote": "434356D",
+    "variedad": "BRIANZA BN",
+    "variedad_id": 2446
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "22",
+    "lote": "438753K",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "24",
+    "lote": "433354D",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "24",
+    "lote": "528598H",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "24",
+    "lote": "528598J",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "24",
+    "lote": "528991C",
+    "variedad": "MERLET BN",
+    "variedad_id": 2460
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "24",
+    "lote": "529002",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "24",
+    "lote": "539160",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "24",
+    "lote": "540144",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "4",
+    "lote": "428047h",
+    "variedad": "TIRRENO BN",
+    "variedad_id": 1915
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "4",
+    "lote": "429247c",
+    "variedad": "TIRRENO BN",
+    "variedad_id": 1915
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "4",
+    "lote": "429395",
+    "variedad": "SARONNO BN",
+    "variedad_id": 2326
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "4",
+    "lote": "438398",
+    "variedad": "HINAULT BN",
+    "variedad_id": 2017
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "4",
+    "lote": "439722C",
+    "variedad": "MERLET BN",
+    "variedad_id": 2460
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "428047H",
+    "variedad": "TIRRENO BN",
+    "variedad_id": 1915
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "428157",
+    "variedad": "EREMO BN",
+    "variedad_id": 1922
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "428235",
+    "variedad": "COMPETITION BN",
+    "variedad_id": 2223
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "430027",
+    "variedad": "EREMO BN",
+    "variedad_id": 1922
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "431199H",
+    "variedad": "COMPETITION BN",
+    "variedad_id": 2223
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "434174",
+    "variedad": "CORTONA BN",
+    "variedad_id": 2053
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "434356D",
+    "variedad": "BRIANZA BN",
+    "variedad_id": 2446
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "436908c",
+    "variedad": "CRYSTAL_BLANCA BN",
+    "variedad_id": 1923
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "437933",
+    "variedad": "BAROLO BN",
+    "variedad_id": 2493
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "437953g",
+    "variedad": "TIRRENO BN",
+    "variedad_id": 1915
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "439722C",
+    "variedad": "MERLET BN",
+    "variedad_id": 2460
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "527728L",
+    "variedad": "YERSEKE BN",
+    "variedad_id": 2037
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "528031",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "528365C",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "528757C",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "528784G",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "528983D",
+    "variedad": "EREMO BN",
+    "variedad_id": 1922
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "529306",
+    "variedad": "CORTONA BN",
+    "variedad_id": 2053
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "529307",
+    "variedad": "CORTONA BN",
+    "variedad_id": 2053
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "529998D",
+    "variedad": "EREMO BN",
+    "variedad_id": 1922
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "530502C",
+    "variedad": "FRONTERA BN",
+    "variedad_id": 2547
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "531283C",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "532559",
+    "variedad": "FRONTERA BN",
+    "variedad_id": 2547
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "535329C",
+    "variedad": "NASHVILLE BN",
+    "variedad_id": 2019
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "535335C",
+    "variedad": "NASHVILLE BN",
+    "variedad_id": 2019
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "538687C",
+    "variedad": "MONTENEU BN",
+    "variedad_id": 1994
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "539057",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "5",
+    "lote": "540731C",
+    "variedad": "NASHVILLE BN",
+    "variedad_id": 2019
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "428038H",
+    "variedad": "PACIANO BN",
+    "variedad_id": 2221
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "429055E",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "429384E",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "429581H",
+    "variedad": "MERCATO BN",
+    "variedad_id": 2516
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "431814C",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "431831R",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "434356D",
+    "variedad": "BRIANZA BN",
+    "variedad_id": 2446
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "435631",
+    "variedad": "ARMANDALE BN",
+    "variedad_id": 2251
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "436908J1",
+    "variedad": "CRYSTAL_BLANCA BN",
+    "variedad_id": 1923
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "437236D",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "437497H",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "437537J",
+    "variedad": "INDIAN_SUMMERSET BN",
+    "variedad_id": 1912
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "437597",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "437894",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "437941",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "437952",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "437957D",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "439356C",
+    "variedad": "LOWLAND BN",
+    "variedad_id": 2515
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "439734J",
+    "variedad": "SUNDERLAND BN",
+    "variedad_id": 1954
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "440089j",
+    "variedad": "NASHVILLE BN",
+    "variedad_id": 2019
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "7",
+    "lote": "442465E",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "9",
+    "lote": "429194",
+    "variedad": "DYNAMIX BN",
+    "variedad_id": 1909
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "9",
+    "lote": "434795L",
+    "variedad": "STARFIGHTER BN",
+    "variedad_id": 1903
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "9",
+    "lote": "436305",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "9",
+    "lote": "436486C",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "9",
+    "lote": "436908J",
+    "variedad": "CRYSTAL_BLANCA BN",
+    "variedad_id": 1923
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "9",
+    "lote": "437598",
+    "variedad": "LITOUWEEN BN",
+    "variedad_id": 1910
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "9",
+    "lote": "440628C",
+    "variedad": "CORVETTE BN",
+    "variedad_id": 2461
+  },
+  {
+    "proveedor": "ONINGS HOLLAND",
+    "contenedor": "9",
+    "lote": "440697",
+    "variedad": "SCANSANO BN",
+    "variedad_id": 2041
+  },
+  {
+    "proveedor": "P. AKER ZADEN EN BLOEMBOLLEN BV",
+    "contenedor": "19",
+    "lote": "41658",
+    "variedad": "EREMO BN",
+    "variedad_id": 1922
+  },
+  {
+    "proveedor": "P. AKER ZADEN EN BLOEMBOLLEN BV",
+    "contenedor": "19",
+    "lote": "41725",
+    "variedad": "HINAULT BN",
+    "variedad_id": 2017
+  },
+  {
+    "proveedor": "P. AKER ZADEN EN BLOEMBOLLEN BV",
+    "contenedor": "19",
+    "lote": "42059",
+    "variedad": "SCIPIONE BN",
+    "variedad_id": 2044
+  }
+]

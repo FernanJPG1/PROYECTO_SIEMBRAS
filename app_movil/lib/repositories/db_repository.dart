@@ -749,6 +749,104 @@ class DbRepository {
       }
     } catch (_) {}
   }
+
+  // === MÉTODOS CATÁLOGO LIRIOS TABLA 187 (Proveedor, Contenedor, Lote, Variedad) ===
+
+  /// Reemplaza todos los registros del catálogo de la tabla 187 de Lirios
+  Future<void> reemplazarLirios187(List<LirioItem187> lirios) async {
+    final db = await LocalDatabase.instance.database;
+    await db.transaction((txn) async {
+      await txn.delete('tb_lirios_187');
+      final batch = txn.batch();
+      for (var l in lirios) {
+        batch.insert('tb_lirios_187', l.toMap());
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  /// Obtiene los proveedores únicos registrados en la tabla 187
+  Future<List<String>> obtenerProveedoresLirios() async {
+    final db = await LocalDatabase.instance.database;
+    try {
+      final res = await db.rawQuery(
+        'SELECT DISTINCT proveedor FROM tb_lirios_187 WHERE proveedor IS NOT NULL AND proveedor != "" ORDER BY proveedor ASC',
+      );
+      return res.map((r) => r['proveedor'].toString()).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Obtiene los contenedores únicos registrados en la tabla 187 (opcionalmente filtrados por proveedor)
+  Future<List<String>> obtenerContenedoresLirios({String? proveedor}) async {
+    final db = await LocalDatabase.instance.database;
+    try {
+      String sql = 'SELECT DISTINCT contenedor FROM tb_lirios_187 WHERE contenedor IS NOT NULL AND contenedor != ""';
+      List<dynamic> args = [];
+      if (proveedor != null && proveedor.trim().isNotEmpty) {
+        sql += ' AND proveedor = ?';
+        args.add(proveedor.trim());
+      }
+      sql += ' ORDER BY CAST(contenedor AS INTEGER), contenedor ASC';
+      final res = await db.rawQuery(sql, args);
+      return res.map((r) => r['contenedor'].toString()).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Obtiene los lotes únicos registrados en la tabla 187 (opcionalmente filtrados por proveedor y contenedor)
+  Future<List<String>> obtenerLotesLirios({String? proveedor, String? contenedor}) async {
+    final db = await LocalDatabase.instance.database;
+    try {
+      String sql = 'SELECT DISTINCT lote FROM tb_lirios_187 WHERE lote IS NOT NULL AND lote != ""';
+      List<dynamic> args = [];
+      if (proveedor != null && proveedor.trim().isNotEmpty) {
+        sql += ' AND proveedor = ?';
+        args.add(proveedor.trim());
+      }
+      if (contenedor != null && contenedor.trim().isNotEmpty) {
+        sql += ' AND contenedor = ?';
+        args.add(contenedor.trim());
+      }
+      sql += ' ORDER BY lote ASC';
+      final res = await db.rawQuery(sql, args);
+      return res.map((r) => r['lote'].toString()).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Busca registros completos de la tabla 187 (para auto-completar proveedor/contenedor al elegir lote)
+  Future<List<LirioItem187>> obtenerRegistrosLirios187({
+    String? proveedor,
+    String? contenedor,
+    String? lote,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    try {
+      String sql = 'SELECT * FROM tb_lirios_187 WHERE 1=1';
+      List<dynamic> args = [];
+      if (proveedor != null && proveedor.trim().isNotEmpty) {
+        sql += ' AND proveedor = ?';
+        args.add(proveedor.trim());
+      }
+      if (contenedor != null && contenedor.trim().isNotEmpty) {
+        sql += ' AND contenedor = ?';
+        args.add(contenedor.trim());
+      }
+      if (lote != null && lote.trim().isNotEmpty) {
+        sql += ' AND lote = ?';
+        args.add(lote.trim());
+      }
+      sql += ' ORDER BY lote ASC';
+      final res = await db.rawQuery(sql, args);
+      return res.map((r) => LirioItem187.fromMap(r)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
 }
 
 

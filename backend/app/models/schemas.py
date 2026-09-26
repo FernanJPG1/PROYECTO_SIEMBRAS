@@ -85,12 +85,27 @@ class Operario(BaseModel):
     nombre_completo: str
     cargo: Optional[str] = None
 
+# Tabla 187: Catálogo de Proveedor, Contenedor y Lote de Lirios
+class LirioRegistro187(BaseModel):
+    proveedor: str
+    contenedor: str
+    lote: str
+    variedad: Optional[str] = None
+    variedad_id: Optional[int] = None
+
+class LiriosCatalogo187(BaseModel):
+    proveedores: List[str] = []
+    contenedores: List[str] = []
+    lotes: List[str] = []
+    registros: List[LirioRegistro187] = []
+
 class CatalogosResponse(BaseModel):
     bloques: List[Bloque]
     camas: List[Cama]
     familias: List[FamiliaVariedad] = []
     variedades: List[Variedad]
     operarios: List[Operario]
+    lirios_187: Optional[LiriosCatalogo187] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 # --- Sincronización de Siembras y Ciclos (Offline-First) ---

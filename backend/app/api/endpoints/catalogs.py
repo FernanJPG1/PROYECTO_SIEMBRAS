@@ -8,7 +8,7 @@ from app.db.connection import get_db
 from app.db import queries
 from app.models.schemas import (
     CatalogosResponse, Bloque, Cama, FamiliaVariedad, SubvariedadSerie, ColorVariedad,
-    Variedad, VariedadCreate, VariedadUpdate, Operario
+    Variedad, VariedadCreate, VariedadUpdate, Operario, LiriosCatalogo187
 )
 
 router = APIRouter()
@@ -25,12 +25,14 @@ def get_todos_los_catalogos(
     - Familias / Especies de Plantas (t09)
     - 762 Variedades Comerciales Reales (t11 con color y serie)
     - 272 Operarios activos (t159)
+    - Tabla 187 de Lirios (Proveedores, Contenedores y Lotes)
     """
     bloques = queries.get_bloques(conn)
     camas = queries.get_camas(conn)
     familias = queries.get_familias(conn, solo_activas=True)
     variedades = queries.get_variedades(conn, solo_activas=True)
     operarios = queries.get_operarios(conn, solo_activos=True)
+    lirios_187 = queries.get_lirios_tabla187(conn)
 
     return CatalogosResponse(
         bloques=bloques,
@@ -38,8 +40,22 @@ def get_todos_los_catalogos(
         familias=familias,
         variedades=variedades,
         operarios=operarios,
+        lirios_187=lirios_187,
         timestamp=datetime.utcnow()
     )
+
+# --- Tabla 187: Lirios (Proveedor, Contenedor y Lote) ---
+
+@router.get("/lirios-187", response_model=LiriosCatalogo187)
+def get_catalogo_lirios_187(
+    conn: pyodbc.Connection = Depends(get_db),
+    api_key: str = Depends(get_api_key)
+):
+    """
+    Obtiene el catálogo oficial de la Tabla 187 para Lirios:
+    Proveedores, Contenedores y Lotes con sus relaciones y variedad.
+    """
+    return queries.get_lirios_tabla187(conn)
 
 # --- Bloques (t17) ---
 

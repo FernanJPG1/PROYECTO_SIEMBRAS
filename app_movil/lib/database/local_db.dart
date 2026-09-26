@@ -20,7 +20,7 @@ class LocalDatabase {
 
     return await openDatabase(
       path,
-      version: 13,
+      version: 14,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -53,6 +53,31 @@ class LocalDatabase {
           try {
             await db.execute('ALTER TABLE tb_config_agronomica ADD COLUMN densidad_linea INTEGER NOT NULL DEFAULT 20');
           } catch (_) {}
+
+          // Asegurar existencia y datos de tb_lirios_187 (Tabla 187 de Access)
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS tb_lirios_187 (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              proveedor TEXT NOT NULL,
+              contenedor TEXT NOT NULL,
+              lote TEXT NOT NULL,
+              variedad TEXT,
+              variedad_id INTEGER
+            )
+          ''');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_proveedor ON tb_lirios_187 (proveedor)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_contenedor ON tb_lirios_187 (contenedor)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_lote ON tb_lirios_187 (lote)');
+
+          final cRes = await db.rawQuery('SELECT COUNT(*) as total FROM tb_lirios_187');
+          final total187 = Sqflite.firstIntValue(cRes) ?? 0;
+          if (total187 == 0) {
+            final batch187 = db.batch();
+            for (var l in kSeedLirios187) {
+              batch187.insert('tb_lirios_187', l);
+            }
+            await batch187.commit(noResult: true);
+          }
         } catch (_) {}
       },
     );
@@ -187,6 +212,34 @@ class LocalDatabase {
         }
       } catch (_) {}
     }
+
+    if (oldVersion < 14) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS tb_lirios_187 (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            proveedor TEXT NOT NULL,
+            contenedor TEXT NOT NULL,
+            lote TEXT NOT NULL,
+            variedad TEXT,
+            variedad_id INTEGER
+          )
+        ''');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_proveedor ON tb_lirios_187 (proveedor)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_contenedor ON tb_lirios_187 (contenedor)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_lote ON tb_lirios_187 (lote)');
+
+        final countRes = await db.rawQuery('SELECT COUNT(*) as total FROM tb_lirios_187');
+        final total = Sqflite.firstIntValue(countRes) ?? 0;
+        if (total == 0) {
+          final batch = db.batch();
+          for (var l in kSeedLirios187) {
+            batch.insert('tb_lirios_187', l);
+          }
+          await batch.commit(noResult: true);
+        }
+      } catch (_) {}
+    }
   }
 
   Future<void> _crearTablaConfigAgronomica(Database db) async {
@@ -312,6 +365,21 @@ class LocalDatabase {
       )
     ''');
 
+    // 8. Tabla Catálogo Lirios 187 (t187_salidaslirioscomp + t185 + t23)
+    await db.execute('''
+      CREATE TABLE tb_lirios_187 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        proveedor TEXT NOT NULL,
+        contenedor TEXT NOT NULL,
+        lote TEXT NOT NULL,
+        variedad TEXT,
+        variedad_id INTEGER
+      )
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_proveedor ON tb_lirios_187 (proveedor)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_contenedor ON tb_lirios_187 (contenedor)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_lote ON tb_lirios_187 (lote)');
+
     // --- Poblar con Seed Data Real Empresarial ---
     final batch = db.batch();
 
@@ -326,6 +394,9 @@ class LocalDatabase {
     }
     for (var c in kSeedCamas) {
       batch.insert('tb_camas', c);
+    }
+    for (var l in kSeedLirios187) {
+      batch.insert('tb_lirios_187', l);
     }
 
     await batch.commit(noResult: true);

@@ -245,6 +245,45 @@ class ConfigAgronomica {
   }
 }
 
+/// Registro del Catálogo de la Tabla 187 (Lirios: Proveedor, Contenedor, Lote, Variedad)
+class LirioItem187 {
+  final String proveedor;
+  final String contenedor;
+  final String lote;
+  final String? variedad;
+  final int? variedadId;
+
+  LirioItem187({
+    required this.proveedor,
+    required this.contenedor,
+    required this.lote,
+    this.variedad,
+    this.variedadId,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'proveedor': proveedor,
+      'contenedor': contenedor,
+      'lote': lote,
+      'variedad': variedad,
+      'variedad_id': variedadId,
+    };
+  }
+
+  factory LirioItem187.fromMap(Map<String, dynamic> map) {
+    return LirioItem187(
+      proveedor: map['proveedor']?.toString() ?? '',
+      contenedor: map['contenedor']?.toString() ?? '',
+      lote: map['lote']?.toString() ?? '',
+      variedad: map['variedad']?.toString(),
+      variedadId: map['variedad_id'] is int
+          ? map['variedad_id']
+          : int.tryParse(map['variedad_id']?.toString() ?? ''),
+    );
+  }
+}
+
 class Siembra {
   final int? idLocal; // Autoincremental local
   final String? uuid; // Identificador global de ciclo

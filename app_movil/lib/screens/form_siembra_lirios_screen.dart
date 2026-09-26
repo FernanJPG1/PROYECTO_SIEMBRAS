@@ -37,6 +37,17 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
   bool _cargandoCamas = false;
   bool _guardando = false;
 
+  // Catálogo Tabla 187 (Lirios: Proveedor, Contenedor, Lote, Variedad)
+  List<LirioItem187> _todosLirios187 = [];
+  List<String> _proveedores187 = [];
+  List<String> _contenedores187 = [];
+  List<String> _lotes187 = [];
+
+  // Selecciones de listas desplegables de Tabla 187
+  String? _proveedorSeleccionado;
+  String? _contenedorSeleccionado;
+  String? _loteSeleccionado;
+
   // Controladores de texto según el wireframe
   final TextEditingController _lineasController = TextEditingController(text: '14');
   final TextEditingController _tallosController = TextEditingController();
@@ -81,6 +92,12 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
     final o = await _db.obtenerOperarios();
     final cfg = await _db.obtenerConfigAgronomica(cultivo: widget.subtipo);
 
+    // Cargar Catálogo Tabla 187 (Proveedor, Contenedor, Lote, Variedad)
+    final lirios187 = await _db.obtenerRegistrosLirios187();
+    final provs = await _db.obtenerProveedoresLirios();
+    final conts = await _db.obtenerContenedoresLirios();
+    final lots = await _db.obtenerLotesLirios();
+
     if (!mounted) return;
     setState(() {
       _bloques = b;
@@ -88,6 +105,10 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
       _todasLasVariedades = allV;
       _operarios = o;
       _configAgronomica = cfg;
+      _todosLirios187 = lirios187;
+      _proveedores187 = provs;
+      _contenedores187 = conts;
+      _lotes187 = lots;
     });
   }
 
@@ -156,6 +177,272 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
             "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
       });
       await _recargarCiclosCamas();
+    }
+  }
+
+  // === GETTERS Y HANDLERS TABLA 187 (Listas Desplegables Vinculadas) ===
+
+  List<String> get _contenedoresFiltrados {
+    if (_proveedorSeleccionado == null || _proveedorSeleccionado!.trim().isEmpty) {
+      return _contenedores187;
+    }
+    final set = _todosLirios187
+        .where((e) => e.proveedor == _proveedorSeleccionado)
+        .map((e) => e.contenedor)
+        .where((c) => c.isNotEmpty)
+        .toSet()
+        .toList();
+    set.sort((a, b) {
+      final intA = int.tryParse(a);
+      final intB = int.tryParse(b);
+      if (intA != null && intB != null) return intA.compareTo(intB);
+      return a.compareTo(b);
+    });
+    return set;
+  }
+
+  List<String> get _lotesFiltrados {
+    final bool sinFiltros = (_proveedorSeleccionado == null || _proveedorSeleccionado!.trim().isEmpty) &&
+        (_contenedorSeleccionado == null || _contenedorSeleccionado!.trim().isEmpty);
+    if (sinFiltros && _lotes187.isNotEmpty) {
+      return _lotes187;
+    }
+    Iterable<LirioItem187> items = _todosLirios187;
+    if (_proveedorSeleccionado != null && _proveedorSeleccionado!.trim().isNotEmpty) {
+      items = items.where((e) => e.proveedor == _proveedorSeleccionado);
+    }
+    if (_contenedorSeleccionado != null && _contenedorSeleccionado!.trim().isNotEmpty) {
+      items = items.where((e) => e.contenedor == _contenedorSeleccionado);
+    }
+    final set = items
+        .map((e) => e.lote)
+        .where((l) => l.isNotEmpty)
+        .toSet()
+        .toList();
+    set.sort();
+    return set;
+  }
+
+  void _onProveedorCambiado(String? nuevoProveedor) {
+    setState(() {
+      _proveedorSeleccionado = nuevoProveedor;
+      _proveedorController.text = nuevoProveedor ?? '';
+
+      // Si el contenedor actual no pertenece al nuevo proveedor, resetearlo
+      if (_contenedorSeleccionado != null && !_contenedoresFiltrados.contains(_contenedorSeleccionado)) {
+        _contenedorSeleccionado = null;
+        _conteoController.text = '';
+      }
+
+      // Si el lote actual no pertenece al nuevo proveedor, resetearlo
+      if (_loteSeleccionado != null && !_lotesFiltrados.contains(_loteSeleccionado)) {
+        _loteSeleccionado = null;
+        _loteController.text = '';
+      }
+    });
+  }
+
+  void _onContenedorCambiado(String? nuevoContenedor) {
+    setState(() {
+      _contenedorSeleccionado = nuevoContenedor;
+      _conteoController.text = nuevoContenedor ?? '';
+
+      // Si no hay proveedor seleccionado, deducirlo si todos los items pertenecen al mismo proveedor
+      if (_proveedorSeleccionado == null && nuevoContenedor != null) {
+        final provs = _todosLirios187
+            .where((e) => e.contenedor == nuevoContenedor)
+            .map((e) => e.proveedor)
+            .toSet();
+        if (provs.length == 1) {
+          _proveedorSeleccionado = provs.first;
+          _proveedorController.text = provs.first;
+        }
+      }
+
+      // Si el lote actual no pertenece a este contenedor, resetearlo
+      if (_loteSeleccionado != null && !_lotesFiltrados.contains(_loteSeleccionado)) {
+        _loteSeleccionado = null;
+        _loteController.text = '';
+      }
+    });
+  }
+
+  void _onLoteCambiado(String? nuevoLote) {
+    if (nuevoLote == null) {
+      setState(() {
+        _loteSeleccionado = null;
+        _loteController.text = '';
+      });
+      return;
+    }
+
+    final match = _todosLirios187.firstWhere(
+      (e) => e.lote == nuevoLote &&
+          (_proveedorSeleccionado == null || e.proveedor == _proveedorSeleccionado) &&
+          (_contenedorSeleccionado == null || e.contenedor == _contenedorSeleccionado),
+      orElse: () => _todosLirios187.firstWhere(
+        (e) => e.lote == nuevoLote,
+        orElse: () => LirioItem187(proveedor: '', contenedor: '', lote: nuevoLote),
+      ),
+    );
+
+    setState(() {
+      _loteSeleccionado = nuevoLote;
+      _loteController.text = nuevoLote;
+
+      if (match.proveedor.isNotEmpty) {
+        _proveedorSeleccionado = match.proveedor;
+        _proveedorController.text = match.proveedor;
+      }
+      if (match.contenedor.isNotEmpty) {
+        _contenedorSeleccionado = match.contenedor;
+        _conteoController.text = match.contenedor;
+      }
+
+      // Auto-emparejar Variedad si está disponible en Tabla 187
+      if (_variedadSeleccionada == null && (match.variedadId != null || match.variedad != null)) {
+        Variedad? varMatch;
+        if (match.variedadId != null) {
+          try {
+            varMatch = _todasLasVariedades.firstWhere((v) => v.id == match.variedadId);
+          } catch (_) {}
+        }
+        if (varMatch == null && match.variedad != null) {
+          final nomClean = match.variedad!.toLowerCase().replaceAll(' bn', '').trim();
+          try {
+            varMatch = _todasLasVariedades.firstWhere(
+              (v) => v.nombre.toLowerCase().contains(nomClean) || nomClean.contains(v.nombre.toLowerCase()),
+            );
+          } catch (_) {}
+        }
+        if (varMatch != null) {
+          _variedadSeleccionada = varMatch;
+          _db.obtenerConfigAgronomicaParaVariedad(varMatch, cultivoFallback: 'LIRIOS').then((cfg) {
+            if (mounted) {
+              setState(() {
+                _configAgronomica = cfg;
+              });
+              _recalcularTallosPorLineas();
+            }
+          });
+        }
+      }
+    });
+  }
+
+  Future<void> _abrirBuscadorLotes() async {
+    final lotesDisponibles = _lotesFiltrados;
+    final String? seleccionado = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        String query = '';
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final lista = query.isEmpty
+                ? lotesDisponibles
+                : lotesDisponibles.where((l) => l.toLowerCase().contains(query.toLowerCase())).toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Buscar Lote - Tabla 187 (${lotesDisponibles.length})',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF33691E)),
+                      ),
+                      if (_proveedorSeleccionado != null || _contenedorSeleccionado != null)
+                        Text(
+                          '${_proveedorSeleccionado ?? ""}${_contenedorSeleccionado != null ? " | Cont: $_contenedorSeleccionado" : ""}',
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Escribe para buscar número de lote...',
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF7CB342)),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFF7CB342), width: 2),
+                      ),
+                    ),
+                    onChanged: (val) => setModalState(() => query = val),
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: lista.isEmpty
+                        ? const Center(child: Text('No se encontraron lotes coincidentes'))
+                        : ListView.separated(
+                            itemCount: lista.length,
+                            separatorBuilder: (ctx, i) => const Divider(height: 1),
+                            itemBuilder: (ctx, i) {
+                              final item = lista[i];
+                              final isSelected = _loteSeleccionado == item;
+                              final detalles = _todosLirios187.where((e) => e.lote == item).toList();
+                              final prov = detalles.isNotEmpty ? detalles.first.proveedor : '';
+                              final cont = detalles.isNotEmpty ? detalles.first.contenedor : '';
+                              final varNom = detalles.isNotEmpty && detalles.first.variedad != null
+                                  ? detalles.first.variedad!
+                                  : '';
+
+                              return ListTile(
+                                tileColor: isSelected
+                                    ? const Color(0xFF7CB342).withValues(alpha: 0.15)
+                                    : null,
+                                title: Text(
+                                  'Lote: $item',
+                                  style: TextStyle(
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                    color: isSelected ? const Color(0xFF33691E) : Colors.black87,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  'Prov: $prov | Cont: $cont${varNom.isNotEmpty ? " | Var: $varNom" : ""}',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                                ),
+                                trailing: isSelected
+                                    ? const Icon(Icons.check_circle, color: Color(0xFF7CB342))
+                                    : null,
+                                onTap: () => Navigator.pop(ctx, item),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (seleccionado != null) {
+      _onLoteCambiado(seleccionado);
     }
   }
 
@@ -487,9 +774,9 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
         cantidad: tallos,
         estado: 'ACTIVA',
         lineas: lineas,
-        cont: _conteoController.text.trim().isNotEmpty ? _conteoController.text.trim() : null,
-        proveedor: _proveedorController.text.trim().isNotEmpty ? _proveedorController.text.trim() : null,
-        lote: _loteController.text.trim().isNotEmpty ? _loteController.text.trim() : null,
+        cont: _contenedorSeleccionado ?? (_conteoController.text.trim().isNotEmpty ? _conteoController.text.trim() : null),
+        proveedor: _proveedorSeleccionado ?? (_proveedorController.text.trim().isNotEmpty ? _proveedorController.text.trim() : null),
+        lote: _loteSeleccionado ?? (_loteController.text.trim().isNotEmpty ? _loteController.text.trim() : null),
         observaciones: _observacionesController.text.trim().isNotEmpty
             ? _observacionesController.text.trim()
             : null,
@@ -993,13 +1280,13 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
 
                 const SizedBox(height: 8),
 
-                // Fila 3: TALLOS X SEMBRAR | CONTEO | PROVEEDOR
+                // Fila 3: TALLOS X SEMBRAR | PROVEEDOR (Lista Desplegable Tabla 187) | CONTENEDOR (Lista Desplegable Tabla 187)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Tallos
                     Expanded(
-                      flex: 4,
+                      flex: 3,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1057,42 +1344,100 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
                       ),
                     ),
                     const SizedBox(width: 14),
-                    // Conteo
+                    // Proveedor (Lista desplegable Tabla 187)
                     Expanded(
-                      flex: 3,
+                      flex: 4,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel('Conteo'),
-                          TextFormField(
-                            controller: _conteoController,
-                            decoration: InputDecoration(
-                              hintText: 'Conteo / Contenedor',
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildLabel('Proveedor'),
+                              if (_proveedorSeleccionado != null)
+                                InkWell(
+                                  onTap: () => _onProveedorCambiado(null),
+                                  child: const Text('Limpiar', style: TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                                ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _proveedorSeleccionado != null ? const Color(0xFF7CB342) : Colors.grey.shade400,
+                                width: _proveedorSeleccionado != null ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                hint: const Text('Proveedor...'),
+                                value: _proveedores187.contains(_proveedorSeleccionado) ? _proveedorSeleccionado : null,
+                                items: _proveedores187.map((p) {
+                                  return DropdownMenuItem<String>(
+                                    value: p,
+                                    child: Text(
+                                      p,
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: _onProveedorCambiado,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 14),
-                    // Proveedor
+                    // Contenedor (Lista desplegable Tabla 187)
                     Expanded(
                       flex: 3,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel('Proveedor'),
-                          TextFormField(
-                            controller: _proveedorController,
-                            decoration: InputDecoration(
-                              hintText: 'Nombre proveedor...',
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildLabel('Contenedor'),
+                              if (_contenedorSeleccionado != null)
+                                InkWell(
+                                  onTap: () => _onContenedorCambiado(null),
+                                  child: const Text('Limpiar', style: TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                                ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _contenedorSeleccionado != null ? const Color(0xFF7CB342) : Colors.grey.shade400,
+                                width: _contenedorSeleccionado != null ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                hint: const Text('Contenedor...'),
+                                value: _contenedoresFiltrados.contains(_contenedorSeleccionado) ? _contenedorSeleccionado : null,
+                                items: _contenedoresFiltrados.map((c) {
+                                  return DropdownMenuItem<String>(
+                                    value: c,
+                                    child: Text(
+                                      'Cont. $c',
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: _onContenedorCambiado,
+                              ),
                             ),
                           ),
                         ],
@@ -1140,7 +1485,7 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
 
                 const SizedBox(height: 8),
 
-                // Fila 4: LOTE
+                // Fila 4: LOTE (Lista Desplegable Tabla 187) | OBSERVACIONES
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1149,15 +1494,63 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel('Lote'),
-                          TextFormField(
-                            controller: _loteController,
-                            decoration: InputDecoration(
-                              hintText: 'Código o número de lote...',
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildLabel('Lote (Tabla 187)'),
+                              Row(
+                                children: [
+                                  if (_loteSeleccionado != null)
+                                    InkWell(
+                                      onTap: () => _onLoteCambiado(null),
+                                      child: const Text('Limpiar  ', style: TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                                    ),
+                                  InkWell(
+                                    onTap: _abrirBuscadorLotes,
+                                    child: const Row(
+                                      children: [
+                                        Icon(Icons.search, size: 14, color: Color(0xFF558B2F)),
+                                        SizedBox(width: 2),
+                                        Text('Buscar', style: TextStyle(fontSize: 11, color: Color(0xFF558B2F), fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _loteSeleccionado != null ? const Color(0xFF7CB342) : Colors.grey.shade400,
+                                width: _loteSeleccionado != null ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                hint: Text(
+                                  _lotesFiltrados.isEmpty
+                                      ? 'Sin lotes'
+                                      : 'Lote (${_lotesFiltrados.length})...',
+                                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                                ),
+                                value: _lotesFiltrados.contains(_loteSeleccionado) ? _loteSeleccionado : null,
+                                items: _lotesFiltrados.map((l) {
+                                  return DropdownMenuItem<String>(
+                                    value: l,
+                                    child: Text(
+                                      l,
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: _onLoteCambiado,
+                              ),
                             ),
                           ),
                         ],
@@ -1206,6 +1599,37 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
                     ),
                   ],
                 ),
+
+                if (_loteSeleccionado != null) ...[
+                  const SizedBox(height: 6),
+                  Builder(builder: (context) {
+                    final matches = _todosLirios187.where((e) => e.lote == _loteSeleccionado).toList();
+                    final p = matches.isNotEmpty ? matches.first.proveedor : (_proveedorSeleccionado ?? '');
+                    final c = matches.isNotEmpty ? matches.first.contenedor : (_contenedorSeleccionado ?? '');
+                    final v = matches.isNotEmpty ? matches.first.variedad : null;
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFA5D6A7)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.inventory_2_outlined, color: Color(0xFF2E7D32), size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Lote $_loteSeleccionado (Tabla 187) ➔ Proveedor: $p | Contenedor: $c${v != null ? " | Variedad: $v" : ""}',
+                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF1B5E20), fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
 
                 const SizedBox(height: 12),
 

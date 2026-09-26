@@ -138,6 +138,14 @@ class SyncService {
         await dbRepo.reemplazarOperarios(operarios);
       }
 
+      // Catálogo Lirios Tabla 187 (Proveedor, Contenedor, Lote, Variedad)
+      if (data['lirios_187'] != null) {
+        final List<LirioItem187> lirios187 = (data['lirios_187'] as List)
+            .map((l) => LirioItem187.fromMap(l))
+            .toList();
+        await dbRepo.reemplazarLirios187(lirios187);
+      }
+
       return true;
     } else {
       print('Error descargando catálogos: ${response.statusCode} - ${response.body}');

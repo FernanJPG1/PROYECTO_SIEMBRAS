@@ -4,8 +4,11 @@ from datetime import datetime, timedelta
 import logging
 from app.models.schemas import (
     Bloque, Cama, FamiliaVariedad, SubvariedadSerie, ColorVariedad,
-    Variedad, VariedadCreate, VariedadUpdate, Operario, SiembraSync
+    Variedad, VariedadCreate, VariedadUpdate, Operario, SiembraSync,
+    LirioRegistro187, LiriosCatalogo187
 )
+import json
+from pathlib import Path
 from app.db.connection import safe_backup_database, ensure_database_schema
 
 logger = logging.getLogger(__name__)
@@ -691,5 +694,77 @@ def eliminar_siembras_por_uuid(conn: pyodbc.Connection, uuids: List[str]) -> int
         pass
     logger.info(f"✓ {eliminadas} siembras eliminadas de Access por sincronización móvil.")
     return eliminadas
+
+# --- Tabla 187: Catálogo de Lirios (Proveedor, Contenedor y Lote) ---
+
+def get_lirios_tabla187(conn: Optional[pyodbc.Connection] = None) -> LiriosCatalogo187:
+    """
+    Obtiene los registros de la Tabla 187 (t187_salidaslirioscomp) con su proveedor (t185 / t23)
+    y contenedor (t185), extrayendo listas únicas para selectores desplegables en la app móvil.
+    """
+    registros: List[LirioRegistro187] = []
+    
+    if conn:
+        try:
+            cursor = conn.cursor()
+            query = """
+                SELECT DISTINCT 
+                    t23.t23_nombre AS proveedor,
+                    CSTR(t185.t185_num_contenedor) AS contenedor,
+                    t187.t187_lote AS lote,
+                    t11.t11_nomsting AS variedad,
+                    t11.t11_interno AS variedad_id
+                FROM (
+                    (
+                        (t187_salidaslirioscomp t187
+                        INNER JOIN t185_entradaliriosprinc t185 ON t187.t187_num_entrada = t185.t185_num_entrada)
+                        LEFT JOIN t23_msucterceros t23 ON t185.t185_proveedor = t23.t23_interno
+                    )
+                    LEFT JOIN t102_composcama t102 ON t187.t187_variedad = t102.t102_interno
+                )
+                LEFT JOIN t11_mcolorsseries t11 ON t102.t102_referencia = t11.t11_interno
+                WHERE t187.t187_lote IS NOT NULL AND t23.t23_nombre IS NOT NULL
+                ORDER BY t23.t23_nombre, CSTR(t185.t185_num_contenedor), t187.t187_lote
+            """
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            for r in rows:
+                registros.append(LirioRegistro187(
+                    proveedor=str(r.proveedor).strip() if r.proveedor else "",
+                    contenedor=str(r.contenedor).strip() if r.contenedor else "",
+                    lote=str(r.lote).strip() if r.lote else "",
+                    variedad=str(r.variedad).strip() if r.variedad else None,
+                    variedad_id=int(r.variedad_id) if r.variedad_id is not None else None
+                ))
+        except Exception as e:
+            logger.warning(f"Error consultando t187 en Access, recurriendo a cache JSON: {e}")
+
+    # Si no se obtuvieron filas de Access o no hay conexión, cargar desde el JSON exportado
+    if not registros:
+        json_path = Path(__file__).parent / "lirios_tabla187.json"
+        if json_path.exists():
+            try:
+                with open(json_path, "r", encoding="utf-8") as f:
+                    raw_items = json.load(f)
+                    for item in raw_items:
+                        registros.append(LirioRegistro187(**item))
+            except Exception as e_json:
+                logger.error(f"Error cargando lirios_tabla187.json: {e_json}")
+
+    # Extraer conjuntos únicos ordenados
+    proveedores = sorted(list(set(r.proveedor for r in registros if r.proveedor)))
+    contenedores = sorted(
+        list(set(r.contenedor for r in registros if r.contenedor)),
+        key=lambda x: int(x) if x.isdigit() else 999
+    )
+    lotes = sorted(list(set(r.lote for r in registros if r.lote)))
+
+    return LiriosCatalogo187(
+        proveedores=proveedores,
+        contenedores=contenedores,
+        lotes=lotes,
+        registros=registros
+    )
+
 
 
