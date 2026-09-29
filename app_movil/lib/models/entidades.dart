@@ -237,8 +237,8 @@ class ConfigAgronomica {
   factory ConfigAgronomica.fromMap(Map<String, dynamic> map) {
     return ConfigAgronomica(
       cultivo: (map['cultivo']?.toString() ?? 'GENERAL').toUpperCase(),
-      limiteEsquejes: int.tryParse(map['limite_esquejes'].toString()) ?? 2600,
-      diasCiclo: int.tryParse(map['dias_ciclo'].toString()) ?? 75,
+      limiteEsquejes: int.tryParse(map['limite_esquejes'].toString()) ?? 3600,
+      diasCiclo: int.tryParse(map['dias_ciclo'].toString()) ?? 70,
       densidadLinea: int.tryParse(map['densidad_linea']?.toString() ?? '') ?? 20,
       fechaActualizacion: map['fecha_actualizacion']?.toString(),
     );

@@ -4,8 +4,16 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:app_movil/models/entidades.dart';
+import 'package:app_movil/utils/calendario_util.dart';
 
 class ReporteService {
+  static String _resolverSemana(String? sem) {
+    if (sem == null || sem.trim().isEmpty || sem == 'Semana #38' || sem == 'Semana General') {
+      return CalendarioUtil.obtenerEtiquetaSemana(DateTime.now(), incluirAnio: true);
+    }
+    return sem.trim();
+  }
+
   /// Genera el documento PDF con el diseño exacto de Buenavista Flowers
   static Future<Uint8List> generarPdfReporte({
     required List<Siembra> siembras,
@@ -13,9 +21,10 @@ class ReporteService {
     required List<Cama> camas,
     required List<Operario> operarios,
     required String cultivo, // 'TODOS', 'LIRIOS', 'GIRASOL', 'MATSUMOTO', 'CREMON', 'POMPON'
-    String semana = 'Semana #38',
+    String? semana,
     String? rangoFechas,
   }) async {
+    final semanaReal = _resolverSemana(semana);
     final pdf = pw.Document();
 
     final fontRegular = await PdfGoogleFonts.robotoRegular();
@@ -36,7 +45,7 @@ class ReporteService {
         margin: const pw.EdgeInsets.all(24),
         header: (context) => _buildHeader(
           cultivo: cultivo,
-          semana: semana,
+          semana: semanaReal,
           rangoFechas: rangoFechas,
           fechaHoy: fechaHoy,
           totalRegistros: siembras.length,
@@ -462,9 +471,10 @@ class ReporteService {
     required List<Siembra> siembras,
     required List<Operario> operarios,
     required String cultivo,
-    String semana = 'Semana #38',
+    String? semana,
     String? rangoFechas,
   }) async {
+    final semanaReal = _resolverSemana(semana);
     final pdf = pw.Document();
     final fontRegular = await PdfGoogleFonts.robotoRegular();
     final fontBold = await PdfGoogleFonts.robotoBold();
@@ -482,7 +492,7 @@ class ReporteService {
         margin: const pw.EdgeInsets.all(24),
         header: (context) => _buildHeader(
           cultivo: '$cultivo - RENDIMIENTO',
-          semana: semana,
+          semana: semanaReal,
           rangoFechas: rangoFechas,
           fechaHoy: fechaHoy,
           totalRegistros: siembras.length,
@@ -518,20 +528,21 @@ class ReporteService {
     required List<Siembra> siembras,
     required List<Operario> operarios,
     required String cultivo,
-    String semana = 'Semana #38',
+    String? semana,
     String? rangoFechas,
   }) async {
+    final semanaReal = _resolverSemana(semana);
     final pdfBytes = await generarPdfReporteRendimiento(
       siembras: siembras,
       operarios: operarios,
       cultivo: cultivo,
-      semana: semana,
+      semana: semanaReal,
       rangoFechas: rangoFechas,
     );
 
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdfBytes,
-      name: 'Rendimiento_Sembradores_${cultivo}_$semana.pdf',
+      name: 'Rendimiento_Sembradores_${cultivo}_$semanaReal.pdf',
     );
   }
 
@@ -539,20 +550,21 @@ class ReporteService {
     required List<Siembra> siembras,
     required List<Operario> operarios,
     required String cultivo,
-    String semana = 'Semana #38',
+    String? semana,
     String? rangoFechas,
   }) async {
+    final semanaReal = _resolverSemana(semana);
     final pdfBytes = await generarPdfReporteRendimiento(
       siembras: siembras,
       operarios: operarios,
       cultivo: cultivo,
-      semana: semana,
+      semana: semanaReal,
       rangoFechas: rangoFechas,
     );
 
     await Printing.sharePdf(
       bytes: pdfBytes,
-      filename: 'Rendimiento_Sembradores_${cultivo}_$semana.pdf',
+      filename: 'Rendimiento_Sembradores_${cultivo}_$semanaReal.pdf',
     );
   }
 
@@ -574,22 +586,23 @@ class ReporteService {
     required List<Cama> camas,
     required List<Operario> operarios,
     required String cultivo,
-    String semana = 'Semana #38',
+    String? semana,
     String? rangoFechas,
   }) async {
+    final semanaReal = _resolverSemana(semana);
     final pdfBytes = await generarPdfReporte(
       siembras: siembras,
       variedades: variedades,
       camas: camas,
       operarios: operarios,
       cultivo: cultivo,
-      semana: semana,
+      semana: semanaReal,
       rangoFechas: rangoFechas,
     );
 
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdfBytes,
-      name: 'Reporte_Siembras_${cultivo}_$semana.pdf',
+      name: 'Reporte_Siembras_${cultivo}_$semanaReal.pdf',
     );
   }
 
@@ -600,22 +613,23 @@ class ReporteService {
     required List<Cama> camas,
     required List<Operario> operarios,
     required String cultivo,
-    String semana = 'Semana #38',
+    String? semana,
     String? rangoFechas,
   }) async {
+    final semanaReal = _resolverSemana(semana);
     final pdfBytes = await generarPdfReporte(
       siembras: siembras,
       variedades: variedades,
       camas: camas,
       operarios: operarios,
       cultivo: cultivo,
-      semana: semana,
+      semana: semanaReal,
       rangoFechas: rangoFechas,
     );
 
     await Printing.sharePdf(
       bytes: pdfBytes,
-      filename: 'Reporte_Siembras_${cultivo}_$semana.pdf',
+      filename: 'Reporte_Siembras_${cultivo}_$semanaReal.pdf',
     );
   }
 }

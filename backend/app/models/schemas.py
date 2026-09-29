@@ -23,6 +23,10 @@ class FamiliaVariedad(BaseModel):
     id: int
     codigo: str
     nombre: str
+    densidad_siembra: Optional[float] = None  # t09_densiembra (plantas/m2)
+    dias_rotacion: Optional[int] = None      # t09_dias_rot (semanas de rotación agronómica)
+    dias_ciclo: Optional[int] = None         # días calculados (dias_rot * 7)
+    limite_cama_estandar: Optional[int] = None # Esquejes/plantas por cama estándar (36m2)
     estado: int = 1
 
 # Nivel 2: Subvariedad / Serie (t10_mservar)
@@ -50,8 +54,10 @@ class Variedad(BaseModel):
     subvar_nombre: Optional[str] = None
     familia_id: Optional[int] = None
     familia_nombre: Optional[str] = None
-    limite_esquejes: Optional[int] = None  # t11_esqxcama (Límite agronómico ingresado por admin)
-    dias_ciclo: Optional[int] = None       # t11_ciclo_destronque (Duración estimada del ciclo)
+    limite_esquejes: Optional[int] = None  # t11_esqxcama (Límite agronómico por cama)
+    dias_ciclo: Optional[int] = None       # t11_ciclo_destronque / t09_dias_rot * 7
+    densidad_linea: Optional[int] = None   # Plantas/esquejes por línea estándar
+    densidad_m2: Optional[float] = None    # t11_densm2 o t09_densiembra
     estado: int = 1
 
 class VariedadCreate(BaseModel):
@@ -67,6 +73,15 @@ class VariedadUpdate(BaseModel):
     estado: Optional[int] = None
     limite_esquejes: Optional[int] = None
     dias_ciclo: Optional[int] = None
+
+# Configuración Agronómica por Cultivo / Familia (de t09_mfamvar y t11_mcolorsseries)
+class ConfiguracionAgronomica(BaseModel):
+    cultivo: str
+    limite_esquejes: int
+    dias_ciclo: int
+    densidad_linea: int
+    densidad_m2: Optional[float] = None
+    fecha_actualizacion: Optional[str] = None
 
 # Composición de Cama Actual (t50_mcomposcama)
 class ComposicionCama(BaseModel):
@@ -105,6 +120,7 @@ class CatalogosResponse(BaseModel):
     familias: List[FamiliaVariedad] = []
     variedades: List[Variedad]
     operarios: List[Operario]
+    configuraciones_agronomicas: List[ConfiguracionAgronomica] = []
     lirios_187: Optional[LiriosCatalogo187] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 

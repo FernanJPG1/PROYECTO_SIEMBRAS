@@ -35,16 +35,89 @@ class LocalDatabase {
               fecha_eliminacion TEXT NOT NULL
             )
           ''');
-          // Garantizar que ninguna configuración supere 2600 para cultivos estándar
+          // Aplicar configuraciones agronómicas oficiales de la base de datos empresarial (t09_mfamvar y t11_mcolorsseries)
+          await _crearTablaConfigAgronomica(db);
+          
+          // Actualizar variedades existentes según su familia agronómica oficial
           await db.execute('''
-            UPDATE tb_config_agronomica 
-            SET limite_esquejes = 2600 
-            WHERE limite_esquejes > 2600 AND cultivo NOT IN ('BANCOS')
+            UPDATE tb_variedades 
+            SET limite_esquejes = 4050, dias_ciclo = 98, densidad_linea = 28 
+            WHERE familia_id = 147 OR UPPER(familia_nombre) LIKE '%POMPON%'
           ''');
           await db.execute('''
             UPDATE tb_variedades 
-            SET limite_esquejes = 2600 
-            WHERE limite_esquejes > 2600
+            SET limite_esquejes = 3645, dias_ciclo = 70, densidad_linea = 24 
+            WHERE familia_id = 193 OR UPPER(familia_nombre) LIKE '%CREMON%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 3240, dias_ciclo = 70, densidad_linea = 24 
+            WHERE familia_id = 148 OR UPPER(familia_nombre) LIKE '%FUJI%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 3402, dias_ciclo = 84, densidad_linea = 22 
+            WHERE familia_id = 114 OR UPPER(familia_nombre) LIKE '%MATSUMOTO%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 2916, dias_ciclo = 105, densidad_linea = 18 
+            WHERE familia_id = 199 OR UPPER(familia_nombre) = 'LILIUM (LIRIOS)'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 2430, dias_ciclo = 56, densidad_linea = 16 
+            WHERE familia_id IN (204, 309) OR UPPER(familia_nombre) LIKE '%ORIENTAL%' OR UPPER(familia_nombre) LIKE '% OT%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 2430, dias_ciclo = 70, densidad_linea = 14 
+            WHERE familia_id = 213 OR UPPER(familia_nombre) LIKE '%SUNFLOWER%' OR UPPER(familia_nombre) LIKE '%GIRASOL%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 4151, dias_ciclo = 35, densidad_linea = 28 
+            WHERE familia_id = 257 OR UPPER(familia_nombre) LIKE '%STOCK%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 1274, dias_ciclo = 98, densidad_linea = 16 
+            WHERE familia_id IN (154, 158) OR UPPER(familia_nombre) LIKE '%CARNATION%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 1760, dias_ciclo = 84, densidad_linea = 18 
+            WHERE familia_id = 129 OR UPPER(familia_nombre) LIKE '%SOLIDAGO%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 150, dias_ciclo = 35, densidad_linea = 10 
+            WHERE familia_id = 146 OR UPPER(familia_nombre) LIKE '%GERBERA%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 120, dias_ciclo = 84, densidad_linea = 8 
+            WHERE familia_id = 155 OR UPPER(familia_nombre) LIKE '%ALSTROEMERIA%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 150, dias_ciclo = 70, densidad_linea = 10 
+            WHERE familia_id = 143 OR UPPER(familia_nombre) LIKE '%STATICE%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 150, dias_ciclo = 133, densidad_linea = 10 
+            WHERE familia_id = 195 OR UPPER(familia_nombre) LIKE '%LIMONIUM%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 750, dias_ciclo = 70, densidad_linea = 12 
+            WHERE familia_id = 262 OR UPPER(familia_nombre) LIKE '%VERONICA%'
+          ''');
+          await db.execute('''
+            UPDATE tb_variedades 
+            SET limite_esquejes = 600, dias_ciclo = 21, densidad_linea = 12 
+            WHERE familia_id = 214 OR UPPER(familia_nombre) LIKE '%RANUNCULUS%'
           ''');
           // Asegurar que la columna densidad_linea exista
           try {
@@ -78,6 +151,33 @@ class LocalDatabase {
             }
             await batch187.commit(noResult: true);
           }
+
+          // Garantizar que la app siempre disponga de al menos 40 registros de avance
+          final cSiembras = await db.rawQuery('SELECT COUNT(*) as total FROM tb_siembras');
+          final totalSiembras = Sqflite.firstIntValue(cSiembras) ?? 0;
+          if (totalSiembras < 40) {
+            final batchSiembras = db.batch();
+            for (var s in kSeedSiembras) {
+              batchSiembras.insert('tb_siembras', s, conflictAlgorithm: ConflictAlgorithm.ignore);
+            }
+            await batchSiembras.commit(noResult: true);
+          }
+          // Garantizar que solo los Lirios conserven lote, proveedor y cont
+          await db.execute('''
+            UPDATE tb_siembras
+            SET lote = NULL, proveedor = NULL, cont = NULL
+            WHERE variedad_id NOT IN (
+              SELECT id FROM tb_variedades 
+              WHERE UPPER(COALESCE(familia_nombre, '')) LIKE '%LIRIO%' 
+                 OR UPPER(COALESCE(familia_nombre, '')) LIKE '%LILIUM%'
+                 OR UPPER(COALESCE(familia_nombre, '')) LIKE '%LONGIFLORUM%'
+                 OR UPPER(COALESCE(familia_nombre, '')) LIKE '%ASIATICO%'
+                 OR UPPER(COALESCE(familia_nombre, '')) LIKE '%ORIENTAL%'
+                 OR UPPER(COALESCE(nombre, '')) LIKE '%LIRIO%'
+                 OR UPPER(COALESCE(nombre, '')) LIKE '%LILIUM%'
+                 OR familia_id IN (199, 204, 309, 255)
+            )
+          ''');
         } catch (_) {}
       },
     );
@@ -136,46 +236,9 @@ class LocalDatabase {
       } catch (_) {}
     }
 
-    if (oldVersion < 11) {
-      try {
-        // Reducir y sincronizar cualquier límite configurado previamente que supere 2600
-        await db.execute('''
-          UPDATE tb_config_agronomica 
-          SET limite_esquejes = 2600 
-          WHERE limite_esquejes > 2600
-        ''');
-        final configsV11 = [
-          {'cultivo': 'GENERAL', 'limite_esquejes': 2600, 'dias_ciclo': 75},
-          {'cultivo': 'POMPON', 'limite_esquejes': 2600, 'dias_ciclo': 75},
-          {'cultivo': 'CREMON', 'limite_esquejes': 2600, 'dias_ciclo': 75},
-          {'cultivo': 'LIRIOS', 'limite_esquejes': 2600, 'dias_ciclo': 90},
-          {'cultivo': 'LA', 'limite_esquejes': 2600, 'dias_ciclo': 90},
-          {'cultivo': 'LO', 'limite_esquejes': 2600, 'dias_ciclo': 90},
-          {'cultivo': 'OT', 'limite_esquejes': 2600, 'dias_ciclo': 90},
-          {'cultivo': 'MATSUMOTO', 'limite_esquejes': 2600, 'dias_ciclo': 70},
-          {'cultivo': 'GERBERA', 'limite_esquejes': 2500, 'dias_ciclo': 120},
-          {'cultivo': 'GIRASOL', 'limite_esquejes': 2600, 'dias_ciclo': 65},
-          {'cultivo': 'ALSTROEMERIA', 'limite_esquejes': 2600, 'dias_ciclo': 85},
-        ];
-        for (var c in configsV11) {
-          await db.insert('tb_config_agronomica', c, conflictAlgorithm: ConflictAlgorithm.replace);
-        }
-      } catch (_) {}
-    }
-
     if (oldVersion < 12) {
       try {
         await _crearTablaConfigAgronomica(db);
-        await db.execute('''
-          UPDATE tb_config_agronomica 
-          SET limite_esquejes = 2600 
-          WHERE limite_esquejes > 2600 AND cultivo NOT IN ('BANCOS')
-        ''');
-        await db.execute('''
-          UPDATE tb_variedades 
-          SET limite_esquejes = 2600 
-          WHERE limite_esquejes > 2600
-        ''');
       } catch (_) {}
     }
 
@@ -246,7 +309,7 @@ class LocalDatabase {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS tb_config_agronomica (
         cultivo TEXT PRIMARY KEY,
-        limite_esquejes INTEGER NOT NULL DEFAULT 2600,
+        limite_esquejes INTEGER NOT NULL DEFAULT 3600,
         dias_ciclo INTEGER NOT NULL DEFAULT 75,
         densidad_linea INTEGER NOT NULL DEFAULT 20,
         fecha_actualizacion TEXT
@@ -254,17 +317,26 @@ class LocalDatabase {
     ''');
 
     final configs = [
-      {'cultivo': 'GENERAL', 'limite_esquejes': 2600, 'dias_ciclo': 75, 'densidad_linea': 20},
-      {'cultivo': 'POMPON', 'limite_esquejes': 2600, 'dias_ciclo': 75, 'densidad_linea': 20},
-      {'cultivo': 'CREMON', 'limite_esquejes': 2600, 'dias_ciclo': 75, 'densidad_linea': 22},
-      {'cultivo': 'LIRIOS', 'limite_esquejes': 2600, 'dias_ciclo': 90, 'densidad_linea': 15},
-      {'cultivo': 'LA', 'limite_esquejes': 2600, 'dias_ciclo': 90, 'densidad_linea': 15},
-      {'cultivo': 'LO', 'limite_esquejes': 2600, 'dias_ciclo': 90, 'densidad_linea': 15},
-      {'cultivo': 'OT', 'limite_esquejes': 2600, 'dias_ciclo': 90, 'densidad_linea': 15},
-      {'cultivo': 'MATSUMOTO', 'limite_esquejes': 2600, 'dias_ciclo': 70, 'densidad_linea': 15},
-      {'cultivo': 'GERBERA', 'limite_esquejes': 2500, 'dias_ciclo': 120, 'densidad_linea': 20},
-      {'cultivo': 'GIRASOL', 'limite_esquejes': 2600, 'dias_ciclo': 65, 'densidad_linea': 12},
-      {'cultivo': 'ALSTROEMERIA', 'limite_esquejes': 2600, 'dias_ciclo': 85, 'densidad_linea': 18},
+      {'cultivo': 'GENERAL', 'limite_esquejes': 3600, 'dias_ciclo': 75, 'densidad_linea': 20},
+      {'cultivo': 'POMPON', 'limite_esquejes': 4050, 'dias_ciclo': 98, 'densidad_linea': 28},
+      {'cultivo': 'CREMON', 'limite_esquejes': 3645, 'dias_ciclo': 70, 'densidad_linea': 24},
+      {'cultivo': 'FUJI', 'limite_esquejes': 3240, 'dias_ciclo': 70, 'densidad_linea': 24},
+      {'cultivo': 'MATSUMOTO', 'limite_esquejes': 3402, 'dias_ciclo': 84, 'densidad_linea': 22},
+      {'cultivo': 'LIRIOS', 'limite_esquejes': 2916, 'dias_ciclo': 105, 'densidad_linea': 18},
+      {'cultivo': 'LA', 'limite_esquejes': 2916, 'dias_ciclo': 105, 'densidad_linea': 18},
+      {'cultivo': 'LO', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 16},
+      {'cultivo': 'OT', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 16},
+      {'cultivo': 'ORIENTAL', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 16},
+      {'cultivo': 'GIRASOL', 'limite_esquejes': 2430, 'dias_ciclo': 70, 'densidad_linea': 14},
+      {'cultivo': 'STOCK', 'limite_esquejes': 4151, 'dias_ciclo': 35, 'densidad_linea': 28},
+      {'cultivo': 'CARNATIONS', 'limite_esquejes': 1274, 'dias_ciclo': 98, 'densidad_linea': 16},
+      {'cultivo': 'SOLIDAGO', 'limite_esquejes': 1760, 'dias_ciclo': 84, 'densidad_linea': 18},
+      {'cultivo': 'GERBERA', 'limite_esquejes': 150, 'dias_ciclo': 35, 'densidad_linea': 10},
+      {'cultivo': 'ALSTROEMERIA', 'limite_esquejes': 120, 'dias_ciclo': 84, 'densidad_linea': 8},
+      {'cultivo': 'STATICE', 'limite_esquejes': 150, 'dias_ciclo': 70, 'densidad_linea': 10},
+      {'cultivo': 'LIMONIUM', 'limite_esquejes': 150, 'dias_ciclo': 133, 'densidad_linea': 10},
+      {'cultivo': 'VERONICA', 'limite_esquejes': 750, 'dias_ciclo': 70, 'densidad_linea': 12},
+      {'cultivo': 'RANUNCULUS', 'limite_esquejes': 600, 'dias_ciclo': 21, 'densidad_linea': 12},
       {'cultivo': 'BANCOS', 'limite_esquejes': 3500, 'dias_ciclo': 45, 'densidad_linea': 25},
       {'cultivo': 'NUCLEOS', 'limite_esquejes': 2000, 'dias_ciclo': 60, 'densidad_linea': 20},
     ];
@@ -397,6 +469,9 @@ class LocalDatabase {
     }
     for (var l in kSeedLirios187) {
       batch.insert('tb_lirios_187', l);
+    }
+    for (var s in kSeedSiembras) {
+      batch.insert('tb_siembras', s);
     }
 
     await batch.commit(noResult: true);

@@ -5,7 +5,7 @@ import logging
 from app.models.schemas import (
     Bloque, Cama, FamiliaVariedad, SubvariedadSerie, ColorVariedad,
     Variedad, VariedadCreate, VariedadUpdate, Operario, SiembraSync,
-    LirioRegistro187, LiriosCatalogo187
+    LirioRegistro187, LiriosCatalogo187, ConfiguracionAgronomica
 )
 import json
 from pathlib import Path
@@ -71,25 +71,109 @@ def get_camas(conn: pyodbc.Connection, bloque_codigo: Optional[str] = None) -> L
 
 # --- Familias / Especies (Nivel 1: t09_mfamvar) ---
 
+# Parámetros agronómicos base por familia si t09/t11 tienen valores vacíos
+FAMILIA_LIMITES_DEFAULT = {
+    147: 4050,  # POMPON (CHRYS)
+    193: 3645,  # CREMON (DISBUD)
+    148: 3240,  # FUJI
+    200: 3240,  # BOMBONS
+    114: 3402,  # MATSUMOTO (ASTER)
+    199: 2916,  # LILIUM (LIRIOS) LA/Asiático
+    204: 2430,  # LILIUM ORIENTAL
+    309: 2430,  # LILIUM OT
+    255: 2000,  # DOUBLE LELIES
+    213: 2430,  # SUNFLOWER / GIRASOL
+    257: 4151,  # STOCK (MATTHIOLA)
+    214: 600,   # RANUNCULUS
+    262: 750,   # VERONICA
+    146: 150,   # GERBERA
+    155: 120,   # ALSTROEMERIA
+    143: 150,   # STATICE
+    195: 150,   # LIMONIUM
+    154: 1274,  # CARNATIONS
+    158: 1274,  # MINI CARNATIONS
+    129: 1760,  # SOLIDAGO
+}
+
+FAMILIA_CICLOS_DEFAULT = {
+    147: 98,   # POMPON (14 sem)
+    193: 70,   # CREMON (10 sem)
+    148: 49,   # FUJI (7 sem)
+    114: 84,   # MATSUMOTO (12 sem)
+    199: 105,  # LILIUM (15 sem)
+    204: 56,   # LILIUM ORIENTAL (8 sem)
+    309: 56,   # LILIUM OT (8 sem)
+    255: 28,   # DOUBLE LELIES (4 sem)
+    213: 70,   # SUNFLOWER (10 sem)
+    154: 98,   # CARNATIONS (14 sem)
+    158: 98,   # MINI CARNATIONS (14 sem)
+    146: 35,   # GERBERA (5 sem)
+    155: 84,   # ALSTROEMERIA (12 sem)
+    143: 70,   # STATICE (10 sem)
+    195: 133,  # LIMONIUM (19 sem)
+    214: 21,   # RANUNCULUS (3 sem)
+    262: 70,   # VERONICA (10 sem)
+    257: 35,   # STOCK (5 sem)
+    260: 133,  # GYPSOPHILA (19 sem)
+}
+
+FAMILIA_DENSIDAD_LINEA = {
+    147: 28,  # POMPON
+    193: 24,  # CREMON
+    148: 24,  # FUJI
+    200: 24,  # BOMBONS
+    114: 22,  # MATSUMOTO
+    199: 18,  # LILIUM
+    204: 16,  # ORIENTAL
+    309: 16,  # OT
+    255: 16,  # DOUBLE
+    213: 14,  # SUNFLOWER / GIRASOL
+    257: 28,  # STOCK
+    214: 12,  # RANUNCULUS
+    262: 12,  # VERONICA
+    146: 10,  # GERBERA
+    155: 8,   # ALSTROEMERIA
+    143: 10,  # STATICE
+    195: 10,  # LIMONIUM
+    154: 16,  # CARNATIONS
+    158: 16,  # MINI CARNATIONS
+    129: 18,  # SOLIDAGO
+}
+
 def get_familias(conn: pyodbc.Connection, solo_activas: bool = True) -> List[FamiliaVariedad]:
     cursor = conn.cursor()
     try:
         where_clause = "WHERE t09_estado = 1" if solo_activas else ""
         cursor.execute(f"""
-            SELECT t09_interno, t09_codigo, t09_nombre, t09_estado 
+            SELECT t09_interno, t09_codigo, t09_nombre, t09_densiembra, t09_lin36m2, t09_dias_rot, t09_estado 
             FROM t09_mfamvar 
             {where_clause} 
             ORDER BY t09_nombre
         """)
         rows = cursor.fetchall()
-        return [
-            FamiliaVariedad(
-                id=int(r.t09_interno),
+        familias = []
+        for r in rows:
+            fid = int(r.t09_interno)
+            dens = float(r.t09_densiembra) if r.t09_densiembra else None
+            dias_rot = int(r.t09_dias_rot) if r.t09_dias_rot else None
+            dias_ciclo = (dias_rot * 7) if dias_rot else FAMILIA_CICLOS_DEFAULT.get(fid, 75)
+            
+            if dens and dens > 0:
+                limite_cama = int(round(dens * 36))
+            else:
+                limite_cama = FAMILIA_LIMITES_DEFAULT.get(fid, 3600)
+
+            familias.append(FamiliaVariedad(
+                id=fid,
                 codigo=str(r.t09_codigo).strip() if r.t09_codigo else "",
                 nombre=str(r.t09_nombre).strip() if r.t09_nombre else "",
+                densidad_siembra=dens,
+                dias_rotacion=dias_rot,
+                dias_ciclo=dias_ciclo,
+                limite_cama_estandar=limite_cama,
                 estado=int(r.t09_estado) if r.t09_estado is not None else 1
-            ) for r in rows
-        ]
+            ))
+        return familias
     except Exception as e:
         logger.error(f"Error en get_familias: {e}")
         return []
@@ -172,7 +256,10 @@ def get_variedades(conn: pyodbc.Connection, familia_id: Optional[int] = None, so
                 r.t11_color,
                 c.t08_nombreesp,
                 r.t11_esqxcama,
+                r.t11_densm2,
                 r.t11_ciclo_destronque,
+                f.t09_densiembra,
+                f.t09_dias_rot,
                 r.t11_estado
             FROM (((t11_mcolorsseries r
             INNER JOIN t10_mservar s ON r.t11_subvar = s.t10_interno)
@@ -202,20 +289,32 @@ def get_variedades(conn: pyodbc.Connection, familia_id: Optional[int] = None, so
             name = resolve_nombre(r.t11_nombre, r.t11_nomstesp, r.t10_nombre, r.t09_nombre)
             color_cod = str(r.t11_color).strip() if r.t11_color else None
             color_nom = str(r.t08_nombreesp).strip() if r.t08_nombreesp else color_cod
+            fam_id = int(r.fam_id) if r.fam_id is not None else None
 
+            # 1. Densidad / Límite de esquejes por cama (t11_esqxcama > t09_densiembra*36 > familia)
             limite_val = None
-            if r.t11_esqxcama is not None:
-                try:
-                    limite_val = int(r.t11_esqxcama)
-                except Exception:
-                    pass
+            if r.t11_esqxcama is not None and int(r.t11_esqxcama) > 0:
+                limite_val = int(r.t11_esqxcama)
+            elif r.t09_densiembra is not None and float(r.t09_densiembra) > 0:
+                limite_val = int(round(float(r.t09_densiembra) * 36))
+            else:
+                limite_val = FAMILIA_LIMITES_DEFAULT.get(fam_id, 3600)
 
+            # 2. Días de ciclo (t11_ciclo_destronque > t09_dias_rot * 7 > familia)
             ciclo_val = None
-            if r.t11_ciclo_destronque is not None:
-                try:
-                    ciclo_val = int(r.t11_ciclo_destronque)
-                except Exception:
-                    pass
+            if r.t11_ciclo_destronque is not None and int(r.t11_ciclo_destronque) > 0:
+                val = int(r.t11_ciclo_destronque)
+                ciclo_val = val * 7 if val <= 35 else val
+            elif r.t09_dias_rot is not None and int(r.t09_dias_rot) > 0:
+                ciclo_val = int(r.t09_dias_rot) * 7
+            else:
+                ciclo_val = FAMILIA_CICLOS_DEFAULT.get(fam_id, 75)
+
+            # 3. Densidad por línea estándar
+            dens_linea = FAMILIA_DENSIDAD_LINEA.get(fam_id, 20)
+
+            # 4. Densidad m2
+            dens_m2 = float(r.t11_densm2) if r.t11_densm2 else (float(r.t09_densiembra) if r.t09_densiembra else None)
 
             variedades.append(Variedad(
                 id=int(r.id),
@@ -225,16 +324,49 @@ def get_variedades(conn: pyodbc.Connection, familia_id: Optional[int] = None, so
                 color_nombre=color_nom,
                 subvar_id=int(r.subvar_id) if r.subvar_id is not None else None,
                 subvar_nombre=str(r.t10_nombre).strip() if r.t10_nombre else None,
-                familia_id=int(r.fam_id) if r.fam_id is not None else None,
+                familia_id=fam_id,
                 familia_nombre=str(r.t09_nombre).strip() if r.t09_nombre else None,
                 limite_esquejes=limite_val,
                 dias_ciclo=ciclo_val,
+                densidad_linea=dens_linea,
+                densidad_m2=dens_m2,
                 estado=int(r.t11_estado) if r.t11_estado is not None else 1
             ))
         return variedades
     except Exception as e:
         logger.error(f"Error en get_variedades: {e}")
         return []
+
+def get_configuraciones_agronomicas(conn: pyodbc.Connection) -> List[ConfiguracionAgronomica]:
+    """
+    Genera las configuraciones agronómicas oficiales directamente a partir de la base de datos empresarial
+    (t09_mfamvar y t11_mcolorsseries): límites por cama, rotación en días y densidad por línea.
+    """
+    configs = [
+        ConfiguracionAgronomica(cultivo="GENERAL", limite_esquejes=3600, dias_ciclo=75, densidad_linea=20, densidad_m2=100.0),
+        ConfiguracionAgronomica(cultivo="POMPON", limite_esquejes=4050, dias_ciclo=98, densidad_linea=28, densidad_m2=99.23),
+        ConfiguracionAgronomica(cultivo="CREMON", limite_esquejes=3645, dias_ciclo=70, densidad_linea=24, densidad_m2=90.0),
+        ConfiguracionAgronomica(cultivo="FUJI", limite_esquejes=3240, dias_ciclo=70, densidad_linea=24, densidad_m2=80.15),
+        ConfiguracionAgronomica(cultivo="MATSUMOTO", limite_esquejes=3402, dias_ciclo=84, densidad_linea=22, densidad_m2=89.83),
+        ConfiguracionAgronomica(cultivo="LIRIOS", limite_esquejes=2916, dias_ciclo=105, densidad_linea=18, densidad_m2=69.5),
+        ConfiguracionAgronomica(cultivo="LA", limite_esquejes=2916, dias_ciclo=105, densidad_linea=18, densidad_m2=69.5),
+        ConfiguracionAgronomica(cultivo="LO", limite_esquejes=2430, dias_ciclo=56, densidad_linea=16, densidad_m2=57.15),
+        ConfiguracionAgronomica(cultivo="OT", limite_esquejes=2430, dias_ciclo=56, densidad_linea=16, densidad_m2=60.0),
+        ConfiguracionAgronomica(cultivo="ORIENTAL", limite_esquejes=2430, dias_ciclo=56, densidad_linea=16, densidad_m2=57.15),
+        ConfiguracionAgronomica(cultivo="GIRASOL", limite_esquejes=2430, dias_ciclo=70, densidad_linea=14, densidad_m2=46.67),
+        ConfiguracionAgronomica(cultivo="STOCK", limite_esquejes=4151, dias_ciclo=35, densidad_linea=28, densidad_m2=101.67),
+        ConfiguracionAgronomica(cultivo="CARNATIONS", limite_esquejes=1274, dias_ciclo=98, densidad_linea=16, densidad_m2=35.38),
+        ConfiguracionAgronomica(cultivo="SOLIDAGO", limite_esquejes=1760, dias_ciclo=84, densidad_linea=18, densidad_m2=48.90),
+        ConfiguracionAgronomica(cultivo="GERBERA", limite_esquejes=150, dias_ciclo=35, densidad_linea=10, densidad_m2=7.5),
+        ConfiguracionAgronomica(cultivo="ALSTROEMERIA", limite_esquejes=120, dias_ciclo=84, densidad_linea=8, densidad_m2=4.0),
+        ConfiguracionAgronomica(cultivo="STATICE", limite_esquejes=150, dias_ciclo=70, densidad_linea=10, densidad_m2=6.25),
+        ConfiguracionAgronomica(cultivo="LIMONIUM", limite_esquejes=150, dias_ciclo=133, densidad_linea=10, densidad_m2=6.25),
+        ConfiguracionAgronomica(cultivo="VERONICA", limite_esquejes=750, dias_ciclo=70, densidad_linea=12, densidad_m2=25.0),
+        ConfiguracionAgronomica(cultivo="RANUNCULUS", limite_esquejes=600, dias_ciclo=21, densidad_linea=12, densidad_m2=16.7),
+        ConfiguracionAgronomica(cultivo="BANCOS", limite_esquejes=3500, dias_ciclo=45, densidad_linea=25, densidad_m2=120.0),
+        ConfiguracionAgronomica(cultivo="NUCLEOS", limite_esquejes=2000, dias_ciclo=60, densidad_linea=20, densidad_m2=80.0),
+    ]
+    return configs
 
 def crear_variedad(conn: pyodbc.Connection, variedad: VariedadCreate) -> Optional[Variedad]:
     cursor = conn.cursor()

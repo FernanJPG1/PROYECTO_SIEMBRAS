@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/services/reporte_service.dart';
 import 'package:app_movil/screens/rendimiento_dialog.dart';
+import 'package:app_movil/utils/calendario_util.dart';
 
 class ReporteDialog extends StatefulWidget {
   final List<Siembra> siembras;
@@ -24,9 +25,25 @@ class ReporteDialog extends StatefulWidget {
 
 class _ReporteDialogState extends State<ReporteDialog> {
   String _cultivoSeleccionado = 'TODOS';
-  final TextEditingController _semanaController = TextEditingController(text: 'Semana #38');
+  late final TextEditingController _semanaController;
   DateTimeRange? _rangoFechas;
   bool _generando = false;
+  int _anioSemanas = DateTime.now().year;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    final semActual = CalendarioUtil.obtenerSemanaUS(now);
+    _semanaController = TextEditingController(text: 'Semana #$semActual - ${now.year}');
+    _rangoFechas = CalendarioUtil.obtenerRangoFechasSemanaUS(now.year, semActual);
+  }
+
+  @override
+  void dispose() {
+    _semanaController.dispose();
+    super.dispose();
+  }
 
   final List<String> _opcionesCultivo = [
     'TODOS',
@@ -106,8 +123,121 @@ class _ReporteDialogState extends State<ReporteDialog> {
       },
     );
     if (picked != null) {
-      setState(() => _rangoFechas = picked);
+      setState(() {
+        _rangoFechas = picked;
+        final semInicio = CalendarioUtil.obtenerSemanaUS(picked.start);
+        final semFin = CalendarioUtil.obtenerSemanaUS(picked.end);
+        if (semInicio == semFin) {
+          _semanaController.text = 'Semana #$semInicio - ${picked.start.year}';
+        } else {
+          _semanaController.text = 'Semana #$semInicio a #$semFin - ${picked.start.year}';
+        }
+      });
     }
+  }
+
+  void _seleccionarSemanaUS() {
+    final semanas = CalendarioUtil.obtenerListaSemanasDelAnio(_anioSemanas);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.calendar_month, color: Color(0xFF558B2F)),
+                    SizedBox(width: 8),
+                    Text(
+                      'Semanas Calendario EE. UU.',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF33691E)),
+                    ),
+                  ],
+                ),
+                TextButton.icon(
+                  icon: const Icon(Icons.today, size: 16, color: Color(0xFF558B2F)),
+                  label: const Text('Semana Actual', style: TextStyle(color: Color(0xFF558B2F), fontWeight: FontWeight.bold, fontSize: 12)),
+                  onPressed: () {
+                    final now = DateTime.now();
+                    final sem = CalendarioUtil.obtenerSemanaUS(now);
+                    final r = CalendarioUtil.obtenerRangoFechasSemanaUS(now.year, sem);
+                    setState(() {
+                      _semanaController.text = 'Semana #$sem - ${now.year}';
+                      _rangoFechas = r;
+                    });
+                    Navigator.pop(ctx);
+                  },
+                ),
+              ],
+            ),
+            const Divider(),
+            Expanded(
+              child: ListView.builder(
+                itemCount: semanas.length,
+                itemBuilder: (c, idx) {
+                  final item = semanas[idx];
+                  final semNum = item['semana'] as int;
+                  final r = item['rango'] as DateTimeRange;
+                  final now = DateTime.now();
+                  final esActual = (now.year == _anioSemanas && CalendarioUtil.obtenerSemanaUS(now) == semNum);
+
+                  return ListTile(
+                    dense: true,
+                    leading: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: esActual ? const Color(0xFF558B2F) : const Color(0xFFF1F8E9),
+                      child: Text(
+                        '$semNum',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: esActual ? Colors.white : const Color(0xFF33691E),
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      item['etiquetaCompleta'] as String,
+                      style: TextStyle(
+                        fontWeight: esActual ? FontWeight.bold : FontWeight.w500,
+                        color: esActual ? const Color(0xFF33691E) : Colors.black87,
+                      ),
+                    ),
+                    trailing: esActual
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: const Color(0xFFDCEDC8), borderRadius: BorderRadius.circular(6)),
+                            child: const Text('ACTUAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF33691E))),
+                          )
+                        : const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                    onTap: () {
+                      setState(() {
+                        _semanaController.text = 'Semana #$semNum - $_anioSemanas';
+                        _rangoFechas = r;
+                      });
+                      Navigator.pop(ctx);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _ejecutarAccion({required bool compartir}) async {
@@ -253,7 +383,7 @@ class _ReporteDialogState extends State<ReporteDialog> {
 
             const SizedBox(height: 14),
 
-            // Selector 2: Semana y Rango de Fechas
+            // Selector 2: Semana y Rango de Fechas (Calendario EE. UU.)
             Row(
               children: [
                 Expanded(
@@ -261,19 +391,41 @@ class _ReporteDialogState extends State<ReporteDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Número de Semana:',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Semana (EE. UU.):',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
+                          ),
+                          InkWell(
+                            onTap: _seleccionarSemanaUS,
+                            child: const Text(
+                              'Elegir semana',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF558B2F), decoration: TextDecoration.underline),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _semanaController,
-                        decoration: InputDecoration(
-                          hintText: 'Ej: Semana #38',
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          filled: true,
-                          fillColor: const Color(0xFFF9FBE7),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      InkWell(
+                        onTap: _seleccionarSemanaUS,
+                        child: TextFormField(
+                          controller: _semanaController,
+                          enabled: false,
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF33691E)),
+                          decoration: InputDecoration(
+                            hintText: 'Ej: Semana #40',
+                            suffixIcon: const Icon(Icons.arrow_drop_down, color: Color(0xFF558B2F)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            filled: true,
+                            fillColor: const Color(0xFFF9FBE7),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                            disabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(color: Color(0xFFC5E1A5)),
+                            ),
+                          ),
                         ),
                       ),
                     ],

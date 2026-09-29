@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
+import 'package:app_movil/utils/calendario_util.dart';
 
 class FormularioSiembraScreen extends StatefulWidget {
   const FormularioSiembraScreen({super.key});
@@ -398,11 +399,13 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
       operarioId: _operarioSeleccionado!.id,
       cantidad: cantidadIngresada,
       lineas: int.tryParse(_lineasController.text) ?? 14,
+      corte: CalendarioUtil.obtenerEtiquetaCorta(CalendarioUtil.parsearFecha(_fechaSeleccionada) ?? DateTime.now()),
       observaciones: _observacionesController.text.trim().isNotEmpty
           ? _observacionesController.text.trim().toUpperCase()
           : null,
-      lote: _loteController.text.isNotEmpty ? _loteController.text : null,
-      proveedor: _proveedorController.text.isNotEmpty ? _proveedorController.text : null,
+      lote: null,
+      proveedor: null,
+      cont: null,
       sincronizado: 0,
     );
 
@@ -497,10 +500,12 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
                     Builder(
                       builder: (context) {
                         final cfg = _configAgronomica;
-                        final int limite = _variedadSeleccionada?.limiteEsquejes ?? cfg?.limiteEsquejes ?? 2600;
-                        final int dias = _variedadSeleccionada?.diasCiclo ?? cfg?.diasCiclo ?? 75;
+                        final int limite = _variedadSeleccionada?.limiteEsquejes ?? cfg?.limiteEsquejes ?? 3600;
+                        final int dias = _variedadSeleccionada?.diasCiclo ?? cfg?.diasCiclo ?? 70;
                         final fInicio = parsearFechaSiembra(_fechaSeleccionada) ?? DateTime.now();
+                        final semSiembra = CalendarioUtil.obtenerSemanaUS(fInicio);
                         final fEst = fInicio.add(Duration(days: dias));
+                        final semCosecha = CalendarioUtil.obtenerSemanaUS(fEst);
                         final fEstStr = "${fEst.day.toString().padLeft(2, '0')}/${fEst.month.toString().padLeft(2, '0')}/${fEst.year}";
 
                         return Container(
@@ -517,7 +522,7 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Parámetros (${_variedadSeleccionada?.nombre ?? "General"}): Máx: $limite plant/cama | Ciclo: $dias d | Cosecha Est.: $fEstStr',
+                                  'Parámetros (${_variedadSeleccionada?.nombre ?? "General"}): Máx: $limite plant/cama | Ciclo: $dias d | Sem. Siembra: Sem $semSiembra | Cosecha Est.: $fEstStr (Sem. $semCosecha)',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFF2E7D32),
@@ -545,7 +550,13 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(_fechaSeleccionada!, style: const TextStyle(fontSize: 16)),
+                              Builder(
+                                builder: (context) {
+                                  final fActual = CalendarioUtil.parsearFecha(_fechaSeleccionada) ?? DateTime.now();
+                                  final semTxt = CalendarioUtil.obtenerEtiquetaCorta(fActual);
+                                  return Text('${_fechaSeleccionada!} ($semTxt)', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600));
+                                },
+                              ),
                               Icon(Icons.calendar_today, color: Colors.green.shade700, size: 20),
                             ],
                           ),
@@ -715,7 +726,7 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
                             'TALLOS X SEMBRAR',
                             Builder(
                               builder: (context) {
-                                final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 2600;
+                                final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 3600;
                                 final int cant = int.tryParse(_tallosController.text.trim()) ?? 0;
                                 final bool excede = cant > limitePermitido;
 
@@ -782,7 +793,7 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
                         final int factor = _variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 20;
                         final int total = (l ?? 0) * factor;
                         final String varNombre = _variedadSeleccionada?.nombre ?? 'GENERAL';
-                        final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 2600;
+                        final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 3600;
                         final bool excede = total > limitePermitido;
 
                         return Container(

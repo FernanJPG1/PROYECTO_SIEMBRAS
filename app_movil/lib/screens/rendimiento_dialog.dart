@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/services/reporte_service.dart';
+import 'package:app_movil/utils/calendario_util.dart';
 
 class RendimientoDialog extends StatefulWidget {
   final List<Siembra> siembras;
@@ -19,7 +20,7 @@ class RendimientoDialog extends StatefulWidget {
     this.variedades,
     this.camas,
     this.cultivo = 'TODOS',
-    this.semana = 'Semana #38',
+    this.semana = '',
     this.rangoFechas,
   });
 
@@ -31,6 +32,17 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
   String _filtroTexto = '';
   String _orden = 'TALLOS'; // 'TALLOS', 'CAMAS', 'PROMEDIO', 'NOMBRE'
   bool _generando = false;
+  late String _semanaActual;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.semana.isNotEmpty && widget.semana != 'Semana #38' && widget.semana != 'Semana General') {
+      _semanaActual = widget.semana;
+    } else {
+      _semanaActual = CalendarioUtil.obtenerEtiquetaSemana(DateTime.now(), incluirAnio: true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +108,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Rendimiento de Sembradores',
+                          'Rendimiento del Cortador y Sembrador',
                           style: TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.bold,
@@ -104,7 +116,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                           ),
                         ),
                         Text(
-                          'Métricas de productividad y ranking por operario | ${widget.cultivo}',
+                          'Métricas de productividad y ranking por operario | ${widget.cultivo} | $_semanaActual (EE. UU.)',
                           style: const TextStyle(fontSize: 12.5, color: Colors.grey),
                         ),
                       ],
@@ -491,7 +503,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
           siembras: widget.siembras,
           operarios: widget.operarios,
           cultivo: widget.cultivo,
-          semana: widget.semana,
+          semana: _semanaActual,
           rangoFechas: widget.rangoFechas,
         );
       } else {
@@ -499,7 +511,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
           siembras: widget.siembras,
           operarios: widget.operarios,
           cultivo: widget.cultivo,
-          semana: widget.semana,
+          semana: _semanaActual,
           rangoFechas: widget.rangoFechas,
         );
       }

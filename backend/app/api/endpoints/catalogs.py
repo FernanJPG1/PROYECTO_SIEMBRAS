@@ -8,7 +8,7 @@ from app.db.connection import get_db
 from app.db import queries
 from app.models.schemas import (
     CatalogosResponse, Bloque, Cama, FamiliaVariedad, SubvariedadSerie, ColorVariedad,
-    Variedad, VariedadCreate, VariedadUpdate, Operario, LiriosCatalogo187
+    Variedad, VariedadCreate, VariedadUpdate, Operario, LiriosCatalogo187, ConfiguracionAgronomica
 )
 
 router = APIRouter()
@@ -22,9 +22,10 @@ def get_todos_los_catalogos(
     Entrega todos los catálogos en una sola llamada para sincronización offline en la App Móvil:
     - 29 Bloques (t17)
     - 2.865 Camas activas (t49)
-    - Familias / Especies de Plantas (t09)
-    - 762 Variedades Comerciales Reales (t11 con color y serie)
+    - Familias / Especies de Plantas con densidades y rotación (t09)
+    - 762 Variedades Comerciales Reales con densidades y ciclos reales (t11 con color y serie)
     - 272 Operarios activos (t159)
+    - Configuraciones agronómicas por familia de cultivo
     - Tabla 187 de Lirios (Proveedores, Contenedores y Lotes)
     """
     bloques = queries.get_bloques(conn)
@@ -32,6 +33,7 @@ def get_todos_los_catalogos(
     familias = queries.get_familias(conn, solo_activas=True)
     variedades = queries.get_variedades(conn, solo_activas=True)
     operarios = queries.get_operarios(conn, solo_activos=True)
+    configuraciones = queries.get_configuraciones_agronomicas(conn)
     lirios_187 = queries.get_lirios_tabla187(conn)
 
     return CatalogosResponse(
@@ -40,9 +42,21 @@ def get_todos_los_catalogos(
         familias=familias,
         variedades=variedades,
         operarios=operarios,
+        configuraciones_agronomicas=configuraciones,
         lirios_187=lirios_187,
         timestamp=datetime.utcnow()
     )
+
+@router.get("/configuracion-agronomica", response_model=List[ConfiguracionAgronomica])
+def get_configuracion_agronomica(
+    conn: pyodbc.Connection = Depends(get_db),
+    api_key: str = Depends(get_api_key)
+):
+    """
+    Obtiene las configuraciones agronómicas oficiales de la base de datos empresarial
+    (límites por cama, días de ciclo y densidades por línea).
+    """
+    return queries.get_configuraciones_agronomicas(conn)
 
 # --- Tabla 187: Lirios (Proveedor, Contenedor y Lote) ---
 

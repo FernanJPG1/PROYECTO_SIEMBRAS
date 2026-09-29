@@ -123,7 +123,13 @@ class DbRepository {
     String cName = (cultivo ?? 'GENERAL').trim().toUpperCase();
 
     // Normalización de sinónimos agronómicos de cultivo
-    if (cName == 'LA' || cName == 'LO' || cName == 'OT' || cName.contains('LIRIO')) {
+    if (cName.contains(' LA') || cName == 'LA' || cName.contains('ASIAT')) {
+      cName = 'LA';
+    } else if (cName.contains(' LO') || cName == 'LO' || cName.contains('ORIENT')) {
+      cName = 'LO';
+    } else if (cName.contains(' OT') || cName == 'OT') {
+      cName = 'OT';
+    } else if (cName.contains('LIRIO')) {
       cName = 'LIRIOS';
     } else if (cName.contains('CRISAN') || cName.contains('POMP')) {
       cName = 'POMPON';
@@ -170,7 +176,7 @@ class DbRepository {
       return ConfigAgronomica.fromMap(general.first);
     }
 
-    return ConfigAgronomica(cultivo: 'GENERAL', limiteEsquejes: 2600, diasCiclo: 75, densidadLinea: 20);
+    return ConfigAgronomica(cultivo: 'GENERAL', limiteEsquejes: 3600, diasCiclo: 75, densidadLinea: 20);
   }
 
   /// Obtiene los parámetros agronómicos precisos para una variedad específica.
@@ -186,7 +192,15 @@ class DbRepository {
       final nom = variedad.nombre.toUpperCase();
 
       if (fam.contains('LIRIO') || nom.contains('LIRIO') || fam.contains('LONGIFLORUM') || fam.contains('ASIATICO') || fam.contains('ORIENTAL') || nom.contains('LA') || nom.contains('LO') || nom.contains('OT')) {
-        cultivoDeducido = 'LIRIOS';
+        if (fam.contains('ORIENTAL') || nom.contains('ORIENTAL') || fam.contains(' LO') || nom.contains(' LO')) {
+          cultivoDeducido = 'LO';
+        } else if (fam.contains(' OT') || nom.contains(' OT')) {
+          cultivoDeducido = 'OT';
+        } else if (fam.contains('LA') || nom.contains('LA') || fam.contains('ASIAT')) {
+          cultivoDeducido = 'LA';
+        } else {
+          cultivoDeducido = 'LIRIOS';
+        }
       } else if (fam.contains('CREMON') || nom.contains('CREMON') || fam.contains('FUJI') || fam.contains('DISBUD')) {
         cultivoDeducido = 'CREMON';
       } else if (fam.contains('POMPON') || nom.contains('POMPON') || fam.contains('CRISANTEMO')) {
@@ -530,10 +544,40 @@ class DbRepository {
       );
     }
 
+    // 2.1 Validación estricta para LIRIOS: Lote, Proveedor y Contenedor obligatorios
+    final fam = (varSiembra?.familiaNombre ?? '').toUpperCase();
+    final nom = (varSiembra?.nombre ?? '').toUpperCase();
+    final famId = varSiembra?.familiaId ?? 0;
+    final bool esLirios = fam.contains('LIRIO') ||
+        fam.contains('LILIUM') ||
+        fam.contains('LONGIFLORUM') ||
+        fam.contains('ASIATICO') ||
+        fam.contains('ORIENTAL') ||
+        nom.contains('LIRIO') ||
+        nom.contains('LILIUM') ||
+        [199, 204, 309, 255].contains(famId);
+
+    if (esLirios) {
+      if (siembra.lote == null || siembra.lote!.trim().isEmpty ||
+          siembra.proveedor == null || siembra.proveedor!.trim().isEmpty ||
+          siembra.cont == null || siembra.cont!.trim().isEmpty) {
+        throw AgronomicValidationException(
+          'Trazabilidad obligatoria: Para el cultivo de LIRIOS, el Lote, Contenedor y Proveedor son campos estrictamente OBLIGATORIOS.',
+        );
+      }
+    }
+
     // 3. ELIMINAR DE LA BASE DE DATOS LAS SIEMBRAS ANTERIORES QUE HAYAN CUMPLIDO EL CICLO EN ESTA CAMA
     await eliminarSiembrasCicloCumplidoPorCama(siembra.camaId, fechaNuevaStr: siembra.fecha);
 
-    return await db.insert('tb_siembras', siembra.toMap());
+    final map = siembra.toMap();
+    if (!esLirios) {
+      map['lote'] = null;
+      map['proveedor'] = null;
+      map['cont'] = null;
+    }
+
+    return await db.insert('tb_siembras', map);
   }
 
   /// Elimina de la base de datos local las siembras de una cama que ya hayan cumplido su ciclo agronómico
@@ -674,7 +718,35 @@ class DbRepository {
       );
     }
 
+    // 2.1 Validación estricta para LIRIOS: Lote, Proveedor y Contenedor obligatorios
+    final fam = (varSiembra?.familiaNombre ?? '').toUpperCase();
+    final nom = (varSiembra?.nombre ?? '').toUpperCase();
+    final famId = varSiembra?.familiaId ?? 0;
+    final bool esLirios = fam.contains('LIRIO') ||
+        fam.contains('LILIUM') ||
+        fam.contains('LONGIFLORUM') ||
+        fam.contains('ASIATICO') ||
+        fam.contains('ORIENTAL') ||
+        nom.contains('LIRIO') ||
+        nom.contains('LILIUM') ||
+        [199, 204, 309, 255].contains(famId);
+
+    if (esLirios) {
+      if (siembra.lote == null || siembra.lote!.trim().isEmpty ||
+          siembra.proveedor == null || siembra.proveedor!.trim().isEmpty ||
+          siembra.cont == null || siembra.cont!.trim().isEmpty) {
+        throw AgronomicValidationException(
+          'Trazabilidad obligatoria: Para el cultivo de LIRIOS, el Lote, Contenedor y Proveedor son campos estrictamente OBLIGATORIOS.',
+        );
+      }
+    }
+
     final map = siembra.toMap();
+    if (!esLirios) {
+      map['lote'] = null;
+      map['proveedor'] = null;
+      map['cont'] = null;
+    }
     map['sincronizado'] = 0; // Marcar para re-sincronizar con backend Access
     await db.update(
       'tb_siembras',

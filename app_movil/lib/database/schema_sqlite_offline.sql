@@ -66,8 +66,9 @@ CREATE TABLE IF NOT EXISTS tb_operarios (
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS tb_config_agronomica (
   cultivo TEXT PRIMARY KEY,
-  limite_esquejes INTEGER NOT NULL DEFAULT 2600,
-  dias_ciclo INTEGER NOT NULL DEFAULT 75,
+  limite_esquejes INTEGER NOT NULL DEFAULT 3600,
+  dias_ciclo INTEGER NOT NULL DEFAULT 70,
+  densidad_linea INTEGER NOT NULL DEFAULT 20,
   fecha_actualizacion TEXT
 );
 

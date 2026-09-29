@@ -5,8 +5,7 @@ import 'package:app_movil/screens/menu_cultivos_screen.dart';
 import 'package:app_movil/screens/admin_panel_hub_screen.dart';
 import 'package:app_movil/services/network_service.dart';
 import 'package:app_movil/services/sync_service.dart' as app_sync;
-import 'package:app_movil/screens/reporte_dialog.dart';
-import 'package:app_movil/screens/rendimiento_dialog.dart';
+import 'package:app_movil/utils/calendario_util.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,8 +22,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<Operario> _operarios = [];
   bool _cargando = true;
 
-  // Filtro interactivo por fecha y variedad madre (Pompón, Cremón, Matsumoto, Lirios, Girasol)
+  // Filtro interactivo por fecha, semana de EE. UU. y variedad madre
   DateTime? _fechaFiltro;
+  int? _semanaFiltro; // Semana US (1 a 53)
+  int _anioFiltro = DateTime.now().year;
   String _cultivoFiltro = 'TODOS'; // 'TODOS', 'POMPÓN', 'CREMÓN', 'MATSUMOTO', 'LIRIOS', 'GIRASOL'
 
   static const List<Map<String, dynamic>> _cultivosConfig = [
@@ -207,6 +208,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (!s.fecha.contains(match1) && !s.fecha.contains(match2)) {
           continue;
         }
+      } else if (_semanaFiltro != null) {
+        final f = CalendarioUtil.parsearFecha(s.fecha);
+        if (f == null || f.year != _anioFiltro || CalendarioUtil.obtenerSemanaUS(f) != _semanaFiltro) {
+          continue;
+        }
       }
 
       counts['TODOS'] = (counts['TODOS'] ?? 0) + 1;
@@ -228,6 +234,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final match1 = "$dStr/$mStr/$yStr";
         final match2 = "$yStr-$mStr-$dStr";
         if (!s.fecha.contains(match1) && !s.fecha.contains(match2)) {
+          return false;
+        }
+      } else if (_semanaFiltro != null) {
+        final f = CalendarioUtil.parsearFecha(s.fecha);
+        if (f == null || f.year != _anioFiltro || CalendarioUtil.obtenerSemanaUS(f) != _semanaFiltro) {
           return false;
         }
       }
@@ -263,7 +274,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Ingresa el PIN de Administrador para gestionar ciclos agronómicos y límites:',
+              'Ingresa el PIN de Administrador para acceder a reportes, exportación PDF y rendimiento del personal:',
               style: TextStyle(fontSize: 14, color: Colors.black87),
             ),
             const SizedBox(height: 12),
@@ -311,7 +322,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (auth == true && mounted) {
       await Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const AdminPanelHubScreen()),
+        MaterialPageRoute(
+          builder: (context) => AdminPanelHubScreen(
+            siembras: _siembras,
+            siembrasFiltradas: _siembrasFiltradas,
+            variedades: _variedades,
+            camas: _camas,
+            operarios: _operarios,
+            cultivoFiltro: _cultivoFiltro,
+            fechaFiltro: _fechaFiltro,
+          ),
+        ),
       );
       _cargarDatos();
     }
@@ -440,28 +461,167 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _seleccionarFechaFiltro() async {
-    final DateTime? seleccionada = await showDatePicker(
+    showModalBottomSheet(
       context: context,
-      initialDate: _fechaFiltro ?? DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2035),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF7CB342),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF263238),
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 14),
+            const Text('Filtrar Siembras por Fecha / Semana', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF33691E))),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const CircleAvatar(backgroundColor: Color(0xFFE8F5E9), child: Icon(Icons.today, color: Color(0xFF558B2F))),
+              title: const Text('Semana Actual (Calendario EE. UU.)', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('Semana ${CalendarioUtil.obtenerSemanaUS(DateTime.now())} (${DateTime.now().year})'),
+              trailing: const Icon(Icons.chevron_right, color: Color(0xFF558B2F)),
+              onTap: () {
+                Navigator.pop(ctx);
+                setState(() {
+                  _semanaFiltro = CalendarioUtil.obtenerSemanaUS(DateTime.now());
+                  _anioFiltro = DateTime.now().year;
+                  _fechaFiltro = null;
+                });
+              },
             ),
-          ),
-          child: child!,
-        );
-      },
+            ListTile(
+              leading: const CircleAvatar(backgroundColor: Color(0xFFE8F5E9), child: Icon(Icons.calendar_month, color: Color(0xFF558B2F))),
+              title: const Text('Seleccionar por Semana (EE. UU.)', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Elegir una semana específica del calendario agronómico'),
+              trailing: const Icon(Icons.chevron_right, color: Color(0xFF558B2F)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _abrirSelectorSemanaFiltro();
+              },
+            ),
+            ListTile(
+              leading: const CircleAvatar(backgroundColor: Color(0xFFE8F5E9), child: Icon(Icons.calendar_today, color: Color(0xFF558B2F))),
+              title: const Text('Seleccionar Día Específico', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Elegir una fecha puntual en el calendario'),
+              trailing: const Icon(Icons.chevron_right, color: Color(0xFF558B2F)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final DateTime? seleccionada = await showDatePicker(
+                  context: context,
+                  initialDate: _fechaFiltro ?? DateTime.now(),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2035),
+                  builder: (context, child) => Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: const ColorScheme.light(primary: Color(0xFF7CB342), onPrimary: Colors.white, onSurface: Color(0xFF263238)),
+                    ),
+                    child: child!,
+                  ),
+                );
+                if (seleccionada != null) {
+                  setState(() {
+                    _fechaFiltro = seleccionada;
+                    _semanaFiltro = null;
+                  });
+                }
+              },
+            ),
+            if (_fechaFiltro != null || _semanaFiltro != null) ...[
+              const Divider(),
+              TextButton.icon(
+                icon: const Icon(Icons.clear, color: Colors.red),
+                label: const Text('Quitar Filtro de Fecha / Semana', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    _fechaFiltro = null;
+                    _semanaFiltro = null;
+                  });
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
     );
+  }
 
-    if (seleccionada != null) {
-      setState(() => _fechaFiltro = seleccionada);
-    }
+  void _abrirSelectorSemanaFiltro() {
+    final semanas = CalendarioUtil.obtenerListaSemanasDelAnio(_anioFiltro);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+        child: Column(
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 12),
+            const Text(
+              'Seleccionar Semana (Calendario EE. UU.)',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF33691E)),
+            ),
+            const Divider(),
+            Expanded(
+              child: ListView.builder(
+                itemCount: semanas.length,
+                itemBuilder: (c, idx) {
+                  final item = semanas[idx];
+                  final semNum = item['semana'] as int;
+                  final now = DateTime.now();
+                  final esActual = (now.year == _anioFiltro && CalendarioUtil.obtenerSemanaUS(now) == semNum);
+                  final isSelected = (_semanaFiltro == semNum);
+
+                  return ListTile(
+                    dense: true,
+                    leading: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: isSelected
+                          ? const Color(0xFF33691E)
+                          : esActual
+                              ? const Color(0xFF7CB342)
+                              : const Color(0xFFF1F8E9),
+                      child: Text(
+                        '$semNum',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: (isSelected || esActual) ? Colors.white : const Color(0xFF33691E),
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      item['etiquetaCompleta'] as String,
+                      style: TextStyle(
+                        fontWeight: (isSelected || esActual) ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected ? const Color(0xFF33691E) : Colors.black87,
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check_circle, color: Color(0xFF33691E), size: 20)
+                        : esActual
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(color: const Color(0xFFDCEDC8), borderRadius: BorderRadius.circular(6)),
+                                child: const Text('ACTUAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF33691E))),
+                              )
+                            : null,
+                    onTap: () {
+                      setState(() {
+                        _semanaFiltro = semNum;
+                        _fechaFiltro = null;
+                      });
+                      Navigator.pop(ctx);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _mostrarMetricasDialog() {
@@ -505,18 +665,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF57F17),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            icon: const Icon(Icons.leaderboard, color: Colors.white, size: 18),
-            label: const Text('Rendimiento Sembradores', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            onPressed: () {
-              Navigator.pop(ctx);
-              _abrirDialogoRendimiento();
-            },
-          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cerrar', style: TextStyle(color: Color(0xFF7CB342), fontWeight: FontWeight.bold)),
@@ -841,9 +989,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _buildStatRow('Cama:', ca.cama),
             _buildStatRow('Cantidad Esquejes (Esq):', '${s.cantidad} unidades'),
             _buildStatRow('Líneas (Line):', s.lineas != null ? '${s.lineas}' : '-'),
-            _buildStatRow('Lote:', (s.lote != null && s.lote!.isNotEmpty) ? s.lote! : (va.codigo.isNotEmpty ? va.codigo : '-')),
-            _buildStatRow('Proveedor (Provee):', (s.proveedor != null && s.proveedor!.isNotEmpty) ? s.proveedor! : '-'),
-            _buildStatRow('Contenedor / Conteo (Cont):', (s.cont != null && s.cont!.isNotEmpty) ? s.cont! : '-'),
+            _buildStatRow('Lote:', (_obtenerCultivoDeSiembra(s) == 'LIRIOS' && s.lote != null && s.lote!.isNotEmpty) ? s.lote! : '-'),
+            _buildStatRow('Proveedor (Provee):', (_obtenerCultivoDeSiembra(s) == 'LIRIOS' && s.proveedor != null && s.proveedor!.isNotEmpty) ? s.proveedor! : '-'),
+            _buildStatRow('Contenedor / Conteo (Cont):', (_obtenerCultivoDeSiembra(s) == 'LIRIOS' && s.cont != null && s.cont!.isNotEmpty) ? s.cont! : '-'),
             () {
               final nomVaUpper = va.nombre.toUpperCase();
               final codVaUpper = va.codigo.toUpperCase();
@@ -946,6 +1094,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               codUpper.startsWith('POM') ||
               codUpper.startsWith('CRM') ||
               codUpper.startsWith('CRE');
+          final bool esLirioReq = _obtenerCultivoDeVariedad(varActual) == 'LIRIOS';
 
           return AlertDialog(
             backgroundColor: Colors.white,
@@ -1046,55 +1195,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: lineasCtrl,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Líneas',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  if (esLirioReq) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: lineasCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Líneas',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: loteCtrl,
-                          decoration: InputDecoration(
-                            labelText: 'Lote',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: loteCtrl,
+                            decoration: InputDecoration(
+                              labelText: 'Lote * (Obligatorio)',
+                              labelStyle: const TextStyle(color: Color(0xFF283593), fontWeight: FontWeight.bold),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: proveedorCtrl,
-                          decoration: InputDecoration(
-                            labelText: 'Proveedor',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: proveedorCtrl,
+                            decoration: InputDecoration(
+                              labelText: 'Proveedor * (Obligatorio)',
+                              labelStyle: const TextStyle(color: Color(0xFF283593), fontWeight: FontWeight.bold),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: contCtrl,
-                          decoration: InputDecoration(
-                            labelText: 'Contenedor/Conteo',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: contCtrl,
+                            decoration: InputDecoration(
+                              labelText: 'Contenedor * (Obligatorio)',
+                              labelStyle: const TextStyle(color: Color(0xFF283593), fontWeight: FontWeight.bold),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
                           ),
                         ),
+                      ],
+                    ),
+                  ] else ...[
+                    TextField(
+                      controller: lineasCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Líneas',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
 
                   TextField(
@@ -1189,15 +1351,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return;
                   }
 
+                  // Validación 4: Trazabilidad obligatoria para Lirios
+                  if (esLirioReq) {
+                    if (loteCtrl.text.trim().isEmpty ||
+                        proveedorCtrl.text.trim().isEmpty ||
+                        contCtrl.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          backgroundColor: Colors.red,
+                          content: Text('❌ Para Lirios, Lote, Contenedor y Proveedor son estrictamente OBLIGATORIOS.'),
+                          duration: Duration(seconds: 4),
+                        ),
+                      );
+                      return;
+                    }
+                  }
+
                   final nuevaSiembra = s.copyWith(
                     fecha: fNuevaStr,
                     cantidad: cant,
                     variedadId: selVariedadId,
                     operarioId: selOperarioId,
                     lineas: int.tryParse(lineasCtrl.text.trim()),
-                    lote: loteCtrl.text.trim().isNotEmpty ? loteCtrl.text.trim() : null,
-                    proveedor: proveedorCtrl.text.trim().isNotEmpty ? proveedorCtrl.text.trim() : null,
-                    cont: contCtrl.text.trim().isNotEmpty ? contCtrl.text.trim() : null,
+                    lote: esLirioReq && loteCtrl.text.trim().isNotEmpty ? loteCtrl.text.trim() : null,
+                    proveedor: esLirioReq && proveedorCtrl.text.trim().isNotEmpty ? proveedorCtrl.text.trim() : null,
+                    cont: esLirioReq && contCtrl.text.trim().isNotEmpty ? contCtrl.text.trim() : null,
                     observaciones: obsCtrl.text.trim().isNotEmpty ? obsCtrl.text.trim().toUpperCase() : null,
                     sincronizado: 0,
                   );
@@ -1355,33 +1533,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _abrirDialogoReportes() {
-    showDialog(
-      context: context,
-      builder: (context) => ReporteDialog(
-        siembras: _siembras,
-        variedades: _variedades,
-        camas: _camas,
-        operarios: _operarios,
-      ),
-    );
-  }
 
-  void _abrirDialogoRendimiento() {
-    showDialog(
-      context: context,
-      builder: (context) => RendimientoDialog(
-        siembras: _siembrasFiltradas,
-        operarios: _operarios,
-        variedades: _variedades,
-        camas: _camas,
-        cultivo: _cultivoFiltro != 'TODOS' ? _cultivoFiltro : 'TODOS',
-        rangoFechas: _fechaFiltro != null
-            ? '${_fechaFiltro!.day.toString().padLeft(2, '0')}/${_fechaFiltro!.month.toString().padLeft(2, '0')}/${_fechaFiltro!.year}'
-            : null,
-      ),
-    );
-  }
 
   Widget _buildStatRow(String label, String value, {Color? color}) {
     return Padding(
@@ -1446,7 +1598,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.shield, color: Colors.white, size: 26),
-            tooltip: 'Administración de Parámetros',
+            tooltip: 'Panel de Administrador',
             onPressed: _abrirAdminVariedades,
           ),
           IconButton(
@@ -1478,48 +1630,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const Icon(Icons.filter_alt, color: Color(0xFF558B2F), size: 24),
                 const SizedBox(width: 8),
 
-                // Filtro 1: [ Fecha  v ]
-                SizedBox(
-                  width: 135,
-                  child: InkWell(
-                    onTap: _seleccionarFechaFiltro,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _fechaFiltro != null ? const Color(0xFFE8F5E9) : Colors.white,
+                // Filtro 1: [ Fecha / Sem. v ]
+                Builder(
+                  builder: (context) {
+                    final bool tieneFiltro = _fechaFiltro != null || _semanaFiltro != null;
+                    String labelFiltro = "Fecha / Sem.";
+                    if (_semanaFiltro != null) {
+                      labelFiltro = "Semana #$_semanaFiltro";
+                    } else if (_fechaFiltro != null) {
+                      final sem = CalendarioUtil.obtenerSemanaUS(_fechaFiltro!);
+                      labelFiltro = "${_fechaFiltro!.day.toString().padLeft(2, '0')}/${_fechaFiltro!.month.toString().padLeft(2, '0')} (S$sem)";
+                    }
+
+                    return SizedBox(
+                      width: 145,
+                      child: InkWell(
+                        onTap: _seleccionarFechaFiltro,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: _fechaFiltro != null ? const Color(0xFF558B2F) : Colors.grey.shade400,
-                          width: _fechaFiltro != null ? 2 : 1.2,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _fechaFiltro != null
-                                  ? "${_fechaFiltro!.day.toString().padLeft(2, '0')}/${_fechaFiltro!.month.toString().padLeft(2, '0')}/${_fechaFiltro!.year}"
-                                  : "Fecha",
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: _fechaFiltro != null ? FontWeight.bold : FontWeight.w500,
-                                color: _fechaFiltro != null ? const Color(0xFF33691E) : Colors.grey.shade700,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: tieneFiltro ? const Color(0xFFE8F5E9) : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: tieneFiltro ? const Color(0xFF558B2F) : Colors.grey.shade400,
+                              width: tieneFiltro ? 2 : 1.2,
                             ),
                           ),
-                          if (_fechaFiltro != null)
-                            GestureDetector(
-                              onTap: () => setState(() => _fechaFiltro = null),
-                              child: const Icon(Icons.close, size: 16, color: Colors.grey),
-                            )
-                          else
-                            const Icon(Icons.arrow_drop_down, color: Color(0xFF558B2F), size: 18),
-                        ],
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  labelFiltro,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: tieneFiltro ? FontWeight.bold : FontWeight.w500,
+                                    color: tieneFiltro ? const Color(0xFF33691E) : Colors.grey.shade700,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (tieneFiltro)
+                                GestureDetector(
+                                  onTap: () => setState(() {
+                                    _fechaFiltro = null;
+                                    _semanaFiltro = null;
+                                  }),
+                                  child: const Icon(Icons.close, size: 16, color: Colors.grey),
+                                )
+                              else
+                                const Icon(Icons.arrow_drop_down, color: Color(0xFF558B2F), size: 18),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
                 const SizedBox(width: 8),
 
@@ -1669,48 +1835,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onPressed: _abrirModalEditarRegistro,
                   ),
                 ),
-                const SizedBox(width: 6),
-
-                // Botón redondo 4: Imprimir Reportes de Siembra (PDF)
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF7CB342), width: 1.8),
-                    color: Colors.white,
-                  ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.print, color: Color(0xFF558B2F), size: 20),
-                    tooltip: 'Imprimir Reportes de Siembra (PDF)',
-                    onPressed: _abrirDialogoReportes,
-                  ),
-                ),
-                const SizedBox(width: 6),
-
-                // Botón redondo 5: Rendimiento de Sembradores (Podio / Productividad)
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFFB300), width: 1.8),
-                    color: const Color(0xFFFFFDE7),
-                  ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.leaderboard, color: Color(0xFFF57F17), size: 20),
-                    tooltip: 'Rendimiento de Sembradores (Productividad)',
-                    onPressed: _abrirDialogoRendimiento,
-                  ),
-                ),
               ],
             ),
           ),
 
           // Indicador de filtro activo
-          if (_cultivoFiltro != 'TODOS' || _fechaFiltro != null)
+          if (_cultivoFiltro != 'TODOS' || _fechaFiltro != null || _semanaFiltro != null)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -1723,7 +1853,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Text(
                       '${[
                         if (_cultivoFiltro != 'TODOS') 'Variedad Madre: $_cultivoFiltro',
-                        if (_fechaFiltro != null) 'Fecha: ${_fechaFiltro!.day.toString().padLeft(2, "0")}/${_fechaFiltro!.month.toString().padLeft(2, "0")}/${_fechaFiltro!.year}',
+                        if (_semanaFiltro != null) 'Semana EE. UU.: #$_semanaFiltro ($_anioFiltro)',
+                        if (_fechaFiltro != null) 'Fecha: ${_fechaFiltro!.day.toString().padLeft(2, "0")}/${_fechaFiltro!.month.toString().padLeft(2, "0")}/${_fechaFiltro!.year} (Sem. ${CalendarioUtil.obtenerSemanaUS(_fechaFiltro!)})',
                       ].join('  •  ')} (${listaMostrar.length} ${listaMostrar.length == 1 ? "cama" : "camas"})',
                       style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
                     ),
@@ -1733,6 +1864,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       setState(() {
                         _cultivoFiltro = 'TODOS';
                         _fechaFiltro = null;
+                        _semanaFiltro = null;
                       });
                     },
                     child: const Text(
@@ -1868,14 +2000,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         final esActiva = s.estado == 'ACTIVA';
 
                                         // Campos detallados solicitados en el boceto
+                                        final bool esLirioItem = _obtenerCultivoDeSiembra(s) == 'LIRIOS';
                                         final lineasStr = s.lineas != null ? s.lineas.toString() : '-';
-                                        final loteStr = (s.lote != null && s.lote!.isNotEmpty)
+                                        final loteStr = (esLirioItem && s.lote != null && s.lote!.isNotEmpty)
                                             ? s.lote!
-                                            : (va.codigo.isNotEmpty ? va.codigo : '-');
-                                        final proveeStr = (s.proveedor != null && s.proveedor!.isNotEmpty)
+                                            : '-';
+                                        final proveeStr = (esLirioItem && s.proveedor != null && s.proveedor!.isNotEmpty)
                                             ? s.proveedor!
                                             : '-';
-                                        final contStr = (s.cont != null && s.cont!.isNotEmpty)
+                                        final contStr = (esLirioItem && s.cont != null && s.cont!.isNotEmpty)
                                             ? s.cont!
                                             : '-';
                                         final obsesStr = (s.observaciones != null && s.observaciones!.isNotEmpty)
@@ -1889,8 +2022,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                             child: Row(
                                               children: [
-                                                // 1. FECHA
-                                                _DataCol(s.fecha, width: 105, isBold: true),
+                                                // 1. FECHA CON SEMANA US
+                                                () {
+                                                  final fSiembra = CalendarioUtil.parsearFecha(s.fecha);
+                                                  final semStr = fSiembra != null ? 'Sem. ${CalendarioUtil.obtenerSemanaUS(fSiembra)}' : '';
+                                                  return SizedBox(
+                                                    width: 105,
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Text(s.fecha, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                                        if (semStr.isNotEmpty)
+                                                          Text(semStr, style: const TextStyle(fontSize: 10.5, color: Color(0xFF558B2F), fontWeight: FontWeight.bold)),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }(),
                                                 // 2. EMPLEADO
                                                 Expanded(flex: 3, child: _DataCol(op.nombreCompleto, width: 0)),
                                                 // 3. VARIEDAD

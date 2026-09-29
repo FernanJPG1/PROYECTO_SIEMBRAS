@@ -146,6 +146,16 @@ class SyncService {
         await dbRepo.reemplazarLirios187(lirios187);
       }
 
+      // Configuraciones Agronómicas oficiales de la base de datos empresarial
+      if (data['configuraciones_agronomicas'] != null) {
+        final List<ConfigAgronomica> configs = (data['configuraciones_agronomicas'] as List)
+            .map((c) => ConfigAgronomica.fromMap(c))
+            .toList();
+        for (var c in configs) {
+          await dbRepo.guardarConfigAgronomica(c);
+        }
+      }
+
       return true;
     } else {
       print('Error descargando catálogos: ${response.statusCode} - ${response.body}');

@@ -1,14 +1,112 @@
 import 'package:flutter/material.dart';
-import 'package:app_movil/screens/admin_variedades_screen.dart';
-import 'package:app_movil/screens/admin_densidad_plantas_screen.dart';
-import 'package:app_movil/screens/admin_ciclo_variedad_screen.dart';
-import 'package:app_movil/services/sync_service.dart' as app_sync;
+import 'package:app_movil/models/entidades.dart';
+import 'package:app_movil/repositories/db_repository.dart';
+import 'package:app_movil/screens/reporte_dialog.dart';
+import 'package:app_movil/screens/rendimiento_dialog.dart';
+import 'package:app_movil/utils/calendario_util.dart';
 
-class AdminPanelHubScreen extends StatelessWidget {
-  const AdminPanelHubScreen({super.key});
+class AdminPanelHubScreen extends StatefulWidget {
+  final List<Siembra> siembras;
+  final List<Siembra>? siembrasFiltradas;
+  final List<Variedad> variedades;
+  final List<Cama> camas;
+  final List<Operario> operarios;
+  final String cultivoFiltro;
+  final DateTime? fechaFiltro;
+
+  const AdminPanelHubScreen({
+    super.key,
+    this.siembras = const [],
+    this.siembrasFiltradas,
+    this.variedades = const [],
+    this.camas = const [],
+    this.operarios = const [],
+    this.cultivoFiltro = 'TODOS',
+    this.fechaFiltro,
+  });
+
+  @override
+  State<AdminPanelHubScreen> createState() => _AdminPanelHubScreenState();
+}
+
+class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
+  late List<Siembra> _siembras;
+  late List<Siembra> _siembrasFiltradas;
+  late List<Variedad> _variedades;
+  late List<Cama> _camas;
+  late List<Operario> _operarios;
+  bool _cargando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _siembras = List.from(widget.siembras);
+    _siembrasFiltradas = widget.siembrasFiltradas != null
+        ? List.from(widget.siembrasFiltradas!)
+        : List.from(widget.siembras);
+    _variedades = List.from(widget.variedades);
+    _camas = List.from(widget.camas);
+    _operarios = List.from(widget.operarios);
+
+    if (_siembras.isEmpty || _variedades.isEmpty || _operarios.isEmpty) {
+      _recargarDatos();
+    }
+  }
+
+  Future<void> _recargarDatos() async {
+    setState(() => _cargando = true);
+    final db = DbRepository();
+    final siembrasDb = await db.obtenerHistorialSiembras();
+    final variedadesDb = await db.obtenerVariedades();
+    final camasDb = await db.obtenerCamas();
+    final operariosDb = await db.obtenerOperarios();
+
+    if (mounted) {
+      setState(() {
+        _siembras = siembrasDb;
+        _siembrasFiltradas = siembrasDb;
+        _variedades = variedadesDb;
+        _camas = camasDb;
+        _operarios = operariosDb;
+        _cargando = false;
+      });
+    }
+  }
+
+  void _abrirRendimiento() {
+    final sem = CalendarioUtil.obtenerEtiquetaSemana(widget.fechaFiltro ?? DateTime.now(), incluirAnio: true);
+    showDialog(
+      context: context,
+      builder: (context) => RendimientoDialog(
+        siembras: _siembrasFiltradas.isNotEmpty ? _siembrasFiltradas : _siembras,
+        operarios: _operarios,
+        variedades: _variedades,
+        camas: _camas,
+        cultivo: widget.cultivoFiltro != 'TODOS' ? widget.cultivoFiltro : 'TODOS',
+        semana: sem,
+        rangoFechas: widget.fechaFiltro != null
+            ? '${widget.fechaFiltro!.day.toString().padLeft(2, '0')}/${widget.fechaFiltro!.month.toString().padLeft(2, '0')}/${widget.fechaFiltro!.year}'
+            : null,
+      ),
+    );
+  }
+
+  void _abrirReportes() {
+    showDialog(
+      context: context,
+      builder: (context) => ReporteDialog(
+        siembras: _siembras,
+        variedades: _variedades,
+        camas: _camas,
+        operarios: _operarios,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final totalTallos = _siembras.fold<int>(0, (sum, s) => sum + s.cantidad);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF1F8E9),
       appBar: AppBar(
@@ -18,283 +116,203 @@ class AdminPanelHubScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'PANEL DE ADMINISTRACIÓN',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.admin_panel_settings, color: Colors.white, size: 24),
+            SizedBox(width: 8),
+            Text(
+              'PANEL DE ADMINISTRACIÓN',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Row(
+      body: _cargando
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF7CB342)),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.shield, color: Color(0xFF7CB342), size: 36),
-                  SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Gestión Agronómica y Parámetros',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF33691E)),
+                  // Banner Encabezado
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Selecciona el módulo administrativo que deseas configurar. Cada opción administra sus reglas de forma independiente.',
-                          style: TextStyle(fontSize: 13, color: Colors.black87),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5E9),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFC5E1A5)),
+                          ),
+                          child: const Icon(Icons.shield, color: Color(0xFF33691E), size: 34),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Módulo de Supervisión y Control',
+                                style: TextStyle(
+                                  fontSize: 16.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2E7D32),
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Acceso administrativo reservado. Desde este panel se supervisa el rendimiento operativo y se emiten los reportes oficiales.',
+                                style: TextStyle(fontSize: 12.5, color: Colors.black87),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 14),
+
+                  // Resumen rápido de datos en el sistema
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.green.shade100),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildKpiItem('Siembras', '${_siembras.length}', Icons.grass, const Color(0xFF558B2F)),
+                        _buildDivider(),
+                        _buildKpiItem('Tallos / Esquejes', '$totalTallos', Icons.eco, const Color(0xFF2E7D32)),
+                        _buildDivider(),
+                        _buildKpiItem('Operarios', '${_operarios.length}', Icons.people, const Color(0xFFF57F17)),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // OPCIÓN 1: RENDIMIENTO DEL CORTADOR Y SEMBRADOR
+                  _buildAdminCard(
+                    icon: Icons.leaderboard,
+                    iconBgColor: const Color(0xFFFFF3E0),
+                    iconColor: const Color(0xFFE65100),
+                    badgeText: 'PRODUCTIVIDAD Y CONTROL',
+                    badgeColor: const Color(0xFFE65100),
+                    title: 'Rendimiento del Cortador y Sembrador',
+                    subtitle:
+                        'Métricas detalladas de productividad individual, recuento de tallos y esquejes procesados, velocidad por cama y ranking de desempeño del personal.',
+                    actionLabel: 'Ver Rendimiento y Productividad',
+                    onTap: _abrirRendimiento,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // OPCIÓN 2: EXPORTAR PDF E IMPRIMIR
+                  _buildAdminCard(
+                    icon: Icons.print,
+                    iconBgColor: const Color(0xFFE8F5E9),
+                    iconColor: const Color(0xFF2E7D32),
+                    badgeText: 'INFORMES Y DOCUMENTACIÓN OFICIAL',
+                    badgeColor: const Color(0xFF2E7D32),
+                    title: 'Exportar PDF e Imprimir Reportes',
+                    subtitle:
+                        'Generación de documentos consolidados de siembra, filtrado por fechas o variedades, exportación en formato PDF de alta calidad y envío a impresión física.',
+                    actionLabel: 'Generar Reporte / Imprimir',
+                    onTap: _abrirReportes,
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-
-            // --- VISTA 1: REGISTRAR NUEVA VARIEDAD ---
-            _buildAdminOptionCard(
-              context: context,
-              icon: Icons.grass,
-              color: const Color(0xFF558B2F),
-              title: '1. Registrar / Gestionar Variedades',
-              subtitle: 'Crear nuevas variedades, códigos, familias y colores. Activar o desactivar variedades para siembra.',
-              badgeText: 'Catálogo de Variedades',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AdminVariedadesScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 14),
-
-            // --- VISTA 2: DENSIDAD DE PLANTAS X CAMA ---
-            _buildAdminOptionCard(
-              context: context,
-              icon: Icons.numbers,
-              color: const Color(0xFF689F38),
-              title: '2. Densidad de Plantas por Cama',
-              subtitle: 'Definir el número máximo de esquejes/plantas permitidos por cama según la variedad o grupo de cultivo.',
-              badgeText: 'Límites y Reglas de Densidad',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AdminDensidadPlantasScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 14),
-
-            // --- VISTA 3: DÍAS DE CICLO POR VARIEDAD ---
-            _buildAdminOptionCard(
-              context: context,
-              icon: Icons.timelapse,
-              color: const Color(0xFF33691E),
-              title: '3. Días de Ciclo por Variedad',
-              subtitle: 'Configurar el tiempo mínimo de desarrollo agronómico en días requeridos antes de permitir una resiembra.',
-              badgeText: 'Duración del Ciclo Agronómico',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AdminCicloVariedadScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 14),
-
-            // --- VISTA 4: CONFIGURACIÓN DE SERVIDOR LOCAL / RED ---
-            _buildAdminOptionCard(
-              context: context,
-              icon: Icons.dns,
-              color: const Color(0xFF00796B),
-              title: '4. Conexión y Servidor Local / Red',
-              subtitle: 'Configurar IP o URL del servidor backend para sincronizar por Wi-Fi o red local sin cables.',
-              badgeText: 'Servidor y Red',
-              onTap: () {
-                _mostrarConfiguracionServidor(context);
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 
-  void _mostrarConfiguracionServidor(BuildContext context) async {
-    final syncSvc = app_sync.SyncService();
-    final currentUrl = await syncSvc.getBaseUrl();
-    final urlController = TextEditingController(text: currentUrl);
-    String estadoConexion = '';
-    bool probando = false;
-
-    if (!context.mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.dns, color: Color(0xFF00796B), size: 28),
-              SizedBox(width: 8),
-              Text('Servidor y Conexión de Red', style: TextStyle(color: Color(0xFF004D40), fontWeight: FontWeight.bold, fontSize: 18)),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Configura la dirección del backend para que la tablet se sincronice a través de la red local o Wi-Fi:',
-                  style: TextStyle(fontSize: 13, color: Colors.black87),
-                ),
-                const SizedBox(height: 14),
-                const Text('URL del Servidor Backend:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF004D40))),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: urlController,
-                  decoration: InputDecoration(
-                    hintText: 'http://192.168.1.X:8000/api',
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.network_check, color: Color(0xFF00796B)),
-                      tooltip: 'Probar Conexión',
-                      onPressed: probando ? null : () async {
-                        setDialogState(() {
-                          probando = true;
-                          estadoConexion = 'Probando conexión...';
-                        });
-                        final res = await syncSvc.probarConexion(urlController.text.trim());
-                        setDialogState(() {
-                          probando = false;
-                          if (res['exito'] == true) {
-                            estadoConexion = '✓ ${res['mensaje']}';
-                          } else {
-                            estadoConexion = '✗ ${res['mensaje']}';
-                          }
-                        });
-                      },
-                    ),
-                  ),
-                ),
-                if (estadoConexion.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    estadoConexion,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: estadoConexion.startsWith('✓') ? Colors.green.shade700 : Colors.red.shade700,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.blueGrey.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blueGrey.shade200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Valores comunes recomendados:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-                      const SizedBox(height: 4),
-                      InkWell(
-                        onTap: () => urlController.text = 'http://10.0.2.2:8000/api',
-                        child: const Text('• Emulador Android: http://10.0.2.2:8000/api', style: TextStyle(fontSize: 11, color: Colors.blue)),
-                      ),
-                      const SizedBox(height: 2),
-                      InkWell(
-                        onTap: () => urlController.text = 'http://192.168.1.39:8000/api',
-                        child: const Text('• Tablet por Wi-Fi: http://192.168.1.39:8000/api', style: TextStyle(fontSize: 11, color: Colors.blue)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00796B)),
-              onPressed: () async {
-                await syncSvc.setBaseUrl(urlController.text.trim());
-                if (ctx.mounted) Navigator.pop(ctx);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('✓ Dirección del servidor guardada correctamente.'),
-                      backgroundColor: Color(0xFF00796B),
-                    ),
-                  );
-                }
-              },
-              child: const Text('Guardar Configuración', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+  Widget _buildKpiItem(String label, String value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 4),
+            Text(
+              value,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
+        ),
+      ],
     );
   }
 
-  Widget _buildAdminOptionCard({
-    required BuildContext context,
+  Widget _buildDivider() {
+    return Container(
+      width: 1,
+      height: 28,
+      color: Colors.grey.shade300,
+    );
+  }
+
+  Widget _buildAdminCard({
     required IconData icon,
-    required Color color,
+    required Color iconBgColor,
+    required Color iconColor,
+    required String badgeText,
+    required Color badgeColor,
     required String title,
     required String subtitle,
-    required String badgeText,
+    required String actionLabel,
     required VoidCallback onTap,
   }) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: 2.5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(18.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
+                      color: iconBgColor,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: iconColor.withValues(alpha: 0.3)),
                     ),
-                    child: Icon(icon, color: color, size: 28),
+                    child: Icon(icon, color: iconColor, size: 32),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,18 +320,27 @@ class AdminPanelHubScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.15),
+                            color: badgeColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             badgeText,
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: badgeColor,
+                              letterSpacing: 0.3,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Text(
                           title,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
                       ],
                     ),
@@ -321,10 +348,33 @@ class AdminPanelHubScreen extends StatelessWidget {
                   Icon(Icons.arrow_forward_ios, color: Colors.grey.shade400, size: 18),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 13, color: Colors.black54),
+                style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.35),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: iconColor,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      elevation: 0,
+                    ),
+                    icon: Icon(icon, size: 18, color: Colors.white),
+                    label: Text(
+                      actionLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                    onPressed: onTap,
+                  ),
+                ],
               ),
             ],
           ),

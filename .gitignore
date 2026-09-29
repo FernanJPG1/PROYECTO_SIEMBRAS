@@ -5,6 +5,7 @@
 *.sqlite
 *.sqlite3
 *.bak
+backups_seguridad/
 
 # Environment variables & secrets
 *.env

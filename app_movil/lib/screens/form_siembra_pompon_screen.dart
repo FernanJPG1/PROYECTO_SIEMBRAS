@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
+import 'package:app_movil/utils/calendario_util.dart';
 
 class FormSiembraPomponScreen extends StatefulWidget {
   final String cultivo;
@@ -431,7 +432,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
     }
 
     // Validación 2: Verificar límite agronómico estricto fijado por el Administrador
-    final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 2600;
+    final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 4050;
     if (tallos > limitePermitido) {
       showDialog(
         context: context,
@@ -534,6 +535,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
         cantidad: tallos,
         estado: 'ACTIVA',
         lineas: lineas,
+        corte: CalendarioUtil.obtenerEtiquetaCorta(CalendarioUtil.parsearFecha(_fechaSeleccionada) ?? DateTime.now()),
         lote: _loteController.text.trim().isNotEmpty ? _loteController.text.trim() : null,
         proveedor: _proveedorController.text.trim().isNotEmpty ? _proveedorController.text.trim() : null,
         cont: _contController.text.trim().isNotEmpty ? _contController.text.trim() : null,
@@ -658,10 +660,12 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                 Builder(
                   builder: (context) {
                     final cfg = _configAgronomica;
-                    final int limite = _variedadSeleccionada?.limiteEsquejes ?? cfg?.limiteEsquejes ?? 2600;
-                    final int dias = _variedadSeleccionada?.diasCiclo ?? cfg?.diasCiclo ?? 75;
+                    final int limite = _variedadSeleccionada?.limiteEsquejes ?? cfg?.limiteEsquejes ?? 4050;
+                    final int dias = _variedadSeleccionada?.diasCiclo ?? cfg?.diasCiclo ?? 98;
                     final fInicio = parsearFechaSiembra(_fechaSeleccionada) ?? DateTime.now();
+                    final semSiembra = CalendarioUtil.obtenerSemanaUS(fInicio);
                     final fEst = fInicio.add(Duration(days: dias));
+                    final semCosecha = CalendarioUtil.obtenerSemanaUS(fEst);
                     final fEstStr = "${fEst.day.toString().padLeft(2, '0')}/${fEst.month.toString().padLeft(2, '0')}/${fEst.year}";
 
                     return Container(
@@ -678,7 +682,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Parámetros Agronómicos (${_variedadSeleccionada?.nombre ?? widget.cultivo}): Máx: $limite plant/cama | Ciclo: $dias d | Cosecha Est.: $fEstStr',
+                              'Parámetros Agronómicos (${_variedadSeleccionada?.nombre ?? widget.cultivo}): Máx: $limite plant/cama | Ciclo: $dias d | Sem. Siembra: Sem $semSiembra | Cosecha Est.: $fEstStr (Sem. $semCosecha)',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF2E7D32),
@@ -714,9 +718,15 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    _fechaSeleccionada ?? 'dd/mm/aaaa',
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                                  Builder(
+                                    builder: (context) {
+                                      final fActual = CalendarioUtil.parsearFecha(_fechaSeleccionada) ?? DateTime.now();
+                                      final semTxt = CalendarioUtil.obtenerEtiquetaCorta(fActual);
+                                      return Text(
+                                        '${_fechaSeleccionada ?? 'dd/mm/aaaa'} ($semTxt)',
+                                        style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
+                                      );
+                                    },
                                   ),
                                   const Icon(Icons.calendar_today, color: Color(0xFF7CB342), size: 20),
                                 ],
@@ -1070,7 +1080,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                           _buildLabel('Tallos x sembrar'),
                           Builder(
                             builder: (context) {
-                              final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 2600;
+                              final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 4050;
                               final int tallosActuales = int.tryParse(_tallosController.text.trim()) ?? 0;
                               final bool excede = tallosActuales > limitePermitido;
 
@@ -1186,7 +1196,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                     final int factor = _variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 20;
                     final int total = (l ?? 0) * factor;
                     final String varNombre = _variedadSeleccionada?.nombre ?? widget.cultivo;
-                    final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 2600;
+                    final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 4050;
                     final bool excede = total > limitePermitido;
 
                     return Container(
