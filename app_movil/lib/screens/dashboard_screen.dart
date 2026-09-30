@@ -1787,6 +1787,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final listaMostrar = _siembrasFiltradas;
     final conteoCultivos = _calcularConteoCultivos();
+    final pendientesSync = _siembras.where((s) => s.sincronizado == 0).length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F8E9),
@@ -1817,16 +1818,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
+          // === BOTÓN DE SINCRONIZACIÓN GRANDE, LLAMATIVO Y DISTINGUIBLE ===
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(24),
+                onTap: _sincronizando ? null : _autoSincronizar,
+                onLongPress: _mostrarSincronizacionDialog,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: _sincronizando
+                          ? [const Color(0xFF1976D2), const Color(0xFF0D47A1)]
+                          : (pendientesSync > 0
+                              ? [const Color(0xFFFF9100), const Color(0xFFE65100)]
+                              : [const Color(0xFF2E7D32), const Color(0xFF1B5E20)]),
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white, width: 2.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (_sincronizando
+                                ? Colors.blue.shade900
+                                : (pendientesSync > 0 ? Colors.orange.shade900 : Colors.green.shade900))
+                            .withValues(alpha: 0.5),
+                        blurRadius: 7,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_sincronizando)
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.4),
+                        )
+                      else
+                        const Icon(Icons.sync, color: Colors.white, size: 24),
+                      const SizedBox(width: 8),
+                      Text(
+                        _sincronizando
+                            ? 'SINCRONIZANDO...'
+                            : (pendientesSync > 0 ? 'SINCRONIZAR ($pendientesSync)' : 'SINCRONIZAR'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
           IconButton(
-            icon: _sincronizando
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                  )
-                : const Icon(Icons.sync, color: Colors.white, size: 26),
-            tooltip: 'Sincronizar con Access',
-            onPressed: _autoSincronizar,
+            icon: const Icon(Icons.tune, color: Colors.white, size: 22),
+            tooltip: 'Configurar IP y Servidor Backend',
+            onPressed: _mostrarSincronizacionDialog,
           ),
           IconButton(
             icon: const Icon(Icons.security, color: Colors.white, size: 26),
@@ -2038,20 +2098,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(width: 6),
 
-                // Botón redondo 2: Torta / Sincronización
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF7CB342), width: 1.8),
-                    color: Colors.white,
-                  ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.pie_chart, color: Color(0xFF558B2F), size: 19),
-                    tooltip: 'Estado de Sincronización',
-                    onPressed: _mostrarSincronizacionDialog,
+                // Botón Sincronización y Estado en la barra de herramientas
+                InkWell(
+                  onTap: _mostrarSincronizacionDialog,
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: pendientesSync > 0 ? Colors.orange.shade50 : const Color(0xFFF1F8E9),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: pendientesSync > 0 ? Colors.orange.shade800 : const Color(0xFF7CB342),
+                        width: 1.8,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          pendientesSync > 0 ? Icons.sync_problem : Icons.sync,
+                          color: pendientesSync > 0 ? Colors.orange.shade800 : const Color(0xFF33691E),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          pendientesSync > 0 ? '$pendientesSync pend.' : 'Sync OK',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: pendientesSync > 0 ? Colors.orange.shade900 : const Color(0xFF33691E),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(width: 6),
