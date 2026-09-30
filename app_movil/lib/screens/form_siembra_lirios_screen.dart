@@ -657,14 +657,31 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
       return;
     }
 
-    // Validación 1: Verificar restricciones de ciclo agronómico y disponibilidad de cama
+    final int? tallos = int.tryParse(_tallosController.text.trim());
+    if (tallos == null || tallos <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingrese una cantidad válida de tallos')),
+      );
+      return;
+    }
+
+    // Validación 1: Verificar restricciones de capacidad de cama y ciclo (soporta multisembrador y multi-variedad)
     final validacionCiclo = await _db.validarCicloYCamaParaSiembra(
       _camaSeleccionada!.id,
       _fechaSeleccionada ?? '',
+      nuevaCantidad: tallos,
+      nuevaVariedadId: _variedadSeleccionada!.id,
+      nuevoOperarioId: _operarioSeleccionado!.id,
     );
 
     if (!validacionCiclo.esValido) {
       if (!mounted) return;
+      final bool esLlena = validacionCiclo.esCamaLlena;
+      final bool esExcesoCupo = validacionCiclo.esCamaCompartida;
+      final String tituloDialog = esLlena
+          ? 'Cama con Capacidad Completa'
+          : (esExcesoCupo ? 'Cupo de Cama Excedido' : 'Restricción de Ciclo Agronómico');
+
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -674,15 +691,19 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
           title: Row(
             children: [
               Icon(
-                validacionCiclo.esCicloActivo ? Icons.block : Icons.timelapse,
-                color: Colors.red,
+                esExcesoCupo ? Icons.warning_amber_rounded : Icons.block,
+                color: esExcesoCupo ? Colors.orange.shade800 : Colors.red,
                 size: 28,
               ),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Restricción de Ciclo Agronómico',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16),
+                  tituloDialog,
+                  style: TextStyle(
+                    color: esExcesoCupo ? Colors.orange.shade900 : Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ],
@@ -699,18 +720,20 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: esExcesoCupo ? Colors.orange.shade50 : Colors.red.shade50,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade300),
+                  border: Border.all(color: esExcesoCupo ? Colors.orange.shade300 : Colors.red.shade300),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('• Cama: ${_camaSeleccionada!.cama} (Bloque ${_bloqueSeleccionado!.codigo})', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    if (validacionCiclo.variedadPreviaNombre != null)
-                      Text('• Variedad previa: ${validacionCiclo.variedadPreviaNombre}'),
-                    Text('• Días transcurridos: ${validacionCiclo.diasTranscurridos} días'),
-                    Text('• Ciclo agronómico requerido: ${validacionCiclo.diasRequeridos} días'),
+                    if (validacionCiclo.variedadesPresentes.isNotEmpty)
+                      Text('• Variedades en cama: ${validacionCiclo.variedadesPresentes.join(", ")}'),
+                    if (validacionCiclo.operariosPresentes.isNotEmpty)
+                      Text('• Sembradores: ${validacionCiclo.operariosPresentes.join(", ")}'),
+                    Text('• Ocupación actual: ${validacionCiclo.cantidadOcupada} de ${validacionCiclo.limiteMaximo} plantas'),
+                    Text('• Cupo disponible restante: ${validacionCiclo.cupoDisponible} plantas', style: TextStyle(color: esExcesoCupo ? Colors.orange.shade900 : Colors.red, fontWeight: FontWeight.bold)),
                     if (validacionCiclo.diasFaltantes > 0)
                       Text('• Días faltantes para liberar la cama: ${validacionCiclo.diasFaltantes} días', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                   ],
@@ -720,27 +743,20 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
           ),
           actions: [
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(backgroundColor: esExcesoCupo ? Colors.orange.shade800 : Colors.red),
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Entendido (Corregir Cama)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: Text(esExcesoCupo ? 'Corregir Cantidad' : 'Entendido (Corregir Cama)', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
       );
-      return; // ESTRICTAMENTE BLOQUEADO POR CICLO
-    }
-
-    final int? tallos = int.tryParse(_tallosController.text.trim());
-    if (tallos == null || tallos <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingrese una cantidad válida de tallos')),
-      );
-      return;
+      return; // ESTRICTAMENTE BLOQUEADO POR CICLO O CUPO
     }
 
     // Validación 2: Verificar límite agronómico estricto fijado por el Administrador
     final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 2916;
     if (tallos > limitePermitido) {
+      if (!mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -825,19 +841,57 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
 
       await _db.registrarSiembraOffline(nuevaSiembra);
 
+      // Recargar estados de las camas del bloque para reflejar de inmediato la nueva ocupación y cupo
+      await _recargarCiclosCamas();
+
       if (!mounted) return;
+
+      final String nombreVariedad = _variedadSeleccionada?.nombre ?? 'Variedad';
+      final String nombreCama = _camaSeleccionada?.cama ?? '';
+      final infoCama = _camaSeleccionada != null ? _estadoCicloCamas[_camaSeleccionada!.id] : null;
+
+      // Limpiar campos específicos de la variedad para el siguiente registro
+      setState(() {
+        _variedadSeleccionada = null;
+        _tallosController.clear();
+        _conteoController.clear();
+        _observacionesController.clear();
+        _loteController.clear();
+        _proveedorController.clear();
+        _proveedorSeleccionado = null;
+        _contenedorSeleccionado = null;
+        _loteSeleccionado = null;
+        if (!_recordarOperario) {
+          _operarioSeleccionado = null;
+        }
+        // Si la cama ya se llenó al 100%, deseleccionarla para que elijan otra cama disponible
+        if (infoCama != null && infoCama.esCamaLlena) {
+          _camaSeleccionada = null;
+        }
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Siembra de ${widget.subtipo} guardada exitosamente (Offline) ✅',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 24),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  infoCama != null && infoCama.esCamaLlena
+                      ? '✓ $nombreVariedad guardada. ¡Cama $nombreCama al 100% de capacidad!'
+                      : '✓ $nombreVariedad guardada con éxito en Cama $nombreCama. Puede continuar registrando.',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
           backgroundColor: const Color(0xFF558B2F),
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
-
-      // Regresar al Dashboard refrescando datos
-      Navigator.popUntil(context, (route) => route.isFirst);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1082,20 +1136,33 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
                                 value: _camaSeleccionada,
                                 items: _camasDelBloque.map((c) {
                                   final info = _estadoCicloCamas[c.id];
-                                  final bool noDisp = info != null && !info.esValido;
-                                  final bool esActiva = info?.esCicloActivo == true;
-                                  final String estadoTexto = esActiva
-                                      ? '🔴 EN CICLO'
-                                      : (noDisp ? '🟠 CICLO (-${info.diasFaltantes}d)' : '🟢 DISPONIBLE');
-                                  final Color estadoColor = esActiva
-                                      ? Colors.red.shade800
-                                      : (noDisp ? Colors.orange.shade800 : Colors.green.shade800);
-                                  final Color estadoBg = esActiva
-                                      ? Colors.red.shade50
-                                      : (noDisp ? Colors.orange.shade50 : Colors.green.shade50);
-                                  final Color estadoBorder = esActiva
-                                      ? Colors.red.shade200
-                                      : (noDisp ? Colors.orange.shade300 : Colors.green.shade200);
+                                  final bool esCompartida = info?.esCamaCompartida == true;
+                                  final bool esLlena = info?.esCamaLlena == true || (info?.esCicloActivo == true && info?.esValido == false);
+                                  final bool esIncompleta = info?.esCicloIncompleto == true;
+
+                                  final String estadoTexto = esCompartida
+                                      ? '🟡 PARCIAL (${info!.cupoDisponible} disp)'
+                                      : (esLlena
+                                          ? '🔴 LLENA (${info!.cantidadOcupada}/${info.limiteMaximo})'
+                                          : (esIncompleta ? '🟠 CICLO (-${info!.diasFaltantes}d)' : '🟢 DISPONIBLE'));
+
+                                  final Color estadoColor = esCompartida
+                                      ? const Color(0xFFE65100)
+                                      : (esLlena
+                                          ? Colors.red.shade800
+                                          : (esIncompleta ? Colors.orange.shade800 : Colors.green.shade800));
+
+                                  final Color estadoBg = esCompartida
+                                      ? const Color(0xFFFFF8E1)
+                                      : (esLlena
+                                          ? Colors.red.shade50
+                                          : (esIncompleta ? Colors.orange.shade50 : Colors.green.shade50));
+
+                                  final Color estadoBorder = esCompartida
+                                      ? const Color(0xFFFFB300)
+                                      : (esLlena
+                                          ? Colors.red.shade200
+                                          : (esIncompleta ? Colors.orange.shade300 : Colors.green.shade200));
 
                                   return DropdownMenuItem(
                                     value: c,
@@ -1131,46 +1198,84 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
                               ),
                             ),
                           ),
-                          if (_camaSeleccionada != null && _estadoCicloCamas[_camaSeleccionada!.id]?.esValido == false) ...[
+                          if (_camaSeleccionada != null) ...[
                             Builder(
                               builder: (context) {
-                                final info = _estadoCicloCamas[_camaSeleccionada!.id]!;
-                                final esActiva = info.esCicloActivo;
-                                return Container(
-                                  margin: const EdgeInsets.only(top: 6),
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: esActiva ? Colors.red.shade50 : Colors.orange.shade50,
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: esActiva ? Colors.red.shade300 : Colors.orange.shade300),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(esActiva ? Icons.block : Icons.timelapse, color: esActiva ? Colors.red : Colors.orange.shade900, size: 15),
-                                          const SizedBox(width: 6),
-                                          Expanded(
-                                            child: Text(
-                                              esActiva ? '🚫 CAMA EN CICLO ACTIVO' : '⚠️ CICLO INCOMPLETO',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                color: esActiva ? Colors.red.shade900 : Colors.orange.shade900,
-                                                fontWeight: FontWeight.bold,
+                                final info = _estadoCicloCamas[_camaSeleccionada!.id];
+                                if (info == null) return const SizedBox.shrink();
+
+                                if (info.esCamaCompartida) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(top: 6),
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFF8E1),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: const Color(0xFFFFB300)),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.group_work, color: Color(0xFFE65100), size: 14),
+                                            const SizedBox(width: 4),
+                                            const Expanded(
+                                              child: Text(
+                                                'Cama Compartida (Multisembrador / Multi-variedad)',
+                                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFE65100)),
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 3),
-                                      Text(
-                                        info.mensaje,
-                                        style: TextStyle(fontSize: 10.5, color: esActiva ? Colors.red.shade900 : Colors.brown.shade900),
-                                      ),
-                                    ],
-                                  ),
-                                );
+                                          ],
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text('• Ocupado: ${info.cantidadOcupada} de ${info.limiteMaximo} plantas (Cupo: ${info.cupoDisponible} disp)', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
+                                        if (info.variedadesPresentes.isNotEmpty)
+                                          Text('• Variedades: ${info.variedadesPresentes.join(", ")}', style: const TextStyle(fontSize: 10, color: Colors.black87)),
+                                        if (info.operariosPresentes.isNotEmpty)
+                                          Text('• Sembradores: ${info.operariosPresentes.join(", ")}', style: const TextStyle(fontSize: 10, color: Colors.black87)),
+                                      ],
+                                    ),
+                                  );
+                                } else if (!info.esValido) {
+                                  final esActiva = info.esCicloActivo;
+                                  return Container(
+                                    margin: const EdgeInsets.only(top: 6),
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: esActiva ? Colors.red.shade50 : Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: esActiva ? Colors.red.shade300 : Colors.orange.shade300),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(esActiva ? Icons.block : Icons.timelapse, color: esActiva ? Colors.red : Colors.orange.shade900, size: 15),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: Text(
+                                                esActiva ? '🚫 CAPACIDAD COMPLETA EN CICLO' : '⚠️ CICLO INCOMPLETO',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: esActiva ? Colors.red.shade900 : Colors.orange.shade900,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          info.mensaje,
+                                          style: TextStyle(fontSize: 10.5, color: esActiva ? Colors.red.shade900 : Colors.brown.shade900),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
                               },
                             ),
                           ],

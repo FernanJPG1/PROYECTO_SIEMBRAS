@@ -1,4 +1,6 @@
-import 'dart:typed_data';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -27,8 +29,8 @@ class ReporteService {
     final semanaReal = _resolverSemana(semana);
     final pdf = pw.Document();
 
-    final fontRegular = await PdfGoogleFonts.robotoRegular();
-    final fontBold = await PdfGoogleFonts.robotoBold();
+    final fontRegular = pw.Font.helvetica();
+    final fontBold = pw.Font.helveticaBold();
 
     final esLirios = cultivo.toUpperCase() == 'LIRIOS';
     final formatterNum = NumberFormat('#,###', 'es_CO');
@@ -73,14 +75,6 @@ class ReporteService {
             fontBold: fontBold,
             fontRegular: fontRegular,
           ),
-          pw.SizedBox(height: 18),
-          _buildTablaRendimientoOperarios(
-            siembras: siembras,
-            operarios: operarios,
-            formatterNum: formatterNum,
-            fontBold: fontBold,
-            fontRegular: fontRegular,
-          ),
         ],
       ),
     );
@@ -98,7 +92,14 @@ class ReporteService {
     required pw.Font fontRegular,
   }) {
     String tituloPrincipal = 'BUENAVISTA NOVEDADES DE SIEMBRA';
-    if (cultivo.toUpperCase() == 'LIRIOS') {
+    if (cultivo.contains('RENDIMIENTO')) {
+      final subCultivo = cultivo.replaceAll(' - RENDIMIENTO', '').replaceAll('- RENDIMIENTO', '').trim();
+      if (subCultivo == 'TODOS') {
+        tituloPrincipal = 'INFORME DE RENDIMIENTO DE SEMBRADORES';
+      } else {
+        tituloPrincipal = 'INFORME DE RENDIMIENTO - $subCultivo';
+      }
+    } else if (cultivo.toUpperCase() == 'LIRIOS') {
       tituloPrincipal = 'PROGRAMA DE SIEMBRA - LIRIOS';
     } else if (cultivo.toUpperCase() != 'TODOS') {
       tituloPrincipal = 'BUENAVISTA NOVEDADES DE SIEMBRA - ${cultivo.toUpperCase()}';
@@ -381,7 +382,6 @@ class ReporteService {
           padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: const pw.BoxDecoration(
             color: PdfColor.fromInt(0xFFE8F5E9),
-            borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
             border: pw.Border(left: pw.BorderSide(color: PdfColors.green800, width: 3.5)),
           ),
           child: pw.Row(
@@ -476,8 +476,8 @@ class ReporteService {
   }) async {
     final semanaReal = _resolverSemana(semana);
     final pdf = pw.Document();
-    final fontRegular = await PdfGoogleFonts.robotoRegular();
-    final fontBold = await PdfGoogleFonts.robotoBold();
+    final fontRegular = pw.Font.helvetica();
+    final fontBold = pw.Font.helveticaBold();
     final formatterNum = NumberFormat('#,###', 'es_CO');
     final fechaHoy = DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now());
 
@@ -524,6 +524,56 @@ class ReporteService {
     return pdf.save();
   }
 
+  /// Guarda el archivo PDF generado en la carpeta Descargas o Documentos del dispositivo
+  static Future<String?> guardarPdfEnDescargas({
+    required Uint8List bytes,
+    required String nombreArchivo,
+  }) async {
+    try {
+      Directory? dir;
+      if (!kIsWeb && Platform.isAndroid) {
+        try {
+          final extDirs = await getExternalStorageDirectories(type: StorageDirectory.downloads);
+          if (extDirs != null && extDirs.isNotEmpty) {
+            dir = extDirs.first;
+          }
+        } catch (_) {}
+
+        if (dir == null) {
+          try {
+            final publicDownload = Directory('/storage/emulated/0/Download');
+            if (await publicDownload.exists()) {
+              final testFile = File('${publicDownload.path}/.test_tmp');
+              await testFile.writeAsString('ok');
+              await testFile.delete();
+              dir = publicDownload;
+            }
+          } catch (_) {}
+        }
+
+        if (dir == null) {
+          try {
+            dir = await getExternalStorageDirectory();
+          } catch (_) {}
+        }
+      }
+
+      dir ??= await getApplicationDocumentsDirectory();
+
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+      final nombreLimpio = nombreArchivo.replaceAll(RegExp(r'[\\/:*?"<>|]+'), '_');
+      final file = File('${dir.path}/$nombreLimpio');
+      await file.writeAsBytes(bytes, flush: true);
+      return file.path;
+    } catch (e) {
+      debugPrint('[ReporteService] Error guardando PDF en descargas: $e');
+    }
+    return null;
+  }
+
+  /// Abre el servicio de impresión nativo del sistema (Android / Windows / iOS)
   static Future<void> imprimirReporteRendimiento({
     required List<Siembra> siembras,
     required List<Operario> operarios,
@@ -546,6 +596,7 @@ class ReporteService {
     );
   }
 
+  /// Comparte o exporta el archivo PDF de rendimiento a través de aplicaciones del sistema (Archivos, WhatsApp, Drive, etc.)
   static Future<void> compartirPdfRendimiento({
     required List<Siembra> siembras,
     required List<Operario> operarios,
@@ -579,7 +630,7 @@ class ReporteService {
     );
   }
 
-  /// Abre el diálogo nativo del sistema operativo (Android/Windows) para imprimir directamente
+  /// Abre el diálogo nativo del sistema operativo (Android / Windows / iOS) para imprimir directamente
   static Future<void> imprimirReporte({
     required List<Siembra> siembras,
     required List<Variedad> variedades,
@@ -606,7 +657,7 @@ class ReporteService {
     );
   }
 
-  /// Comparte el archivo PDF generado a través de aplicaciones del sistema (WhatsApp, Gmail, etc.)
+  /// Comparte o exporta el archivo PDF de siembras a través de aplicaciones del sistema (Archivos, WhatsApp, Drive, etc.)
   static Future<void> compartirPdf({
     required List<Siembra> siembras,
     required List<Variedad> variedades,
@@ -632,4 +683,103 @@ class ReporteService {
       filename: 'Reporte_Siembras_${cultivo}_$semanaReal.pdf',
     );
   }
+
+  /// Clasifica una siembra en un cultivo canónico según la variedad o las observaciones
+  static String clasificarCultivo({
+    required Siembra siembra,
+    required List<Variedad> variedades,
+  }) {
+    final va = variedades.firstWhere(
+      (v) => v.id == siembra.variedadId,
+      orElse: () => Variedad(id: 0, codigo: '', nombre: ''),
+    );
+    final obs = (siembra.observaciones ?? '').toUpperCase();
+    final fam = (va.familiaNombre ?? '').toUpperCase();
+    final famId = va.familiaId;
+
+    if (fam.contains('LILIUM') || fam.contains('LIRIO') || obs.contains('LIRIO') || [199, 204, 309, 255].contains(famId)) {
+      return 'LIRIOS';
+    }
+    if (fam.contains('SUNFLOWER') || obs.contains('GIRASOL') || famId == 213) {
+      return 'GIRASOL';
+    }
+    if (fam.contains('MATSUMOTO') || obs.contains('MATSUMOTO') || [114, 118, 262].contains(famId)) {
+      return 'MATSUMOTO';
+    }
+    if (fam.contains('CREMON') || fam.contains('FUJI') || obs.contains('CREMON') || [193, 200, 148].contains(famId)) {
+      return 'CREMON';
+    }
+    if (fam.contains('POMPON') || obs.contains('POMPON') || famId == 147) {
+      return 'POMPON';
+    }
+    if (fam.isNotEmpty) {
+      return fam;
+    }
+    return 'OTROS';
+  }
+
+  /// Agrupa una lista de siembras por su cultivo canónico
+  static Map<String, List<Siembra>> agruparSiembrasPorCultivo({
+    required List<Siembra> siembras,
+    required List<Variedad> variedades,
+  }) {
+    final Map<String, List<Siembra>> agrupados = {};
+    for (var s in siembras) {
+      final c = clasificarCultivo(siembra: s, variedades: variedades);
+      agrupados.putIfAbsent(c, () => []).add(s);
+    }
+    return agrupados;
+  }
+
+  /// Genera y guarda en Descargas un PDF independiente para cada cultivo que tenga siembras
+  static Future<Map<String, String>> guardarPdfsSeparadosPorCultivo({
+    required List<Siembra> siembras,
+    required List<Variedad> variedades,
+    required List<Cama> camas,
+    required List<Operario> operarios,
+    String? semana,
+    String? rangoFechas,
+    bool esRendimiento = false,
+  }) async {
+    final semanaReal = _resolverSemana(semana);
+    final agrupados = agruparSiembrasPorCultivo(siembras: siembras, variedades: variedades);
+    final Map<String, String> resultados = {};
+
+    for (var entry in agrupados.entries) {
+      final cult = entry.key;
+      final listaCultivo = entry.value;
+      if (listaCultivo.isEmpty) continue;
+
+      Uint8List bytes;
+      String nombreBase;
+      if (esRendimiento) {
+        bytes = await generarPdfReporteRendimiento(
+          siembras: listaCultivo,
+          operarios: operarios,
+          cultivo: cult,
+          semana: semanaReal,
+          rangoFechas: rangoFechas,
+        );
+        nombreBase = 'Rendimiento_Sembradores_${cult}_${semanaReal.replaceAll(RegExp(r'[\\/:*?"<>|# ]'), '_')}.pdf';
+      } else {
+        bytes = await generarPdfReporte(
+          siembras: listaCultivo,
+          variedades: variedades,
+          camas: camas,
+          operarios: operarios,
+          cultivo: cult,
+          semana: semanaReal,
+          rangoFechas: rangoFechas,
+        );
+        nombreBase = 'Reporte_Siembras_${cult}_${semanaReal.replaceAll(RegExp(r'[\\/:*?"<>|# ]'), '_')}.pdf';
+      }
+
+      final ruta = await guardarPdfEnDescargas(bytes: bytes, nombreArchivo: nombreBase);
+      if (ruta != null) {
+        resultados[cult] = ruta;
+      }
+    }
+    return resultados;
+  }
 }
+

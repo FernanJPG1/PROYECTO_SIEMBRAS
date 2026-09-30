@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:app_movil/database/seed_data.dart';
+import 'package:app_movil/services/persistent_backup_service.dart';
 
 class LocalDatabase {
   static final LocalDatabase instance = LocalDatabase._init();
@@ -22,7 +23,15 @@ class LocalDatabase {
       path,
       version: 14,
       onConfigure: (db) async {
-        await db.execute('PRAGMA foreign_keys = ON');
+        try {
+          await db.execute('PRAGMA foreign_keys = ON');
+        } catch (_) {}
+        try {
+          await db.rawQuery('PRAGMA journal_mode = WAL');
+        } catch (_) {}
+        try {
+          await db.execute('PRAGMA synchronous = FULL');
+        } catch (_) {}
       },
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
@@ -152,16 +161,11 @@ class LocalDatabase {
             await batch187.commit(noResult: true);
           }
 
-          // Garantizar que la app siempre disponga de al menos 40 registros de avance
-          final cSiembras = await db.rawQuery('SELECT COUNT(*) as total FROM tb_siembras');
-          final totalSiembras = Sqflite.firstIntValue(cSiembras) ?? 0;
-          if (totalSiembras < 40) {
-            final batchSiembras = db.batch();
-            for (var s in kSeedSiembras) {
-              batchSiembras.insert('tb_siembras', s, conflictAlgorithm: ConflictAlgorithm.ignore);
-            }
-            await batchSiembras.commit(noResult: true);
-          }
+          // Sincronizar y verificar automáticamente el respaldo persistente antidescarga/apagado
+          try {
+            await db.rawQuery('PRAGMA wal_checkpoint(FULL)');
+          } catch (_) {}
+          await PersistentBackupService.instance.verificarYRecuperar(db);
           // Garantizar que solo los Lirios conserven lote, proveedor y cont
           await db.execute('''
             UPDATE tb_siembras
@@ -475,6 +479,14 @@ class LocalDatabase {
     }
 
     await batch.commit(noResult: true);
+  }
+
+  /// Fuerza la escritura física inmediata de todas las páginas de memoria a disco
+  Future<void> checkpoint() async {
+    try {
+      final db = await database;
+      await db.rawQuery('PRAGMA wal_checkpoint(FULL)');
+    } catch (_) {}
   }
 
   Future close() async {

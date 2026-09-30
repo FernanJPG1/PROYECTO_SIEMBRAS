@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/services/reporte_service.dart';
+import 'package:app_movil/screens/pdf_viewer_screen.dart';
 import 'package:app_movil/utils/calendario_util.dart';
 
 class RendimientoDialog extends StatefulWidget {
@@ -33,10 +34,22 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
   String _orden = 'TALLOS'; // 'TALLOS', 'CAMAS', 'PROMEDIO', 'NOMBRE'
   bool _generando = false;
   late String _semanaActual;
+  late String _cultivoSeleccionado;
+  bool _separarPorCultivo = false;
+
+  final List<String> _opcionesCultivo = [
+    'TODOS',
+    'LIRIOS',
+    'GIRASOL',
+    'MATSUMOTO',
+    'CREMON',
+    'POMPON',
+  ];
 
   @override
   void initState() {
     super.initState();
+    _cultivoSeleccionado = widget.cultivo.isNotEmpty ? widget.cultivo : 'TODOS';
     if (widget.semana.isNotEmpty && widget.semana != 'Semana #38' && widget.semana != 'Semana General') {
       _semanaActual = widget.semana;
     } else {
@@ -44,11 +57,22 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
     }
   }
 
+  List<Siembra> _filtrarSiembras() {
+    if (_cultivoSeleccionado == 'TODOS' || widget.variedades == null || widget.variedades!.isEmpty) {
+      return widget.siembras;
+    }
+    return widget.siembras.where((s) {
+      final c = ReporteService.clasificarCultivo(siembra: s, variedades: widget.variedades!);
+      return c == _cultivoSeleccionado;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final formatterNum = NumberFormat('#,###', 'es_CO');
+    final siembrasActivas = _filtrarSiembras();
     var rendimientos = RendimientoOperario.calcular(
-      siembras: widget.siembras,
+      siembras: siembrasActivas,
       operarios: widget.operarios,
     );
 
@@ -73,8 +97,8 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
       rendimientos.sort((a, b) => b.totalTallos.compareTo(a.totalTallos));
     }
 
-    final totalTallosGlobal = widget.siembras.fold<int>(0, (sum, s) => sum + s.cantidad);
-    final totalCamasGlobal = widget.siembras.length;
+    final totalTallosGlobal = siembrasActivas.fold<int>(0, (sum, s) => sum + s.cantidad);
+    final totalCamasGlobal = siembrasActivas.length;
     final promPorSembrador = rendimientos.isNotEmpty
         ? (totalTallosGlobal / rendimientos.length).round()
         : 0;
@@ -116,7 +140,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                           ),
                         ),
                         Text(
-                          'Métricas de productividad y ranking por operario | ${widget.cultivo} | $_semanaActual (EE. UU.)',
+                          'Métricas de productividad y ranking por operario | $_cultivoSeleccionado | $_semanaActual (EE. UU.)',
                           style: const TextStyle(fontSize: 12.5, color: Colors.grey),
                         ),
                       ],
@@ -128,7 +152,76 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                   ),
                 ],
               ),
-              const Divider(height: 22),
+              const Divider(height: 20),
+
+              if (widget.variedades != null && widget.variedades!.isNotEmpty) ...[
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    const Text('Cultivo: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF33691E))),
+                    ..._opcionesCultivo.map((c) {
+                      final isSelected = _cultivoSeleccionado == c;
+                      return ChoiceChip(
+                        label: Text(
+                          c,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                            color: isSelected ? Colors.white : const Color(0xFF33691E),
+                          ),
+                        ),
+                        selected: isSelected,
+                        selectedColor: const Color(0xFF7CB342),
+                        backgroundColor: const Color(0xFFF1F8E9),
+                        visualDensity: VisualDensity.compact,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                        onSelected: (val) {
+                          if (val) setState(() => _cultivoSeleccionado = c);
+                        },
+                      );
+                    }),
+                  ],
+                ),
+                if (_cultivoSeleccionado == 'TODOS') ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _separarPorCultivo ? const Color(0xFFE8F5E9) : const Color(0xFFF9FBE7),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _separarPorCultivo ? const Color(0xFF81C784) : const Color(0xFFC5E1A5)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _separarPorCultivo ? Icons.folder_copy : Icons.file_copy_outlined,
+                          color: _separarPorCultivo ? const Color(0xFF2E7D32) : const Color(0xFF558B2F),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Separar rendimiento en PDF independiente por cada cultivo',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11.5,
+                              color: _separarPorCultivo ? const Color(0xFF1B5E20) : const Color(0xFF33691E),
+                            ),
+                          ),
+                        ),
+                        Switch(
+                          value: _separarPorCultivo,
+                          activeColor: const Color(0xFF2E7D32),
+                          onChanged: (val) => setState(() => _separarPorCultivo = val),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+              ],
 
               // KPI Cards Row
               Row(
@@ -410,20 +503,44 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                     'Evaluación generada con ${widget.siembras.length} registros',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.end,
                     children: [
                       OutlinedButton.icon(
-                        icon: const Icon(Icons.share, size: 18),
-                        label: const Text('Compartir PDF Rendimiento'),
+                        icon: const Icon(Icons.download, size: 18),
+                        label: const Text('Guardar'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF558B2F),
                           side: const BorderSide(color: Color(0xFF7CB342)),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        onPressed: _generando ? null : () => _exportarRendimiento(compartir: true),
+                        onPressed: _generando ? null : _guardarPdfRendimientoDescargas,
                       ),
-                      const SizedBox(width: 10),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.share, size: 18),
+                        label: const Text('Compartir'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF558B2F),
+                          side: const BorderSide(color: Color(0xFF7CB342)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: _generando ? null : _exportarRendimientoPdf,
+                      ),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.print, size: 18),
+                        label: const Text('Imprimir'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF558B2F),
+                          side: const BorderSide(color: Color(0xFF7CB342)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: _generando ? null : _imprimirRendimientoPdf,
+                      ),
                       ElevatedButton.icon(
                         icon: _generando
                             ? const SizedBox(
@@ -431,17 +548,18 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                                 height: 18,
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                               )
-                            : const Icon(Icons.print, color: Colors.white, size: 19),
+                            : const Icon(Icons.visibility, color: Colors.white, size: 18),
                         label: Text(
-                          _generando ? 'Generando...' : 'Imprimir Rendimiento',
+                          _generando ? 'Generando...' : 'Ver PDF',
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF7CB342),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                          backgroundColor: const Color(0xFF2E7D32),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          elevation: 2,
                         ),
-                        onPressed: _generando ? null : () => _exportarRendimiento(compartir: false),
+                        onPressed: _generando ? null : _verPdfRendimiento,
                       ),
                     ],
                   ),
@@ -495,25 +613,205 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
     );
   }
 
-  Future<void> _exportarRendimiento({required bool compartir}) async {
-    setState(() => _generando = true);
-    try {
-      if (compartir) {
-        await ReporteService.compartirPdfRendimiento(
-          siembras: widget.siembras,
-          operarios: widget.operarios,
-          cultivo: widget.cultivo,
-          semana: _semanaActual,
-          rangoFechas: widget.rangoFechas,
+  void _verPdfRendimiento() {
+    final activas = _filtrarSiembras();
+    if (activas.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay registros de siembra para evaluar el rendimiento.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (_separarPorCultivo && _cultivoSeleccionado == 'TODOS' && widget.variedades != null && widget.variedades!.isNotEmpty) {
+      final agrupados = ReporteService.agruparSiembrasPorCultivo(
+        siembras: activas,
+        variedades: widget.variedades!,
+      );
+      if (agrupados.keys.length == 1) {
+        final cultUnico = agrupados.keys.first;
+        final nombreLimpio = 'Rendimiento_Sembradores_${cultUnico}_${_semanaActual.replaceAll(RegExp(r'[\\/:*?"<>|# ]'), '_')}.pdf';
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PdfViewerScreen(
+              titulo: 'Rendimiento - $cultUnico',
+              nombreArchivo: nombreLimpio,
+              generadorPdf: () => ReporteService.generarPdfReporteRendimiento(
+                siembras: agrupados[cultUnico]!,
+                operarios: widget.operarios,
+                cultivo: cultUnico,
+                semana: _semanaActual,
+                rangoFechas: widget.rangoFechas,
+              ),
+            ),
+          ),
         );
       } else {
-        await ReporteService.imprimirReporteRendimiento(
-          siembras: widget.siembras,
+        _mostrarSelectorCultivoVisualizarRendimiento(agrupados);
+      }
+      return;
+    }
+
+    final nombreLimpio = 'Rendimiento_Sembradores_${_cultivoSeleccionado}_${_semanaActual.replaceAll(RegExp(r'[\\/:*?"<>|# ]'), '_')}.pdf';
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PdfViewerScreen(
+          titulo: 'Rendimiento - $_cultivoSeleccionado',
+          nombreArchivo: nombreLimpio,
+          generadorPdf: () => ReporteService.generarPdfReporteRendimiento(
+            siembras: activas,
+            operarios: widget.operarios,
+            cultivo: _cultivoSeleccionado,
+            semana: _semanaActual,
+            rangoFechas: widget.rangoFechas,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _mostrarSelectorCultivoVisualizarRendimiento(Map<String, List<Siembra>> agrupados) {
+    final fNum = NumberFormat('#,###', 'es_CO');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.leaderboard, color: Color(0xFF2E7D32)),
+            SizedBox(width: 8),
+            Text('Rendimiento por Cultivo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Seleccione el cultivo para ver su reporte de rendimiento:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+              const SizedBox(height: 12),
+              ...agrupados.entries.map((entry) {
+                final cult = entry.key;
+                final list = entry.value;
+                final tallos = list.fold<int>(0, (sum, s) => sum + s.cantidad);
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: const Color(0xFFE8F5E9),
+                      child: Text(cult.substring(0, cult.length >= 2 ? 2 : 1), style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold)),
+                    ),
+                    title: Text(cult, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text('${list.length} camas • ${fNum.format(tallos)} tallos', style: const TextStyle(fontSize: 12)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF2E7D32)),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      final nombreLimpio = 'Rendimiento_Sembradores_${cult}_${_semanaActual.replaceAll(RegExp(r'[\\/:*?"<>|# ]'), '_')}.pdf';
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PdfViewerScreen(
+                            titulo: 'Rendimiento - $cult',
+                            nombreArchivo: nombreLimpio,
+                            generadorPdf: () => ReporteService.generarPdfReporteRendimiento(
+                              siembras: list,
+                              operarios: widget.operarios,
+                              cultivo: cult,
+                              semana: _semanaActual,
+                              rangoFechas: widget.rangoFechas,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _guardarPdfRendimientoDescargas() async {
+    final activas = _filtrarSiembras();
+    if (activas.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay registros de siembra para evaluar el rendimiento.'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+
+    setState(() => _generando = true);
+    try {
+      if (_separarPorCultivo && _cultivoSeleccionado == 'TODOS' && widget.variedades != null && widget.variedades!.isNotEmpty) {
+        final resultados = await ReporteService.guardarPdfsSeparadosPorCultivo(
+          siembras: activas,
+          variedades: widget.variedades!,
+          camas: widget.camas ?? [],
           operarios: widget.operarios,
-          cultivo: widget.cultivo,
           semana: _semanaActual,
           rangoFechas: widget.rangoFechas,
+          esRendimiento: true,
         );
+
+        if (!mounted) return;
+        if (resultados.isNotEmpty) {
+          final nombres = resultados.keys.join(', ');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✓ Se guardaron ${resultados.length} PDFs de rendimiento por cultivo en Descargas:\n$nombres'),
+              backgroundColor: const Color(0xFF2E7D32),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se pudieron guardar los reportes por cultivo'), backgroundColor: Colors.orange),
+          );
+        }
+        return;
+      }
+
+      final pdfBytes = await ReporteService.generarPdfReporteRendimiento(
+        siembras: activas,
+        operarios: widget.operarios,
+        cultivo: _cultivoSeleccionado,
+        semana: _semanaActual,
+        rangoFechas: widget.rangoFechas,
+      );
+
+      final nombreLimpio = 'Rendimiento_Sembradores_${_cultivoSeleccionado}_${_semanaActual.replaceAll(RegExp(r'[\\/:*?"<>|# ]'), '_')}.pdf';
+      final ruta = await ReporteService.guardarPdfEnDescargas(
+        bytes: pdfBytes,
+        nombreArchivo: nombreLimpio,
+      );
+
+      if (!mounted) return;
+      if (ruta != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✓ PDF de rendimiento guardado en Descargas:\n$nombreLimpio'),
+            backgroundColor: const Color(0xFF2E7D32),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      } else {
+        await _exportarRendimientoPdf();
       }
     } catch (e) {
       if (mounted) {
@@ -524,5 +822,269 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
     } finally {
       if (mounted) setState(() => _generando = false);
     }
+  }
+
+  Future<void> _exportarRendimientoPdf() async {
+    final activas = _filtrarSiembras();
+    if (activas.isEmpty) return;
+
+    if (_separarPorCultivo && _cultivoSeleccionado == 'TODOS' && widget.variedades != null && widget.variedades!.isNotEmpty) {
+      final agrupados = ReporteService.agruparSiembrasPorCultivo(
+        siembras: activas,
+        variedades: widget.variedades!,
+      );
+      if (agrupados.keys.length == 1) {
+        final cultUnico = agrupados.keys.first;
+        setState(() => _generando = true);
+        try {
+          await ReporteService.compartirPdfRendimiento(
+            siembras: agrupados[cultUnico]!,
+            operarios: widget.operarios,
+            cultivo: cultUnico,
+            semana: _semanaActual,
+            rangoFechas: widget.rangoFechas,
+          );
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error al exportar rendimiento: $e'), backgroundColor: Colors.red),
+            );
+          }
+        } finally {
+          if (mounted) setState(() => _generando = false);
+        }
+      } else {
+        _mostrarSelectorCultivoCompartirRendimiento(agrupados);
+      }
+      return;
+    }
+
+    setState(() => _generando = true);
+    try {
+      await ReporteService.compartirPdfRendimiento(
+        siembras: activas,
+        operarios: widget.operarios,
+        cultivo: _cultivoSeleccionado,
+        semana: _semanaActual,
+        rangoFechas: widget.rangoFechas,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al exportar PDF de rendimiento: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _generando = false);
+    }
+  }
+
+  void _mostrarSelectorCultivoCompartirRendimiento(Map<String, List<Siembra>> agrupados) {
+    final fNum = NumberFormat('#,###', 'es_CO');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.share, color: Color(0xFF2E7D32)),
+            SizedBox(width: 8),
+            Text('Compartir Rendimiento', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Seleccione el cultivo para compartir su rendimiento:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+              const SizedBox(height: 12),
+              ...agrupados.entries.map((entry) {
+                final cult = entry.key;
+                final list = entry.value;
+                final tallos = list.fold<int>(0, (sum, s) => sum + s.cantidad);
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: const Color(0xFFE8F5E9),
+                      child: Text(cult.substring(0, cult.length >= 2 ? 2 : 1), style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold)),
+                    ),
+                    title: Text(cult, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text('${list.length} camas • ${fNum.format(tallos)} tallos', style: const TextStyle(fontSize: 12)),
+                    trailing: const Icon(Icons.share, color: Color(0xFF2E7D32), size: 20),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      setState(() => _generando = true);
+                      try {
+                        await ReporteService.compartirPdfRendimiento(
+                          siembras: list,
+                          operarios: widget.operarios,
+                          cultivo: cult,
+                          semana: _semanaActual,
+                          rangoFechas: widget.rangoFechas,
+                        );
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error al compartir $cult: $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      } finally {
+                        if (mounted) setState(() => _generando = false);
+                      }
+                    },
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _imprimirRendimientoPdf() async {
+    final activas = _filtrarSiembras();
+    if (activas.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay registros de siembra para evaluar el rendimiento.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (_separarPorCultivo && _cultivoSeleccionado == 'TODOS' && widget.variedades != null && widget.variedades!.isNotEmpty) {
+      final agrupados = ReporteService.agruparSiembrasPorCultivo(
+        siembras: activas,
+        variedades: widget.variedades!,
+      );
+      if (agrupados.keys.length == 1) {
+        final cultUnico = agrupados.keys.first;
+        setState(() => _generando = true);
+        try {
+          await ReporteService.imprimirReporteRendimiento(
+            siembras: agrupados[cultUnico]!,
+            operarios: widget.operarios,
+            cultivo: cultUnico,
+            semana: _semanaActual,
+            rangoFechas: widget.rangoFechas,
+          );
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error al enviar a impresión: $e'), backgroundColor: Colors.red),
+            );
+          }
+        } finally {
+          if (mounted) setState(() => _generando = false);
+        }
+      } else {
+        _mostrarSelectorCultivoImprimirRendimiento(agrupados);
+      }
+      return;
+    }
+
+    setState(() => _generando = true);
+    try {
+      await ReporteService.imprimirReporteRendimiento(
+        siembras: activas,
+        operarios: widget.operarios,
+        cultivo: _cultivoSeleccionado,
+        semana: _semanaActual,
+        rangoFechas: widget.rangoFechas,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al enviar a impresión: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _generando = false);
+    }
+  }
+
+  void _mostrarSelectorCultivoImprimirRendimiento(Map<String, List<Siembra>> agrupados) {
+    final fNum = NumberFormat('#,###', 'es_CO');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.print, color: Color(0xFF2E7D32)),
+            SizedBox(width: 8),
+            Text('Imprimir Rendimiento', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Seleccione el cultivo a enviar a impresión:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+              const SizedBox(height: 12),
+              ...agrupados.entries.map((entry) {
+                final cult = entry.key;
+                final list = entry.value;
+                final tallos = list.fold<int>(0, (sum, s) => sum + s.cantidad);
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: const Color(0xFFE8F5E9),
+                      child: Text(cult.substring(0, cult.length >= 2 ? 2 : 1), style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold)),
+                    ),
+                    title: Text(cult, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text('${list.length} camas • ${fNum.format(tallos)} tallos', style: const TextStyle(fontSize: 12)),
+                    trailing: const Icon(Icons.print, color: Color(0xFF2E7D32), size: 20),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      setState(() => _generando = true);
+                      try {
+                        await ReporteService.imprimirReporteRendimiento(
+                          siembras: list,
+                          operarios: widget.operarios,
+                          cultivo: cult,
+                          semana: _semanaActual,
+                          rangoFechas: widget.rangoFechas,
+                        );
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error al imprimir $cult: $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      } finally {
+                        if (mounted) setState(() => _generando = false);
+                      }
+                    },
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
   }
 }

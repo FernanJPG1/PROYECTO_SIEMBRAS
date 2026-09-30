@@ -10,6 +10,9 @@ class SyncService {
   static const String fallbackLanUrl = 'http://192.168.1.39:8000/api';
   static String? _cachedBaseUrl;
 
+  String? ultimoError;
+  String? ultimaUrlProbada;
+
   final String apiKey = 'sk-siembras-2026-devkey';
   final dbRepo = DbRepository();
   final _uuid = const Uuid();
@@ -24,13 +27,51 @@ class SyncService {
       _cachedBaseUrl = saved.trim();
       return _cachedBaseUrl!;
     }
-    _cachedBaseUrl = defaultUrl;
+    _cachedBaseUrl = fallbackLanUrl; // Preferir la IP de LAN para tablets físicas
     return _cachedBaseUrl!;
+  }
+
+  /// Resuelve automáticamente la mejor URL activa verificando respuesta rápida
+  Future<String> resolverUrlActiva() async {
+    // 1. Probar la URL guardada previamente si existe
+    final saved = await dbRepo.obtenerAjuste('server_url');
+    if (saved != null && saved.trim().isNotEmpty) {
+      final res = await probarConexion(saved.trim());
+      if (res['exito'] == true) {
+        _cachedBaseUrl = saved.trim();
+        ultimaUrlProbada = _cachedBaseUrl;
+        return _cachedBaseUrl!;
+      }
+    }
+
+    // 2. Probar LAN Wi-Fi (usada por tablets físicas en campo)
+    final resLan = await probarConexion(fallbackLanUrl);
+    if (resLan['exito'] == true) {
+      _cachedBaseUrl = fallbackLanUrl;
+      ultimaUrlProbada = fallbackLanUrl;
+      await dbRepo.guardarAjuste('server_url', fallbackLanUrl);
+      return fallbackLanUrl;
+    }
+
+    // 3. Probar Emulador Android (10.0.2.2)
+    final resEmu = await probarConexion(defaultUrl);
+    if (resEmu['exito'] == true) {
+      _cachedBaseUrl = defaultUrl;
+      ultimaUrlProbada = defaultUrl;
+      await dbRepo.guardarAjuste('server_url', defaultUrl);
+      return defaultUrl;
+    }
+
+    // Si ninguna respondió, devolver la configurada o fallback
+    final fallback = (saved != null && saved.trim().isNotEmpty) ? saved.trim() : fallbackLanUrl;
+    ultimaUrlProbada = fallback;
+    return fallback;
   }
 
   /// Guarda una nueva URL base para el servidor backend
   Future<void> setBaseUrl(String newUrl) async {
     _cachedBaseUrl = newUrl.trim();
+    ultimaUrlProbada = _cachedBaseUrl;
     await dbRepo.guardarAjuste('server_url', _cachedBaseUrl!);
   }
 
@@ -74,23 +115,30 @@ class SyncService {
 
   /// Descarga todos los catálogos empresariales y los guarda localmente en SQLite
   Future<bool> descargarCatalogos() async {
-    var url = await getBaseUrl();
+    final url = await resolverUrlActiva();
+    ultimaUrlProbada = url;
     try {
-      return await _ejecutarDescargaCatalogos(url);
+      final ok = await _ejecutarDescargaCatalogos(url);
+      if (ok) {
+        ultimoError = null;
+        return true;
+      }
     } catch (e) {
-      // Si falló con la URL por defecto (10.0.2.2), intentar con la IP de red local
-      if (url == defaultUrl) {
+      // Si la URL inicial falló y no era la LAN, intentar con la LAN como respaldo
+      if (url != fallbackLanUrl) {
         try {
           final ok = await _ejecutarDescargaCatalogos(fallbackLanUrl);
           if (ok) {
             await setBaseUrl(fallbackLanUrl);
+            ultimaUrlProbada = fallbackLanUrl;
+            ultimoError = null;
             return true;
           }
         } catch (_) {}
       }
-      print('Exception en descargarCatalogos: $e');
-      return false;
+      ultimoError = e.toString();
     }
+    return false;
   }
 
   Future<bool> _ejecutarDescargaCatalogos(String activeUrl) async {
@@ -238,17 +286,37 @@ class SyncService {
         'deletes': eliminaciones,
       };
 
-      var url = await getBaseUrl();
+      var url = await resolverUrlActiva();
+      ultimaUrlProbada = url;
       final cleanUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
 
-      final response = await http.post(
-        Uri.parse('$cleanUrl/sync/siembras'),
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
-        },
-        body: jsonEncode(payload),
-      ).timeout(const Duration(seconds: 60));
+      http.Response response;
+      try {
+        response = await http.post(
+          Uri.parse('$cleanUrl/sync/siembras'),
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey,
+          },
+          body: jsonEncode(payload),
+        ).timeout(const Duration(seconds: 45));
+      } catch (netErr) {
+        if (url != fallbackLanUrl) {
+          final cleanLan = fallbackLanUrl.endsWith('/') ? fallbackLanUrl.substring(0, fallbackLanUrl.length - 1) : fallbackLanUrl;
+          response = await http.post(
+            Uri.parse('$cleanLan/sync/siembras'),
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-Key': apiKey,
+            },
+            body: jsonEncode(payload),
+          ).timeout(const Duration(seconds: 45));
+          await setBaseUrl(fallbackLanUrl);
+          ultimaUrlProbada = fallbackLanUrl;
+        } else {
+          rethrow;
+        }
+      }
 
       if (response.statusCode == 200) {
         for (var s in pendientes) {
@@ -259,13 +327,14 @@ class SyncService {
         if (eliminaciones.isNotEmpty) {
           await dbRepo.limpiarEliminacionesPendientes(eliminaciones);
         }
+        ultimoError = null;
         return true;
       } else {
-        print('Error en sync: ${response.statusCode} - ${response.body}');
+        ultimoError = 'Error del servidor: HTTP ${response.statusCode}';
         return false;
       }
     } catch (e) {
-      print('Exception en sync: $e');
+      ultimoError = e.toString();
       return false;
     }
   }

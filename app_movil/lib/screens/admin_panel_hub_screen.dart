@@ -228,17 +228,17 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
 
                   const SizedBox(height: 16),
 
-                  // OPCIÓN 2: EXPORTAR PDF E IMPRIMIR
+                  // OPCIÓN 2: EXPORTAR REPORTES EN PDF
                   _buildAdminCard(
-                    icon: Icons.print,
+                    icon: Icons.picture_as_pdf,
                     iconBgColor: const Color(0xFFE8F5E9),
                     iconColor: const Color(0xFF2E7D32),
                     badgeText: 'INFORMES Y DOCUMENTACIÓN OFICIAL',
                     badgeColor: const Color(0xFF2E7D32),
-                    title: 'Exportar PDF e Imprimir Reportes',
+                    title: 'Exportar Reportes en PDF',
                     subtitle:
-                        'Generación de documentos consolidados de siembra, filtrado por fechas o variedades, exportación en formato PDF de alta calidad y envío a impresión física.',
-                    actionLabel: 'Generar Reporte / Imprimir',
+                        'Generación de documentos consolidados de siembra, filtrado por fechas o variedades y exportación digital en formato PDF de alta calidad.',
+                    actionLabel: 'Generar Reporte PDF',
                     onTap: _abrirReportes,
                   ),
                 ],

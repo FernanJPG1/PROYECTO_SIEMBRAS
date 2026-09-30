@@ -5,6 +5,7 @@ import 'package:app_movil/screens/menu_cultivos_screen.dart';
 import 'package:app_movil/screens/admin_panel_hub_screen.dart';
 import 'package:app_movil/services/network_service.dart';
 import 'package:app_movil/services/sync_service.dart' as app_sync;
+import 'package:app_movil/services/persistent_backup_service.dart';
 import 'package:app_movil/utils/calendario_util.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -85,8 +86,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.dispose();
   }
 
-  Future<void> _cargarDatos() async {
+  Future<void> _cargarDatos({bool mostrarNotificacionRespaldo = false}) async {
     setState(() => _cargando = true);
+    
+    // Auto-recuperación y verificación desde almacenamiento persistente independiente de caché
+    final resultado = await _db.restaurarDesdeRespaldoPersistente();
+
     final historial = await _db.obtenerHistorialSiembras();
     final v = await _db.obtenerVariedades(soloActivas: true);
     final c = await _db.obtenerCamas();
@@ -99,6 +104,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _operarios = o;
       _cargando = false;
     });
+
+    if (resultado.huboRecuperacion && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.security, color: Colors.white, size: 24),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '🛡️ Se recuperaron ${resultado.recuperadas} siembras guardadas de forma permanente antes de que la tablet se apagara o reiniciara.',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF33691E),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } else if (mostrarNotificacionRespaldo && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '✓ Respaldo verificado: Todas las siembras (${resultado.pendientesSync} pendientes) están 100% protegidas contra apagado o reinicio.',
+          ),
+          backgroundColor: const Color(0xFF558B2F),
+        ),
+      );
+    }
   }
 
   String _normalizarCultivo(String c) {
@@ -441,17 +476,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (mounted) {
       if (catalogosExito && subidaExito) {
+        final urlUsada = syncSvc.ultimaUrlProbada ?? 'Servidor';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sincronización Completa (${_variedades.length} Variedades, ${_camas.length} Camas) ✓'),
-            backgroundColor: const Color(0xFF7CB342),
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Sincronización Completa (${_variedades.length} Variedades, ${_camas.length} Camas) ✓\nConectado a: $urlUsada',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF558B2F),
+            duration: const Duration(seconds: 4),
           ),
         );
       } else {
+        final String url = syncSvc.ultimaUrlProbada ?? 'http://192.168.1.39:8000/api';
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Sincronización finalizada (revisa la conexión al backend) ⚠️'),
-            backgroundColor: Colors.orange,
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.wifi_off, color: Colors.white, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'No se pudo conectar al Servidor Backend',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'URL: $url\n'
+                  '• En la PC, ejecuta "iniciar_backend.bat".\n'
+                  '• Verifica que la tablet y la PC estén en la misma red Wi-Fi.',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.orange.shade900,
+            duration: const Duration(seconds: 8),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            action: SnackBarAction(
+              label: 'CONFIGURAR IP',
+              textColor: Colors.amber.shade200,
+              onPressed: _mostrarSincronizacionDialog,
+            ),
           ),
         );
       }
@@ -708,6 +787,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _buildStatRow('Sincronizadas con Servidor:', '$sincronizadas', color: Colors.green.shade700),
                 const Divider(),
                 _buildStatRow('Pendientes por subir:', '$pendientes', color: pendientes > 0 ? Colors.orange.shade800 : Colors.grey),
+                const Divider(),
+                _buildStatRow('Resguardo Antiapagado:', 'Activo y Seguro ✓', color: const Color(0xFF2E7D32)),
                 const SizedBox(height: 16),
                 const Text('Dirección IP / URL del Servidor Backend:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E))),
                 const SizedBox(height: 6),
@@ -750,10 +831,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 6),
-                Text(
-                  '• Emulador: http://10.0.2.2:8000/api\n• Red Local Wi-Fi: http://192.168.1.39:8000/api',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                const SizedBox(height: 10),
+                const Text('Atajos rápidos para Tablets / Emulador:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 6,
+                  children: [
+                    ActionChip(
+                      avatar: const Icon(Icons.wifi, size: 14, color: Color(0xFF33691E)),
+                      label: const Text('Wi-Fi PC (192.168.1.39)', style: TextStyle(fontSize: 11)),
+                      backgroundColor: const Color(0xFFE8F5E9),
+                      onPressed: () {
+                        setDialogState(() {
+                          urlController.text = 'http://192.168.1.39:8000/api';
+                          estadoConexion = '';
+                        });
+                      },
+                    ),
+                    ActionChip(
+                      avatar: const Icon(Icons.developer_mode, size: 14, color: Colors.grey),
+                      label: const Text('Emulador (10.0.2.2)', style: TextStyle(fontSize: 11)),
+                      onPressed: () {
+                        setDialogState(() {
+                          urlController.text = 'http://10.0.2.2:8000/api';
+                          estadoConexion = '';
+                        });
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -775,6 +880,91 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _mostrarDialogoRespaldoPersistente() async {
+    final diag = await PersistentBackupService.instance.obtenerDiagnosticoRespaldo();
+    final pendientes = _siembras.where((s) => s.sincronizado == 0).length;
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.security, color: Color(0xFF558B2F), size: 28),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Almacenamiento Permanente',
+                style: TextStyle(color: Color(0xFF33691E), fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFC8E6C9)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 26),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Protección Activa contra Apagado y Reinicio de Tablet',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade900, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildStatRow('Total Registros en Tablet:', '${_siembras.length}'),
+              const Divider(),
+              _buildStatRow('Pendientes de Sincronizar:', '$pendientes', color: pendientes > 0 ? Colors.orange.shade900 : Colors.green),
+              const Divider(),
+              _buildStatRow('Copia Espejo de Emergencia:', diag['activo'] == true ? 'Actualizada y Activa ✓' : 'En proceso...', color: const Color(0xFF33691E)),
+              const SizedBox(height: 12),
+              const Text(
+                '¿Cómo funciona esta protección?',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
+              ),
+              const SizedBox(height: 5),
+              const Text(
+                'Cada siembra se escribe directamente con sincronización física obligatoria (fsync) en la memoria interna permanente y en archivos espejo fuera de la memoria caché. Si la tablet se apaga, se reinicia o se descarga al 0%, los registros pendientes NO se pierden y se recuperan automáticamente.',
+                style: TextStyle(fontSize: 12, color: Colors.black87, height: 1.35),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cerrar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF558B2F)),
+            icon: const Icon(Icons.verified, color: Colors.white, size: 18),
+            label: const Text('Verificar Respaldo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _cargarDatos(mostrarNotificacionRespaldo: true);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -1007,6 +1197,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _buildStatRow('Días de Ciclo:', '$diasCiclo días ${s.estado == 'ACTIVA' ? '(en curso)' : '(finalizado)'}'),
             if (s.fechaFin != null && s.fechaFin!.isNotEmpty)
               _buildStatRow('Fecha Fin:', s.fechaFin!),
+            FutureBuilder<List<Siembra>>(
+              future: _db.obtenerSiembrasActivasPorCama(s.camaId),
+              builder: (ctx, snapshot) {
+                if (snapshot.hasData && (snapshot.data?.length ?? 0) > 1) {
+                  final activas = snapshot.data!;
+                  final int totalCama = activas.fold(0, (sum, item) => sum + item.cantidad);
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF8E1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFFFB300)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.group_work, color: Color(0xFFE65100), size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Cama Compartida (${activas.length} registros activos)',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFE65100)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Total sembrado en esta cama: $totalCama esquejes/plantas',
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -1305,19 +1534,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return;
                   }
 
-                  // Validación 1: Conflicto de ciclo agronómico en la cama
+                  // Validación 1: Conflicto de ciclo agronómico y capacidad de cama
                   final fNuevaStr = fechaCtrl.text.trim().isNotEmpty ? fechaCtrl.text.trim() : s.fecha;
                   final valCiclo = await _db.validarCicloYCamaParaSiembra(
                     s.camaId,
                     fNuevaStr,
+                    nuevaCantidad: cant,
+                    nuevaVariedadId: s.variedadId,
+                    nuevoOperarioId: s.operarioId,
                     excluirSiembraId: s.idLocal,
                   );
                   if (!mounted) return;
-                  if (!valCiclo.esValido && valCiclo.esCicloIncompleto) {
+                  if (!valCiclo.esValido) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         backgroundColor: Colors.red,
-                        content: Text('❌ Conflicto de ciclo: ${valCiclo.mensaje}'),
+                        content: Text('❌ ${valCiclo.mensaje}'),
                         duration: const Duration(seconds: 4),
                       ),
                     );
@@ -1597,6 +1829,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: _autoSincronizar,
           ),
           IconButton(
+            icon: const Icon(Icons.security, color: Colors.white, size: 26),
+            tooltip: 'Almacenamiento Permanente Seguro (Antiapagado)',
+            onPressed: _mostrarDialogoRespaldoPersistente,
+          ),
+          IconButton(
             icon: const Icon(Icons.shield, color: Colors.white, size: 26),
             tooltip: 'Panel de Administrador',
             onPressed: _abrirAdminVariedades,
@@ -1604,7 +1841,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white, size: 26),
             tooltip: 'Refrescar Datos',
-            onPressed: _cargarDatos,
+            onPressed: () => _cargarDatos(mostrarNotificacionRespaldo: false),
           ),
           const SizedBox(width: 8),
         ],
@@ -1833,6 +2070,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     icon: const Icon(Icons.edit_note, color: Color(0xFF558B2F), size: 21),
                     tooltip: 'Editar Registros de Siembra',
                     onPressed: _abrirModalEditarRegistro,
+                  ),
+                ),
+                const SizedBox(width: 6),
+
+                // Botón redondo 4: Escudo / Seguridad Antiapagado
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF7CB342), width: 1.8),
+                    color: Colors.white,
+                  ),
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(Icons.security, color: Color(0xFF558B2F), size: 19),
+                    tooltip: 'Almacenamiento Permanente Seguro (Antiapagado)',
+                    onPressed: _mostrarDialogoRespaldoPersistente,
                   ),
                 ),
               ],

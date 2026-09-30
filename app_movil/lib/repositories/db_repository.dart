@@ -1,5 +1,6 @@
 import 'package:app_movil/database/local_db.dart';
 import 'package:app_movil/models/entidades.dart';
+import 'package:app_movil/services/persistent_backup_service.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Excepción lanzada cuando una operación viola las restricciones agronómicas de densidad o ciclos
@@ -16,9 +17,17 @@ class ValidacionCicloResultado {
   final bool esValido;
   final bool esCicloActivo; // La cama ya tiene una siembra ACTIVA
   final bool esCicloIncompleto; // La cama tuvo una siembra que no ha cumplido los días mínimos requeridos
+  final bool esCamaLlena; // La cama alcanzó el 100% de su capacidad agronómica
+  final bool esCamaCompartida; // La cama tiene siembras activas pero aún tiene cupo disponible
   final String mensaje;
   final Siembra? siembraPrevia;
+  final List<Siembra> siembrasActivas;
   final String? variedadPreviaNombre;
+  final List<String> variedadesPresentes;
+  final List<String> operariosPresentes;
+  final int cantidadOcupada;
+  final int limiteMaximo;
+  final int cupoDisponible;
   final int diasTranscurridos;
   final int diasRequeridos;
   final int diasFaltantes;
@@ -28,9 +37,17 @@ class ValidacionCicloResultado {
     required this.esValido,
     this.esCicloActivo = false,
     this.esCicloIncompleto = false,
+    this.esCamaLlena = false,
+    this.esCamaCompartida = false,
     required this.mensaje,
     this.siembraPrevia,
+    this.siembrasActivas = const [],
     this.variedadPreviaNombre,
+    this.variedadesPresentes = const [],
+    this.operariosPresentes = const [],
+    this.cantidadOcupada = 0,
+    this.limiteMaximo = 3600,
+    this.cupoDisponible = 3600,
     this.diasTranscurridos = 0,
     this.diasRequeridos = 0,
     this.diasFaltantes = 0,
@@ -359,7 +376,7 @@ class DbRepository {
     return result.map((json) => Cama.fromMap(json)).toList();
   }
 
-  /// Retorna los IDs de las camas que tienen una siembra ACTIVA (ocupadas)
+  /// Retorna los IDs de las camas que tienen su capacidad 100% llena en el ciclo activo
   Future<Set<int>> obtenerIdsCamasOcupadas({String? bloqueCodigo}) async {
     final db = await LocalDatabase.instance.database;
     String whereClause = "estado = 'ACTIVA'";
@@ -368,17 +385,52 @@ class DbRepository {
       whereClause += ' AND bloque_codigo = ?';
       whereArgs.add(bloqueCodigo);
     }
-    final result = await db.query(
+    final siembras = await db.query(
       'tb_siembras',
-      columns: ['cama_id'],
       where: whereClause,
       whereArgs: whereArgs,
     );
-    return result.map((row) => row['cama_id'] as int).toSet();
+
+    if (siembras.isEmpty) return {};
+
+    // Agrupar siembras por cama_id y acumular cantidades
+    final Map<int, int> cantidadPorCama = {};
+    final Map<int, List<int>> variedadesPorCama = {};
+    for (final s in siembras) {
+      final camaId = s['cama_id'] as int;
+      final cant = s['cantidad'] as int? ?? 0;
+      final varId = s['variedad_id'] as int;
+      cantidadPorCama[camaId] = (cantidadPorCama[camaId] ?? 0) + cant;
+      variedadesPorCama.putIfAbsent(camaId, () => []).add(varId);
+    }
+
+    final Set<int> camasLlenas = {};
+    for (final entry in cantidadPorCama.entries) {
+      final camaId = entry.key;
+      final totalCant = entry.value;
+      final varIds = variedadesPorCama[camaId] ?? [];
+
+      int limite = 3600;
+      for (final vid in varIds) {
+        final vRows = await db.query('tb_variedades', where: 'id = ?', whereArgs: [vid], limit: 1);
+        if (vRows.isNotEmpty) {
+          final v = Variedad.fromMap(vRows.first);
+          final cfg = await obtenerConfigAgronomicaParaVariedad(v);
+          final limVar = v.limiteEsquejes ?? cfg.limiteEsquejes;
+          if (limVar < limite) limite = limVar;
+        }
+      }
+
+      if (totalCant >= limite) {
+        camasLlenas.add(camaId);
+      }
+    }
+
+    return camasLlenas;
   }
 
-  /// Retorna la siembra activa para una cama específica si existe
-  Future<Siembra?> obtenerSiembraActivaPorCama(int camaId, {int? excluirSiembraId}) async {
+  /// Retorna TODAS las siembras activas en una cama (soporta multisembradores y multi-variedad)
+  Future<List<Siembra>> obtenerSiembrasActivasPorCama(int camaId, {int? excluirSiembraId}) async {
     final db = await LocalDatabase.instance.database;
     String whereClause = "cama_id = ? AND estado = 'ACTIVA'";
     List<dynamic> whereArgs = [camaId];
@@ -390,10 +442,16 @@ class DbRepository {
       'tb_siembras',
       where: whereClause,
       whereArgs: whereArgs,
-      limit: 1,
+      orderBy: 'id_local ASC',
     );
-    if (result.isNotEmpty) {
-      return Siembra.fromMap(result.first);
+    return result.map((row) => Siembra.fromMap(row)).toList();
+  }
+
+  /// Retorna la primera siembra activa para una cama específica si existe (retrocompatibilidad)
+  Future<Siembra?> obtenerSiembraActivaPorCama(int camaId, {int? excluirSiembraId}) async {
+    final activas = await obtenerSiembrasActivasPorCama(camaId, excluirSiembraId: excluirSiembraId);
+    if (activas.isNotEmpty) {
+      return activas.first;
     }
     return null;
   }
@@ -420,50 +478,149 @@ class DbRepository {
     return null;
   }
 
-  /// Valida de forma estricta las restricciones de ciclo agronómico y disponibilidad para una cama
+  /// Valida de forma estricta las restricciones agronómicas de capacidad y ciclo de cama,
+  /// permitiendo explícitamente multisembradores y multi-variedad en la misma cama hasta agotar el cupo agronómico.
   Future<ValidacionCicloResultado> validarCicloYCamaParaSiembra(
     int camaId,
     String fechaNuevaStr, {
+    int? nuevaCantidad,
+    int? nuevaVariedadId,
+    int? nuevoOperarioId,
     int? excluirSiembraId,
   }) async {
     final db = await LocalDatabase.instance.database;
     final fechaNueva = parsearFechaSiembra(fechaNuevaStr) ?? DateTime.now();
 
-    // 1. Verificar si existe siembra ACTIVA
-    final sActiva = await obtenerSiembraActivaPorCama(camaId, excluirSiembraId: excluirSiembraId);
-    if (sActiva != null) {
-      final fInicio = parsearFechaSiembra(sActiva.fecha) ?? DateTime.now();
-      
-      // Consultar variedad previa y su configuración
-      final vars = await db.query('tb_variedades', where: 'id = ?', whereArgs: [sActiva.variedadId], limit: 1);
-      final varPrevia = vars.isNotEmpty ? Variedad.fromMap(vars.first) : null;
-      final cfgVar = await obtenerConfigAgronomicaParaVariedad(varPrevia);
-      final int diasReq = varPrevia?.diasCiclo ?? cfgVar.diasCiclo;
+    // 1. Consultar configuración de la nueva variedad (si fue especificada)
+    Variedad? nuevaVariedad;
+    ConfigAgronomica? cfgNuevaVariedad;
+    if (nuevaVariedadId != null) {
+      final vRows = await db.query('tb_variedades', where: 'id = ?', whereArgs: [nuevaVariedadId], limit: 1);
+      if (vRows.isNotEmpty) {
+        nuevaVariedad = Variedad.fromMap(vRows.first);
+        cfgNuevaVariedad = await obtenerConfigAgronomicaParaVariedad(nuevaVariedad);
+      }
+    }
 
+    // 2. Obtener TODAS las siembras ACTIVAS en la cama (soporte multisembradores y multi-variedad)
+    final siembrasActivas = await obtenerSiembrasActivasPorCama(camaId, excluirSiembraId: excluirSiembraId);
+
+    if (siembrasActivas.isNotEmpty) {
+      // Calcular cantidad acumulada sembrada actualmente en la cama
+      final int totalPlantado = siembrasActivas.fold(0, (sum, s) => sum + s.cantidad);
+
+      // Recopilar información de variedades y sembradores presentes
+      final Set<String> nombresVariedades = {};
+      final Set<String> nombresOperarios = {};
+      int limiteCama = nuevaVariedad?.limiteEsquejes ?? cfgNuevaVariedad?.limiteEsquejes ?? 3600;
+      int maxDiasCicloReq = nuevaVariedad?.diasCiclo ?? cfgNuevaVariedad?.diasCiclo ?? 75;
+
+      for (final s in siembrasActivas) {
+        final vRows = await db.query('tb_variedades', where: 'id = ?', whereArgs: [s.variedadId], limit: 1);
+        if (vRows.isNotEmpty) {
+          final v = Variedad.fromMap(vRows.first);
+          nombresVariedades.add(v.nombre);
+          final cfg = await obtenerConfigAgronomicaParaVariedad(v);
+          final int limV = v.limiteEsquejes ?? cfg.limiteEsquejes;
+          if (limV < limiteCama) limiteCama = limV;
+          final int dCiclo = v.diasCiclo ?? cfg.diasCiclo;
+          if (dCiclo > maxDiasCicloReq) maxDiasCicloReq = dCiclo;
+        } else {
+          nombresVariedades.add('Variedad #${s.variedadId}');
+        }
+
+        final opRows = await db.query('tb_operarios', where: 'id = ?', whereArgs: [s.operarioId], limit: 1);
+        if (opRows.isNotEmpty) {
+          final op = Operario.fromMap(opRows.first);
+          nombresOperarios.add(op.nombreCompleto);
+        } else {
+          nombresOperarios.add('Operario #${s.operarioId}');
+        }
+      }
+
+      // Fecha de la siembra inicial en el ciclo activo actual
+      final fInicio = parsearFechaSiembra(siembrasActivas.first.fecha) ?? DateTime.now();
       int diasTrans = fechaNueva.difference(fInicio).inDays;
       if (diasTrans < 0) diasTrans = 0;
-      final int diasFalt = (diasReq - diasTrans) > 0 ? (diasReq - diasTrans) : 0;
-      final fechaMin = fInicio.add(Duration(days: diasReq));
+      final int diasFalt = (maxDiasCicloReq - diasTrans) > 0 ? (maxDiasCicloReq - diasTrans) : 0;
+      final fechaMin = fInicio.add(Duration(days: maxDiasCicloReq));
 
-      // Si aún NO ha cumplido el ciclo requerido, bloquear la resiembra
-      if (diasTrans < diasReq) {
-        final fechaMinStr = "${fechaMin.day.toString().padLeft(2, '0')}/${fechaMin.month.toString().padLeft(2, '0')}/${fechaMin.year}";
+      // Si aún está dentro del período de ciclo activo
+      if (diasTrans < maxDiasCicloReq) {
+        final int cupoDisponible = (limiteCama - totalPlantado) > 0 ? (limiteCama - totalPlantado) : 0;
+
+        // Caso A: Cama al 100% de capacidad agronómica (LLENA)
+        if (cupoDisponible <= 0) {
+          final fechaMinStr = "${fechaMin.day.toString().padLeft(2, '0')}/${fechaMin.month.toString().padLeft(2, '0')}/${fechaMin.year}";
+          return ValidacionCicloResultado(
+            esValido: false,
+            esCicloActivo: true,
+            esCamaLlena: true,
+            esCamaCompartida: false,
+            mensaje: 'Restricción Agronómica: La cama ya alcanzó el cupo máximo permitido ($totalPlantado de $limiteCama plantas) con siembras de ${nombresVariedades.join(", ")} por ${nombresOperarios.join(", ")}. Han transcurrido $diasTrans de $maxDiasCicloReq días de ciclo (faltan $diasFalt días). Cama disponible a partir del $fechaMinStr.',
+            siembraPrevia: siembrasActivas.first,
+            siembrasActivas: siembrasActivas,
+            variedadPreviaNombre: nombresVariedades.join(", "),
+            variedadesPresentes: nombresVariedades.toList(),
+            operariosPresentes: nombresOperarios.toList(),
+            cantidadOcupada: totalPlantado,
+            limiteMaximo: limiteCama,
+            cupoDisponible: 0,
+            diasTranscurridos: diasTrans,
+            diasRequeridos: maxDiasCicloReq,
+            diasFaltantes: diasFalt,
+            fechaMinimaPermitida: fechaMin,
+          );
+        }
+
+        // Caso B: Cama con cupo disponible, pero la cantidad solicitada supera el cupo restante
+        if (nuevaCantidad != null && nuevaCantidad > cupoDisponible) {
+          return ValidacionCicloResultado(
+            esValido: false,
+            esCicloActivo: true,
+            esCamaLlena: false,
+            esCamaCompartida: true,
+            mensaje: 'Límite agronómico de cama excedido: La cama ya tiene $totalPlantado plantas sembradas de un máximo de $limiteCama. Solo queda un cupo disponible de $cupoDisponible plantas y se intentó sembrar $nuevaCantidad.',
+            siembraPrevia: siembrasActivas.first,
+            siembrasActivas: siembrasActivas,
+            variedadPreviaNombre: nombresVariedades.join(", "),
+            variedadesPresentes: nombresVariedades.toList(),
+            operariosPresentes: nombresOperarios.toList(),
+            cantidadOcupada: totalPlantado,
+            limiteMaximo: limiteCama,
+            cupoDisponible: cupoDisponible,
+            diasTranscurridos: diasTrans,
+            diasRequeridos: maxDiasCicloReq,
+            diasFaltantes: diasFalt,
+            fechaMinimaPermitida: fechaMin,
+          );
+        }
+
+        // Caso C: Cama compartida con cupo disponible (se permite sembrar nueva variedad o nuevo sembrador)
         return ValidacionCicloResultado(
-          esValido: false,
+          esValido: true,
           esCicloActivo: true,
-          mensaje: 'Restricción de Ciclo Agronómico: La cama tiene una siembra de ${varPrevia?.nombre ?? "Variedad #${sActiva.variedadId}"} (iniciada el ${sActiva.fecha}) que requiere $diasReq días de ciclo. Solo han transcurrido $diasTrans días (faltan $diasFalt días). Estará disponible el $fechaMinStr.',
-          siembraPrevia: sActiva,
-          variedadPreviaNombre: varPrevia?.nombre,
+          esCamaLlena: false,
+          esCamaCompartida: true,
+          mensaje: 'Cama compartida disponible: $totalPlantado de $limiteCama plantas ocupadas. Cupo disponible: $cupoDisponible plantas (${nombresVariedades.join(", ")} por ${nombresOperarios.join(", ")}).',
+          siembraPrevia: siembrasActivas.first,
+          siembrasActivas: siembrasActivas,
+          variedadPreviaNombre: nombresVariedades.join(", "),
+          variedadesPresentes: nombresVariedades.toList(),
+          operariosPresentes: nombresOperarios.toList(),
+          cantidadOcupada: totalPlantado,
+          limiteMaximo: limiteCama,
+          cupoDisponible: cupoDisponible,
           diasTranscurridos: diasTrans,
-          diasRequeridos: diasReq,
+          diasRequeridos: maxDiasCicloReq,
           diasFaltantes: diasFalt,
           fechaMinimaPermitida: fechaMin,
         );
       }
-      // Si diasTrans >= diasReq: El ciclo agronómico YA SE CUMPLIÓ. Se permite la siembra y se limpiará la anterior.
+      // Si diasTrans >= maxDiasCicloReq: El ciclo agronómico previo ya concluyó. La cama se libera.
     }
 
-    // 2. Verificar si la última siembra registrada en la cama ha cumplido el ciclo de desarrollo
+    // 3. Si no hay siembras activas, verificar si la última siembra registrada finalizó recientemente y aún no cumple el ciclo
     final ultimaSiembra = await obtenerUltimaSiembraPorCama(camaId, excluirSiembraId: excluirSiembraId);
     if (ultimaSiembra != null) {
       final fInicio = parsearFechaSiembra(ultimaSiembra.fecha);
@@ -484,7 +641,7 @@ class DbRepository {
           return ValidacionCicloResultado(
             esValido: false,
             esCicloIncompleto: true,
-            mensaje: 'Restricción de Ciclo Agronómico: La siembra previa de ${varPrevia?.nombre ?? "Variedad #${ultimaSiembra.variedadId}"} (iniciada el ${ultimaSiembra.fecha}) requiere un ciclo mínimo de $diasReq días. Solo han transcurrido $diasTrans días (faltan $diasFalt días). La cama estará disponible a partir del $fechaMinStr.',
+            mensaje: 'Restricción de Ciclo Agronómico: La siembra previa de ${varPrevia?.nombre ?? "Variedad #${ultimaSiembra.variedadId}"} (iniciada el ${ultimaSiembra.fecha}) requiere un ciclo mínimo de $diasReq días. Han transcurrido $diasTrans días (faltan $diasFalt días). La cama estará disponible a partir del $fechaMinStr.',
             siembraPrevia: ultimaSiembra,
             variedadPreviaNombre: varPrevia?.nombre,
             diasTranscurridos: diasTrans,
@@ -496,9 +653,22 @@ class DbRepository {
       }
     }
 
+    // 4. Cama totalmente libre y disponible
+    final int limiteDefault = nuevaVariedad?.limiteEsquejes ?? cfgNuevaVariedad?.limiteEsquejes ?? 3600;
+    if (nuevaCantidad != null && nuevaCantidad > limiteDefault) {
+      return ValidacionCicloResultado(
+        esValido: false,
+        mensaje: 'Límite agronómico excedido: La cantidad ingresada ($nuevaCantidad) supera el máximo de $limiteDefault plantas para ${nuevaVariedad?.nombre ?? "el cultivo"}.',
+        limiteMaximo: limiteDefault,
+        cupoDisponible: limiteDefault,
+      );
+    }
+
     return ValidacionCicloResultado(
       esValido: true,
       mensaje: 'Cama disponible para siembra y ciclo agronómico cumplido.',
+      limiteMaximo: limiteDefault,
+      cupoDisponible: limiteDefault,
     );
   }
 
@@ -527,8 +697,14 @@ class DbRepository {
   Future<int> registrarSiembraOffline(Siembra siembra) async {
     final db = await LocalDatabase.instance.database;
 
-    // 1. Validación de Ciclo Agronómico y Cama Activa
-    final validacionCiclo = await validarCicloYCamaParaSiembra(siembra.camaId, siembra.fecha);
+    // 1. Validación de Ciclo Agronómico y Capacidad de Cama (soporte multisembradores y multi-variedad)
+    final validacionCiclo = await validarCicloYCamaParaSiembra(
+      siembra.camaId,
+      siembra.fecha,
+      nuevaCantidad: siembra.cantidad,
+      nuevaVariedadId: siembra.variedadId,
+      nuevoOperarioId: siembra.operarioId,
+    );
     if (!validacionCiclo.esValido) {
       throw AgronomicValidationException(validacionCiclo.mensaje);
     }
@@ -577,7 +753,14 @@ class DbRepository {
       map['cont'] = null;
     }
 
-    return await db.insert('tb_siembras', map);
+    if (map['uuid'] == null || map['uuid'].toString().trim().isEmpty) {
+      map['uuid'] = 'siembra-${DateTime.now().millisecondsSinceEpoch}-${siembra.camaId}';
+    }
+
+    final id = await db.insert('tb_siembras', map);
+    await LocalDatabase.instance.checkpoint();
+    await PersistentBackupService.instance.resguardarSiembras(dbExecutor: db);
+    return id;
   }
 
   /// Elimina de la base de datos local las siembras de una cama que ya hayan cumplido su ciclo agronómico
@@ -614,6 +797,10 @@ class DbRepository {
       }
 
       if (debeEliminarse && s.idLocal != null) {
+        // SEGURIDAD: Nunca eliminar automáticamente siembras pendientes de sincronizar
+        if (s.sincronizado == 0) {
+          continue;
+        }
         if (s.sincronizado == 1 && s.uuid != null && s.uuid!.isNotEmpty) {
           try {
             await db.insert('tb_eliminaciones_pendientes', {
@@ -625,6 +812,11 @@ class DbRepository {
         await db.delete('tb_siembras', where: 'id_local = ?', whereArgs: [s.idLocal]);
         eliminadas++;
       }
+    }
+
+    if (eliminadas > 0) {
+      await LocalDatabase.instance.checkpoint();
+      await PersistentBackupService.instance.resguardarSiembras(dbExecutor: db);
     }
 
     return eliminadas;
@@ -643,6 +835,8 @@ class DbRepository {
       where: 'id_local = ?',
       whereArgs: [idLocal],
     );
+    await LocalDatabase.instance.checkpoint();
+    await PersistentBackupService.instance.resguardarSiembras(dbExecutor: db);
   }
 
   Future<List<Siembra>> obtenerSiembrasPendientesSync() async {
@@ -659,6 +853,8 @@ class DbRepository {
       where: 'id_local = ?',
       whereArgs: [idLocal],
     );
+    await LocalDatabase.instance.checkpoint();
+    await PersistentBackupService.instance.resguardarSiembras(dbExecutor: db);
   }
 
   Future<List<Siembra>> obtenerHistorialSiembras() async {
@@ -690,6 +886,8 @@ class DbRepository {
       where: 'id_local = ?',
       whereArgs: [idLocal],
     );
+    await LocalDatabase.instance.checkpoint();
+    await PersistentBackupService.instance.resguardarSiembras(dbExecutor: db);
   }
 
   /// Actualiza los datos de un registro de siembra en la base de datos local SQLite
@@ -697,13 +895,16 @@ class DbRepository {
     if (siembra.idLocal == null) return;
     final db = await LocalDatabase.instance.database;
 
-    // 1. Validación de Ciclo Agronómico al actualizar
+    // 1. Validación de Ciclo Agronómico y Capacidad de Cama al actualizar
     final validacionCiclo = await validarCicloYCamaParaSiembra(
       siembra.camaId,
       siembra.fecha,
+      nuevaCantidad: siembra.cantidad,
+      nuevaVariedadId: siembra.variedadId,
+      nuevoOperarioId: siembra.operarioId,
       excluirSiembraId: siembra.idLocal,
     );
-    if (!validacionCiclo.esValido && validacionCiclo.esCicloIncompleto) {
+    if (!validacionCiclo.esValido) {
       throw AgronomicValidationException(validacionCiclo.mensaje);
     }
 
@@ -754,6 +955,8 @@ class DbRepository {
       where: 'id_local = ?',
       whereArgs: [siembra.idLocal],
     );
+    await LocalDatabase.instance.checkpoint();
+    await PersistentBackupService.instance.resguardarSiembras(dbExecutor: db);
   }
 
   /// Estadísticas de la base de datos SQLite offline local
@@ -918,6 +1121,12 @@ class DbRepository {
     } catch (_) {
       return [];
     }
+  }
+
+  /// Realiza la verificación y restauración manual desde el almacenamiento persistente
+  Future<ResultadoRecuperacion> restaurarDesdeRespaldoPersistente() async {
+    final db = await LocalDatabase.instance.database;
+    return await PersistentBackupService.instance.verificarYRecuperar(db);
   }
 }
 
