@@ -860,6 +860,57 @@ class DbRepository {
     await PersistentBackupService.instance.resguardarSiembras(dbExecutor: db);
   }
 
+  /// Integra en SQLite las siembras activas recibidas desde el servidor ('pull')
+  Future<int> integrarSiembrasDesdeServidor(List<dynamic> pullList) async {
+    final db = await LocalDatabase.instance.database;
+    int integradas = 0;
+    for (final item in pullList) {
+      if (item is! Map) continue;
+      final map = Map<String, dynamic>.from(item);
+      final uuid = map['uuid']?.toString();
+      if (uuid == null || uuid.isEmpty) continue;
+
+      final existing = await db.query('tb_siembras', where: 'uuid = ?', whereArgs: [uuid], limit: 1);
+      if (existing.isEmpty) {
+        final s = Siembra(
+          uuid: uuid,
+          fecha: map['fecha_str']?.toString() ?? '',
+          bloqueCodigo: map['bloque_codigo']?.toString() ?? '',
+          camaId: map['cama_id'] as int? ?? 0,
+          variedadId: map['variedad_id'] as int? ?? 0,
+          operarioId: map['operario_id'] as int? ?? 0,
+          cantidad: map['cantidad_esquejes'] as int? ?? 0,
+          lineas: map['lineas'] as int? ?? 14,
+          lote: map['lote']?.toString(),
+          proveedor: map['proveedor']?.toString(),
+          cont: map['conteo']?.toString(),
+          observaciones: map['observaciones']?.toString(),
+          estado: map['estado']?.toString() ?? 'ACTIVA',
+          fechaFin: map['fecha_fin_str']?.toString(),
+          sincronizado: 1,
+        );
+        await db.insert('tb_siembras', s.toMap(), conflictAlgorithm: ConflictAlgorithm.ignore);
+        integradas++;
+      } else {
+        await db.update(
+          'tb_siembras',
+          {
+            'estado': map['estado']?.toString() ?? 'ACTIVA',
+            'fecha_fin': map['fecha_fin_str']?.toString(),
+            'sincronizado': 1,
+          },
+          where: 'uuid = ?',
+          whereArgs: [uuid],
+        );
+      }
+    }
+    if (integradas > 0) {
+      await LocalDatabase.instance.checkpoint();
+      await PersistentBackupService.instance.resguardarSiembras(dbExecutor: db);
+    }
+    return integradas;
+  }
+
   Future<List<Siembra>> obtenerHistorialSiembras() async {
     final db = await LocalDatabase.instance.database;
     final result = await db.query('tb_siembras', orderBy: 'id_local DESC');

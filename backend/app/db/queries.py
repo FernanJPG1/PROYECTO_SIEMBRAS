@@ -666,22 +666,45 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                     WHERE uuid = ?
                 """, (s.estado, fecha_fin_dt, s.uuid))
                 
-                # Si se finalizó el ciclo, liberar la cama en t49_mcamas y limpiar t50_mcomposcama
+                # Si se finalizó el ciclo de esta variedad, remover SOLO esta variedad de t50_mcomposcama
+                # y recalcular t49_mcamas para mantener activas las demás variedades si es cama multivariedad.
                 if s.estado == "FINALIZADA" and cama_id:
                     fec_liberacion = fecha_fin_dt or extraer_fecha_pura(None)
                     try:
+                        if s.variedad_id:
+                            cursor.execute("DELETE FROM t50_mcomposcama WHERE t50_cama = ? AND t50_referencia = ?", (cama_id, s.variedad_id))
+                        else:
+                            cursor.execute("DELETE FROM t50_mcomposcama WHERE t50_cama = ?", (cama_id,))
+
+                        # Verificar si aún quedan otras variedades activas en la cama
                         cursor.execute("""
-                            UPDATE t49_mcamas 
-                            SET t49_referencia = NULL, t49_estactual = 7, t49_fecestado = ?, t49_actactual = 7, t49_fecactactual = ?
-                            WHERE t49_interno = ?
-                        """, (fec_liberacion, fec_liberacion, cama_id))
+                            SELECT c.t50_referencia, c.t50_pltasxlin, c.t50_lineas, v.t11_nombre 
+                            FROM t50_mcomposcama c
+                            LEFT JOIN t11_mcolorsseries v ON c.t50_referencia = v.t11_interno
+                            WHERE c.t50_cama = ?
+                        """, (cama_id,))
+                        restantes = cursor.fetchall()
+                        if restantes:
+                            tot_p = sum(float(r[1] or 0) for r in restantes)
+                            tot_l = sum(float(r[2] or 0) for r in restantes)
+                            if len(restantes) > 1:
+                                partes = [f"{str(r[3] or 'Var ' + str(r[0])).strip()} ({int(r[1] or 0)})" for r in restantes]
+                                obs = ("MULTIVARIEDAD: " + " + ".join(partes))[:250]
+                            else:
+                                obs = f":{str(restantes[0][3] or 'Var ' + str(restantes[0][0])).strip()};{int(tot_p)};{int(tot_l)};75"
+                            cursor.execute("""
+                                UPDATE t49_mcamas 
+                                SET t49_referencia = ?, t49_pltasxlin = ?, t49_lineas = ?, t49_obaserv = ?, t49_estactual = 1
+                                WHERE t49_interno = ?
+                            """, (restantes[0][0], tot_p, tot_l, obs, cama_id))
+                        else:
+                            cursor.execute("""
+                                UPDATE t49_mcamas 
+                                SET t49_referencia = NULL, t49_estactual = 7, t49_fecestado = ?, t49_actactual = 7, t49_fecactactual = ?, t49_pltasxlin = 0, t49_obaserv = NULL
+                                WHERE t49_interno = ?
+                            """, (fec_liberacion, fec_liberacion, cama_id))
                     except Exception as ex_free:
-                        logger.warning(f"No se pudo liberar cama {cama_id} en t49: {ex_free}")
-                    
-                    try:
-                        cursor.execute("DELETE FROM t50_mcomposcama WHERE t50_cama = ?", (cama_id,))
-                    except Exception as ex_del_t50:
-                        logger.warning(f"No se pudo limpiar composición t50 para cama {cama_id}: {ex_del_t50}")
+                        logger.warning(f"Aviso actualizando finalización para cama {cama_id}: {ex_free}")
 
                 insertadas += 1
                 continue
@@ -926,7 +949,7 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
 def eliminar_siembras_por_uuid(conn: pyodbc.Connection, uuids: List[str]) -> int:
     """
     Elimina registros de siembra de t_siembras_app según la lista de UUIDs eliminados en la app móvil.
-    También limpia la composición activa en t50_mcomposcama si corresponde.
+    Remueve únicamente la variedad específica en t50_mcomposcama, recalculando t49_mcamas si es multivariedad.
     """
     if not uuids:
         return 0
@@ -934,18 +957,49 @@ def eliminar_siembras_por_uuid(conn: pyodbc.Connection, uuids: List[str]) -> int
     eliminadas = 0
     for u in uuids:
         try:
-            cursor.execute("SELECT cama_id FROM t_siembras_app WHERE uuid = ?", (u,))
+            cursor.execute("SELECT cama_id, variedad_id FROM t_siembras_app WHERE uuid = ?", (u,))
             row = cursor.fetchone()
             c_id = row[0] if row else None
+            var_id = row[1] if row else None
 
             cursor.execute("DELETE FROM t_siembras_app WHERE uuid = ?", (u,))
             eliminadas += cursor.rowcount
 
             if c_id:
                 try:
-                    cursor.execute("DELETE FROM t50_mcomposcama WHERE t50_cama = ?", (c_id,))
-                except Exception:
-                    pass
+                    if var_id:
+                        cursor.execute("DELETE FROM t50_mcomposcama WHERE t50_cama = ? AND t50_referencia = ?", (c_id, var_id))
+                    else:
+                        cursor.execute("DELETE FROM t50_mcomposcama WHERE t50_cama = ?", (c_id,))
+
+                    cursor.execute("""
+                        SELECT c.t50_referencia, c.t50_pltasxlin, c.t50_lineas, v.t11_nombre 
+                        FROM t50_mcomposcama c
+                        LEFT JOIN t11_mcolorsseries v ON c.t50_referencia = v.t11_interno
+                        WHERE c.t50_cama = ?
+                    """, (c_id,))
+                    restantes = cursor.fetchall()
+                    if restantes:
+                        tot_p = sum(float(r[1] or 0) for r in restantes)
+                        tot_l = sum(float(r[2] or 0) for r in restantes)
+                        if len(restantes) > 1:
+                            partes = [f"{str(r[3] or 'Var ' + str(r[0])).strip()} ({int(r[1] or 0)})" for r in restantes]
+                            obs = ("MULTIVARIEDAD: " + " + ".join(partes))[:250]
+                        else:
+                            obs = f":{str(restantes[0][3] or 'Var ' + str(restantes[0][0])).strip()};{int(tot_p)};{int(tot_l)};75"
+                        cursor.execute("""
+                            UPDATE t49_mcamas 
+                            SET t49_referencia = ?, t49_pltasxlin = ?, t49_lineas = ?, t49_obaserv = ?, t49_estactual = 1
+                            WHERE t49_interno = ?
+                        """, (restantes[0][0], tot_p, tot_l, obs, c_id))
+                    else:
+                        cursor.execute("""
+                            UPDATE t49_mcamas 
+                            SET t49_referencia = NULL, t49_estactual = 7, t49_actactual = 7, t49_pltasxlin = 0, t49_obaserv = NULL
+                            WHERE t49_interno = ?
+                        """, (c_id,))
+                except Exception as ex_del_t50:
+                    logger.warning(f"Error recalculando tras eliminar variedad para cama {c_id}: {ex_del_t50}")
         except Exception as e:
             logger.warning(f"Error eliminando siembra uuid {u}: {e}")
     try:
@@ -954,6 +1008,51 @@ def eliminar_siembras_por_uuid(conn: pyodbc.Connection, uuids: List[str]) -> int
         pass
     logger.info(f"✓ {eliminadas} siembras eliminadas de Access por sincronización móvil.")
     return eliminadas
+
+def get_siembras_activas(conn: pyodbc.Connection) -> List[SiembraSync]:
+    """
+    Retorna todas las siembras activas registradas en Access (t_siembras_app)
+    para alimentar el 'pull' de sincronización bidireccional en las tablets.
+    """
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT uuid, bloque_codigo, cama_id, cama_codigo, variedad_id, operario_id,
+                   fecha_siembra, fecha_fin, cantidad_esquejes, lineas, lote, proveedor,
+                   conteo, observaciones, estado
+            FROM t_siembras_app
+            WHERE estado = 'ACTIVA'
+            ORDER BY fecha_siembra DESC
+        """)
+        rows = cursor.fetchall()
+        items = []
+        for r in rows:
+            f_dt = r[6]
+            f_str = f_dt.strftime("%d/%m/%Y") if isinstance(f_dt, datetime) else str(f_dt or "")
+            f_fin_dt = r[7]
+            f_fin_str = f_fin_dt.strftime("%d/%m/%Y") if isinstance(f_fin_dt, datetime) else (str(f_fin_dt) if f_fin_dt else None)
+            items.append(SiembraSync(
+                uuid=str(r[0]),
+                bloque_codigo=str(r[1] or ""),
+                cama_id=int(r[2]) if r[2] else None,
+                cama_codigo=str(r[3] or ""),
+                variedad_id=int(r[4]) if r[4] else None,
+                operario_id=int(r[5]) if r[5] else None,
+                fecha_str=f_str,
+                fecha_fin_str=f_fin_str,
+                cantidad_esquejes=int(r[8]) if r[8] else None,
+                lineas=int(r[9]) if r[9] else 14,
+                lote=str(r[10]) if r[10] else None,
+                proveedor=str(r[11]) if r[11] else None,
+                conteo=str(r[12]) if r[12] else None,
+                observaciones=str(r[13]) if r[13] else None,
+                estado=str(r[14] or "ACTIVA"),
+                version=1
+            ))
+        return items
+    except Exception as e:
+        logger.error(f"Error consultando siembras activas para pull: {e}")
+        return []
 
 # --- Tabla 187: Catálogo de Lirios (Proveedor, Contenedor y Lote) ---
 

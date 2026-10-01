@@ -23,11 +23,13 @@ def sync_siembras(
     if request.deletes:
         queries.eliminar_siembras_por_uuid(conn, request.deletes)
 
+    pull_items = queries.get_siembras_activas(conn)
+
     if not request.push:
         return SyncResponse(
             committed=[],
             conflicts=[],
-            pull=[],
+            pull=pull_items,
             server_timestamp=int(time.time() * 1000)
         )
 
@@ -40,9 +42,12 @@ def sync_siembras(
         for idx, s in enumerate(request.push)
     ]
 
+    # Refrescar pull tras inserciones
+    pull_items = queries.get_siembras_activas(conn)
+
     return SyncResponse(
         committed=committed_list,
         conflicts=[],
-        pull=[],
+        pull=pull_items,
         server_timestamp=int(time.time() * 1000)
     )

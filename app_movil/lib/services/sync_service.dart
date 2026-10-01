@@ -333,6 +333,15 @@ class SyncService {
         if (eliminaciones.isNotEmpty) {
           await dbRepo.limpiarEliminacionesPendientes(eliminaciones);
         }
+
+        // Integración de pull bidireccional (siembras activas desde el servidor)
+        try {
+          final respData = jsonDecode(response.body);
+          if (respData['pull'] != null && respData['pull'] is List) {
+            await dbRepo.integrarSiembrasDesdeServidor(respData['pull'] as List);
+          }
+        } catch (_) {}
+
         ultimoError = null;
         return true;
       } else {
