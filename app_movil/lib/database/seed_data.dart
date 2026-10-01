@@ -4399,7 +4399,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": "6543",
     "proveedor": "c.steam",
     "cont": "10",
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": null,
@@ -4417,7 +4417,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": null,
@@ -4435,7 +4435,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": null,
@@ -4453,7 +4453,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": "434356D",
     "proveedor": "ONINGS HOLLAND",
     "cont": "7",
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": null,
@@ -4489,7 +4489,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": "6543",
     "proveedor": "C. STEENVOORDEN B.V",
     "cont": "10",
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "97e69f1f-01ba-4c1f-9d43-fc1e0199082d",
@@ -4507,7 +4507,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": "4044",
     "proveedor": "ONINGS HOLLAND B.V.",
     "cont": "11",
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "853236fb-5e92-427a-b0b9-113669f98768",
@@ -4525,7 +4525,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": "5120",
     "proveedor": "VAN DEN BOS B.V.",
     "cont": "12",
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "12fdf3c7-e867-4ab0-b960-ca8c4672e8fb",
@@ -4543,7 +4543,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": "7890",
     "proveedor": "C. STEENVOORDEN B.V",
     "cont": "14",
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "12e41bdd-3fba-47bf-89b0-145d5bde067d",
@@ -4579,7 +4579,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": "6543",
     "proveedor": "C. STEENVOORDEN B.V",
     "cont": "10",
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "9f87e854-fb53-4df8-8e80-f413833b6024",
@@ -4615,7 +4615,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": "5120",
     "proveedor": "VAN DEN BOS B.V.",
     "cont": "12",
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "4974c0ff-b2cf-44af-9b52-4c3d4cb0c5e5",
@@ -4669,7 +4669,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "a01d25ba-6dc8-494f-b363-0800d1173fa4",
@@ -4687,7 +4687,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "ada070bb-3007-49a6-8f79-cb8ce3e06143",
@@ -4705,7 +4705,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "29123b66-4120-4f91-b1f2-6dc8047451e1",
@@ -4723,7 +4723,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "255af181-8f19-4725-8e2a-13521079fe77",
@@ -4741,7 +4741,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "b9b27273-7908-4bc6-a2ea-42f20c989cf4",
@@ -4759,7 +4759,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "b2136c94-d25c-4161-aff3-6f2406e6c8b0",
@@ -4777,7 +4777,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "d0fe91a9-ac7f-4f90-8b64-43d728e1adb2",
@@ -4795,7 +4795,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "bf241342-5830-4488-848e-1648e00dff74",
@@ -4831,7 +4831,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "ddf54a69-d529-42ed-93dd-cd3b78a1a8a0",
@@ -4885,7 +4885,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "1fca68c1-7641-4082-aaea-605f76dfb312",
@@ -4903,7 +4903,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "7d79ed4a-43b3-4581-834f-1cfe33b6936e",
@@ -4921,7 +4921,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "1451f8bc-70a0-4f63-a033-f978595120ef",
@@ -4939,7 +4939,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "55ed1714-4c00-4fe3-b71b-0305aeb329f5",
@@ -4957,7 +4957,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "e1d1b7f9-f2ff-4f5e-aece-8e08ba91c201",
@@ -4993,7 +4993,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "d119d1a8-ad07-4c2a-98c7-b8b5d486ad57",
@@ -5029,7 +5029,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "01eb64fe-d85b-4d2b-9ca4-10eccdffa02b",
@@ -5047,7 +5047,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "50f50165-37df-46a1-9552-c2a5d9639033",
@@ -5065,7 +5065,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "b64e61cb-b256-40e3-b5e9-72f3e4c9661e",
@@ -5083,7 +5083,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "62d633b4-b8ec-4533-ae2c-3ac01b50a4ae",
@@ -5101,7 +5101,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "9d2837b0-ba0d-4371-af3a-48beb12d5e9e",
@@ -5137,7 +5137,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "1075b1f9-7363-42b2-bb38-a82fc9fc7e63",
@@ -5173,7 +5173,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "7d42a25f-8dfe-4f70-8f40-ad3968a00943",
@@ -5191,7 +5191,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "65abf3d1-1a02-4125-99c4-8c9013872c08",
@@ -5209,7 +5209,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "b1977b04-ea57-461d-b3d8-80b4f65af00a",
@@ -5227,7 +5227,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "c5a83919-ca6f-4a9e-9128-5f59e4fe4ea7",
@@ -5245,7 +5245,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "89c2f73c-d141-46bb-89f6-ffece606400c",
@@ -5263,7 +5263,7 @@ final List<Map<String, dynamic>> kSeedSiembras = [
     "lote": null,
     "proveedor": null,
     "cont": null,
-    "sincronizado": 1,
+    "sincronizado": 0,
   },
   {
     "uuid": "39bad765-a5a7-4946-9ef3-e5418118ae15",

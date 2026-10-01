@@ -794,6 +794,53 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                 except Exception as ex_t102:
                     logger.warning(f"Advertencia insertando en t102: {ex_t102}")
 
+                # 4.1 PRESERVACIÓN ESTRICTA DE VARIEDADES PREVIAS EN CAMAS MULTIVARIEDAD
+                # Si t49_mcamas ya tenía una variedad activa previa (t49_referencia != s.variedad_id y activa),
+                # o si t_siembras_app tiene variedades activas del ciclo actual que no estén en t50_mcomposcama,
+                # preservarlas en t50_mcomposcama para que NUNCA se borre la variedad previa al ingresar una nueva.
+                try:
+                    cursor.execute("""
+                        SELECT t49_referencia, t49_pltasxlin, t49_lineas, t49_fecestado, t49_obaserv, t49_estactual
+                        FROM t49_mcamas 
+                        WHERE t49_interno = ?
+                    """, (cama_id,))
+                    t49_curr = cursor.fetchone()
+                    if t49_curr and t49_curr[0] and int(t49_curr[0]) != s.variedad_id:
+                        prev_var_id = int(t49_curr[0])
+                        # Solo si la siembra previa es de un ciclo vigente (menos de dias_limpieza días) o estado activo (1)
+                        prev_fecha_est = t49_curr[3]
+                        es_ciclo_vigente = True
+                        if prev_fecha_est and isinstance(prev_fecha_est, datetime):
+                            if (fecha_dt - prev_fecha_est).days > dias_limpieza:
+                                es_ciclo_vigente = False
+                        
+                        if es_ciclo_vigente:
+                            cursor.execute("SELECT COUNT(*) FROM t50_mcomposcama WHERE t50_cama = ? AND t50_referencia = ?", (cama_id, prev_var_id))
+                            ya_en_t50 = cursor.fetchone()
+                            if not ya_en_t50 or ya_en_t50[0] == 0:
+                                current_t50 += 1
+                                prev_plantas = float(t49_curr[1]) if t49_curr[1] and float(t49_curr[1]) > 0 else 1000.0
+                                prev_lineas = float(t49_curr[2]) if t49_curr[2] and float(t49_curr[2]) > 0 else 14.0
+                                prev_fec_ins = prev_fecha_est or fecha_dt
+                                prev_obs = t49_curr[4]
+                                cursor.execute("""
+                                    INSERT INTO t50_mcomposcama 
+                                    (t50_interno, t50_cama, t50_referencia, t50_lineas, t50_pltasxlin, t50_fechasiembra, t50_observac, t50_plantas_alt, t50_dias_ic)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+                                """, (
+                                    current_t50,
+                                    cama_id,
+                                    prev_var_id,
+                                    prev_lineas,
+                                    prev_plantas,
+                                    prev_fec_ins,
+                                    prev_obs,
+                                    prev_plantas
+                                ))
+                                logger.info(f"Variedad previa {prev_var_id} preservada en t50 para cama {cama_id}")
+                except Exception as ex_prev_var:
+                    logger.warning(f"Aviso preservando variedad previa para cama {cama_id}: {ex_prev_var}")
+
                 # 5. TABLA t50: t50_mcomposcama (Composición Activa de Cama)
                 try:
                     cursor.execute("""
