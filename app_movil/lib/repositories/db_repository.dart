@@ -779,20 +779,21 @@ class DbRepository {
       final s = Siembra.fromMap(row);
       bool debeEliminarse = false;
 
-      if (s.estado == 'FINALIZADA') {
-        debeEliminarse = true;
-      } else {
-        final fInicio = parsearFechaSiembra(s.fecha);
-        if (fInicio != null) {
-          final vars = await db.query('tb_variedades', where: 'id = ?', whereArgs: [s.variedadId], limit: 1);
-          final varObj = vars.isNotEmpty ? Variedad.fromMap(vars.first) : null;
-          final cfg = await obtenerConfigAgronomicaParaVariedad(varObj);
-          final diasReq = varObj?.diasCiclo ?? cfg.diasCiclo;
+      // REGLA ESTRICTA DE CAMAS MULTIVARIEDAD Y CICLO AGRONÓMICO:
+      // Al registrar otra variedad en una cama multivariedad, NUNCA se elimina el registro
+      // anterior si su ciclo aún no se ha cumplido.
+      // Únicamente si ya se cumplió la totalidad de los días de ciclo (diasTrans >= diasReq)
+      // se considera ciclo cumplido para su depuración.
+      final fInicio = parsearFechaSiembra(s.fecha);
+      if (fInicio != null) {
+        final vars = await db.query('tb_variedades', where: 'id = ?', whereArgs: [s.variedadId], limit: 1);
+        final varObj = vars.isNotEmpty ? Variedad.fromMap(vars.first) : null;
+        final cfg = await obtenerConfigAgronomicaParaVariedad(varObj);
+        final diasReq = varObj?.diasCiclo ?? cfg.diasCiclo;
 
-          final diasTrans = fechaRef.difference(fInicio).inDays;
-          if (diasTrans >= diasReq) {
-            debeEliminarse = true;
-          }
+        final diasTrans = fechaRef.difference(fInicio).inDays;
+        if (diasTrans >= diasReq) {
+          debeEliminarse = true;
         }
       }
 

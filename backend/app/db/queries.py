@@ -659,17 +659,26 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
 
             # Si es siembra ACTIVA y tenemos cama y variedad, registrar en las tablas empresariales
             if s.estado == "ACTIVA" and cama_id and s.variedad_id:
-                # Limpiar siembras previas de esta cama que hayan cumplido ciclo o estén finalizadas
+                # REGLA ESTRICTA DE CAMAS MULTIVARIEDAD Y CICLO AGRONÓMICO:
+                # Al registrar/sincronizar otra variedad en una cama multivariedad, NO se elimina el registro
+                # anterior si no ha cumplido el ciclo. Solo si se cumplió el ciclo completo se depura.
+                fecha_limite = fecha_dt - timedelta(days=dias_ciclo)
                 try:
-                    cursor.execute("DELETE FROM t50_mcomposcama WHERE t50_cama = ?", (cama_id,))
+                    # En t50_mcomposcama, SOLO eliminar siembras previas de esta cama cuya fecha de siembra
+                    # ya haya cumplido la totalidad del ciclo (fecha_siembra <= fecha_limite).
+                    # Las variedades activas concurrentes (multivariedad) permanecen intactas en t50.
+                    cursor.execute("""
+                        DELETE FROM t50_mcomposcama 
+                        WHERE t50_cama = ? AND t50_fechasiembra IS NOT NULL AND t50_fechasiembra <= ?
+                    """, (cama_id, fecha_limite))
                 except Exception as ex_t50_prev:
                     logger.warning(f"Aviso limpiando composición previa t50 para cama {cama_id}: {ex_t50_prev}")
 
                 try:
-                    fecha_limite = fecha_dt - timedelta(days=dias_ciclo)
+                    # En t_siembras_app, SOLO eliminar siembras con ciclo cumplido (fecha_siembra <= fecha_limite)
                     cursor.execute("""
                         DELETE FROM t_siembras_app 
-                        WHERE cama_id = ? AND uuid <> ? AND (estado = 'FINALIZADA' OR fecha_siembra <= ?)
+                        WHERE cama_id = ? AND uuid <> ? AND fecha_siembra IS NOT NULL AND fecha_siembra <= ?
                     """, (cama_id, s.uuid, fecha_limite))
                 except Exception as ex_app_prev:
                     logger.warning(f"Aviso limpiando siembras de ciclo cumplido en t_siembras_app para cama {cama_id}: {ex_app_prev}")

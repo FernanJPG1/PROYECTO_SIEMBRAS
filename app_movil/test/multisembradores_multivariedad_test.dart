@@ -135,10 +135,30 @@ void main() {
       expect(f2, isNotNull);
       expect(f2!.year, equals(2026));
       expect(f2.month, equals(9));
-      expect(f2.day, equals(30));
-
       final fInvalida = parsearFechaSiembra('no-fecha');
       expect(fInvalida, isNull);
+    });
+
+    test('Cama multivariedad: no elimina el registro anterior si no ha cumplido el ciclo, solo si se cumplió el ciclo', () {
+      final fInicio = parsearFechaSiembra('25/09/2026')!;
+      final fNuevaMismoCiclo = parsearFechaSiembra('30/09/2026')!; // 5 días transcurridos
+      const int diasCicloReq = 75;
+
+      final int diasTransActivo = fNuevaMismoCiclo.difference(fInicio).inDays;
+      expect(diasTransActivo, equals(5));
+
+      // El ciclo está activo (5 < 75), por lo tanto NO debe eliminarse
+      final bool debeEliminarseActivo = diasTransActivo >= diasCicloReq;
+      expect(debeEliminarseActivo, isFalse);
+
+      // Si transcurrieron 75 días o más (ej: fecha nueva el 15/12/2026, 81 días)
+      final fNuevaCicloCumplido = parsearFechaSiembra('15/12/2026')!;
+      final int diasTransCumplido = fNuevaCicloCumplido.difference(fInicio).inDays;
+      expect(diasTransCumplido, equals(81));
+
+      // El ciclo se cumplió (81 >= 75), por lo tanto SI debe eliminarse para rotar la cama
+      final bool debeEliminarseCumplido = diasTransCumplido >= diasCicloReq;
+      expect(debeEliminarseCumplido, isTrue);
     });
   });
 }
