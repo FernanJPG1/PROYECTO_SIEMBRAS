@@ -1,6 +1,6 @@
 import pyodbc
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 from app.models.schemas import (
     Bloque, Cama, FamiliaVariedad, SubvariedadSerie, ColorVariedad,
@@ -12,6 +12,50 @@ from pathlib import Path
 from app.db.connection import safe_backup_database, ensure_database_schema
 
 logger = logging.getLogger(__name__)
+
+def extraer_fecha_pura(valor_fecha, valor_str=None) -> datetime:
+    """
+    Extrae estrictamente la fecha (Año, Mes, Día) con hora 00:00:00.
+    Garantiza que en Microsoft Access el campo Date/Time no almacene hora,
+    mostrándose únicamente como 'DD/MM/YYYY'.
+    """
+    candidato_str = str(valor_str or "").strip()
+    if not candidato_str and isinstance(valor_fecha, str):
+        candidato_str = valor_fecha.strip()
+
+    if candidato_str:
+        if "/" in candidato_str:
+            partes = candidato_str.split("/")
+            if len(partes) == 3:
+                try:
+                    d, m, y = int(partes[0]), int(partes[1]), int(partes[2])
+                    if y < 100:
+                        y += 2000
+                    return datetime(y, m, d, 0, 0, 0)
+                except Exception:
+                    pass
+        elif "-" in candidato_str:
+            partes = candidato_str.split("T")[0].split(" ")[0].split("-")
+            if len(partes) == 3:
+                try:
+                    y, m, d = int(partes[0]), int(partes[1]), int(partes[2])
+                    return datetime(y, m, d, 0, 0, 0)
+                except Exception:
+                    pass
+
+    if isinstance(valor_fecha, (int, float)) and valor_fecha > 0:
+        segundos = valor_fecha / 1000.0 if valor_fecha > 1e11 else float(valor_fecha)
+        try:
+            # Primero intentar UTC (evita desfases de huso horario como UTC vs UTC-5)
+            dt_utc = datetime.fromtimestamp(segundos, tz=timezone.utc)
+            return datetime(dt_utc.year, dt_utc.month, dt_utc.day, 0, 0, 0)
+        except Exception:
+            dt_loc = datetime.fromtimestamp(segundos)
+            return datetime(dt_loc.year, dt_loc.month, dt_loc.day, 0, 0, 0)
+
+    now = datetime.now()
+    return datetime(now.year, now.month, now.day, 0, 0, 0)
+
 
 # --- Bloques (t17_mbloques) ---
 
@@ -540,8 +584,9 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
 
     for s in siembras:
         try:
-            fecha_dt = datetime.fromtimestamp(s.fecha_siembra / 1000) if s.fecha_siembra else datetime.now()
-            fecha_fin_dt = datetime.fromtimestamp(s.fecha_fin / 1000) if s.fecha_fin else None
+            # FORMATO DE FECHA ESTRICTO: Solo fecha sin hora (00:00:00)
+            fecha_dt = extraer_fecha_pura(s.fecha_siembra, getattr(s, 'fecha_str', None))
+            fecha_fin_dt = extraer_fecha_pura(s.fecha_fin, getattr(s, 'fecha_fin_str', None)) if (s.fecha_fin or getattr(s, 'fecha_fin_str', None)) else None
 
             # Determinar ID de cama en t49_mcamas si viene por código o por ID
             cama_id = s.cama_id
@@ -623,12 +668,13 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                 
                 # Si se finalizó el ciclo, liberar la cama en t49_mcamas y limpiar t50_mcomposcama
                 if s.estado == "FINALIZADA" and cama_id:
+                    fec_liberacion = fecha_fin_dt or extraer_fecha_pura(None)
                     try:
                         cursor.execute("""
                             UPDATE t49_mcamas 
                             SET t49_referencia = NULL, t49_estactual = 7, t49_fecestado = ?, t49_actactual = 7, t49_fecactactual = ?
                             WHERE t49_interno = ?
-                        """, (fecha_fin_dt or datetime.now(), fecha_fin_dt or datetime.now(), cama_id))
+                        """, (fec_liberacion, fec_liberacion, cama_id))
                     except Exception as ex_free:
                         logger.warning(f"No se pudo liberar cama {cama_id} en t49: {ex_free}")
                     

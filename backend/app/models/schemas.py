@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Union
 from datetime import datetime
 
 # --- Catálogos Maestros y Tablas Relacionales (bmempresarial2021.accdb) ---
@@ -133,8 +133,10 @@ class SiembraSync(BaseModel):
     cama_codigo: Optional[str] = None
     variedad_id: Optional[int] = None  # t11_interno
     operario_id: Optional[int] = None
-    fecha_siembra: int  # Epoch millis inicio ciclo
-    fecha_fin: Optional[int] = None  # Epoch millis fin de ciclo
+    fecha_siembra: Optional[Union[int, str]] = None  # Epoch millis inicio ciclo o string
+    fecha_fin: Optional[Union[int, str]] = None  # Epoch millis fin de ciclo o string
+    fecha_str: Optional[str] = None  # Fecha pura 'DD/MM/YYYY' o 'YYYY-MM-DD'
+    fecha_fin_str: Optional[str] = None  # Fecha fin pura 'DD/MM/YYYY'
     cantidad_esquejes: Optional[int] = None
     lineas: Optional[int] = 14
     lote: Optional[str] = None

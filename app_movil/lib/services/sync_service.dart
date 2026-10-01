@@ -260,14 +260,20 @@ class SyncService {
 
         final syncUuid = s.uuid ?? (s.idLocal != null ? 'siembra-local-${s.idLocal}' : _uuid.v4());
 
+        // Asegurar que la fecha se envíe como fecha pura (DD/MM/YYYY) y con timestamp al mediodía UTC
+        // para evitar desfases de huso horario (ej: UTC vs UTC-5)
+        final int fechaSiembraMiddayMillis = DateTime.utc(parsedDate.year, parsedDate.month, parsedDate.day, 12, 0, 0).millisecondsSinceEpoch;
+
         pushList.add({
           'uuid': syncUuid,
           'bloque_codigo': s.bloqueCodigo,
           'cama_id': s.camaId,
           'variedad_id': s.variedadId,
           'operario_id': s.operarioId,
-          'fecha_siembra': parsedDate.millisecondsSinceEpoch,
+          'fecha_siembra': fechaSiembraMiddayMillis,
+          'fecha_str': s.fecha,
           'fecha_fin': fechaFinMillis,
+          'fecha_fin_str': s.fechaFin,
           'cantidad_esquejes': s.cantidad,
           'lineas': s.lineas ?? 14,
           'lote': s.lote,

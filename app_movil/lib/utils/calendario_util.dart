@@ -31,6 +31,11 @@ class CalendarioUtil {
     return 'Sem. $sem';
   }
 
+  /// Formatea un DateTime a sólo fecha en formato estándar 'dd/MM/yyyy' (sin hora)
+  static String formatearFechaSolo(DateTime fecha) {
+    return "${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}";
+  }
+
   /// Parsea una cadena de fecha en formatos comunes (dd/MM/yyyy o yyyy-MM-dd)
   static DateTime? parsearFecha(String? fechaStr) {
     if (fechaStr == null || fechaStr.trim().isEmpty) return null;
