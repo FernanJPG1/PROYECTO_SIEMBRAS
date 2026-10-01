@@ -565,6 +565,15 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                     except Exception as ex_cama:
                         logger.warning(f"Error resolviendo cama por bloque/codigo: {ex_cama}")
 
+            if cama_id and not cama_cod:
+                try:
+                    cursor.execute("SELECT t49_cama FROM t49_mcamas WHERE t49_interno = ?", (cama_id,))
+                    crow = cursor.fetchone()
+                    if crow and crow[0]:
+                        cama_cod = str(crow[0]).strip()
+                except Exception:
+                    pass
+
             # Obtener tipo de cama de t49_mcamas
             tipo_cama = 2
             if cama_id:
@@ -659,14 +668,15 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
 
             # Si es siembra ACTIVA y tenemos cama y variedad, registrar en las tablas empresariales
             if s.estado == "ACTIVA" and cama_id and s.variedad_id:
-                # REGLA ESTRICTA DE CAMAS MULTIVARIEDAD Y CICLO AGRONÓMICO:
-                # Al registrar/sincronizar otra variedad en una cama multivariedad, NO se elimina el registro
-                # anterior si no ha cumplido el ciclo. Solo si se cumplió el ciclo completo se depura.
-                fecha_limite = fecha_dt - timedelta(days=dias_ciclo)
+                # REGLA ESTRICTA DE CAMAS MULTIVARIEDAD Y MULTISEMBRADOR:
+                # Al registrar/sincronizar otra variedad u operario en una cama multivariedad, NUNCA se elimina
+                # el registro anterior si su ciclo aún no ha concluido.
+                # Solo si han transcurrido los días de ciclo completos (mínimo 60 días) se depura el ciclo viejo.
+                dias_limpieza = max(dias_ciclo if dias_ciclo and dias_ciclo > 0 else 75, 60)
+                fecha_limite = fecha_dt - timedelta(days=dias_limpieza)
                 try:
-                    # En t50_mcomposcama, SOLO eliminar siembras previas de esta cama cuya fecha de siembra
-                    # ya haya cumplido la totalidad del ciclo (fecha_siembra <= fecha_limite).
-                    # Las variedades activas concurrentes (multivariedad) permanecen intactas en t50.
+                    # En t50_mcomposcama, SOLO eliminar siembras de cosechas anteriores cuyo ciclo ya concluyó.
+                    # Todas las variedades del ciclo actual (multivariedad) permanecen intactas.
                     cursor.execute("""
                         DELETE FROM t50_mcomposcama 
                         WHERE t50_cama = ? AND t50_fechasiembra IS NOT NULL AND t50_fechasiembra <= ?
@@ -674,14 +684,8 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                 except Exception as ex_t50_prev:
                     logger.warning(f"Aviso limpiando composición previa t50 para cama {cama_id}: {ex_t50_prev}")
 
-                try:
-                    # En t_siembras_app, SOLO eliminar siembras con ciclo cumplido (fecha_siembra <= fecha_limite)
-                    cursor.execute("""
-                        DELETE FROM t_siembras_app 
-                        WHERE cama_id = ? AND uuid <> ? AND fecha_siembra IS NOT NULL AND fecha_siembra <= ?
-                    """, (cama_id, s.uuid, fecha_limite))
-                except Exception as ex_app_prev:
-                    logger.warning(f"Aviso limpiando siembras de ciclo cumplido en t_siembras_app para cama {cama_id}: {ex_app_prev}")
+                # NOTA: NUNCA se elimina de t_siembras_app durante la inserción.
+                # Todas las siembras registradas se conservan en t_siembras_app para auditoría y trazabilidad.
 
                 # Incrementar contadores en memoria (ultra rápido)
                 current_t31 += 1
@@ -765,8 +769,30 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                     logger.warning(f"Advertencia insertando en t50: {ex_t50}")
 
                 # 6. TABLA t49: t49_mcamas (Maestro y Estado Actual de la Cama)
+                # En camas multivariedad, calcular el acumulado real de plantas y líneas
+                # y detallar las variedades en t49_obaserv para que sea 100% visible en Access.
                 try:
+                    total_cama_plantas = float(s.cantidad_esquejes) if s.cantidad_esquejes else 0.0
+                    total_cama_lineas = float(s.lineas) if s.lineas else 1.0
                     obs_resumen = f":{var_nombre};{s.cantidad_esquejes};{s.lineas or 14};{dias_ciclo}"
+
+                    try:
+                        cursor.execute("""
+                            SELECT c.t50_referencia, c.t50_pltasxlin, c.t50_lineas, v.t11_nombre 
+                            FROM t50_mcomposcama c
+                            LEFT JOIN t11_mcolorsseries v ON c.t50_referencia = v.t11_interno
+                            WHERE c.t50_cama = ?
+                        """, (cama_id,))
+                        compos_rows = cursor.fetchall()
+                        if compos_rows:
+                            total_cama_plantas = sum(float(r[1] or 0) for r in compos_rows)
+                            total_cama_lineas = sum(float(r[2] or 0) for r in compos_rows)
+                            if len(compos_rows) > 1:
+                                partes = [f"{str(r[3] or 'Var ' + str(r[0])).strip()} ({int(r[1] or 0)})" for r in compos_rows]
+                                obs_resumen = ("MULTIVARIEDAD: " + " + ".join(partes))[:250]
+                    except Exception as ex_calc:
+                        logger.warning(f"Aviso calculando multivariedad para t49: {ex_calc}")
+
                     cursor.execute("""
                         UPDATE t49_mcamas 
                         SET t49_referencia = ?, 
@@ -782,8 +808,8 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                         s.variedad_id,
                         fecha_dt,
                         fecha_dt,
-                        float(s.lineas) if s.lineas else 1.0,
-                        float(s.cantidad_esquejes) if s.cantidad_esquejes else 0.0,
+                        total_cama_lineas,
+                        total_cama_plantas,
                         obs_resumen,
                         cama_id
                     ))

@@ -783,16 +783,18 @@ class DbRepository {
       // Al registrar otra variedad en una cama multivariedad, NUNCA se elimina el registro
       // anterior si su ciclo aún no se ha cumplido.
       // Únicamente si ya se cumplió la totalidad de los días de ciclo (diasTrans >= diasReq)
-      // se considera ciclo cumplido para su depuración.
+      // y con un umbral agronómico real (mínimo 30 días) se considera ciclo cumplido para su depuración.
       final fInicio = parsearFechaSiembra(s.fecha);
       if (fInicio != null) {
         final vars = await db.query('tb_variedades', where: 'id = ?', whereArgs: [s.variedadId], limit: 1);
         final varObj = vars.isNotEmpty ? Variedad.fromMap(vars.first) : null;
         final cfg = await obtenerConfigAgronomicaParaVariedad(varObj);
-        final diasReq = varObj?.diasCiclo ?? cfg.diasCiclo;
+        final int diasReq = (varObj?.diasCiclo != null && varObj!.diasCiclo! > 0)
+            ? varObj.diasCiclo!
+            : (cfg.diasCiclo > 0 ? cfg.diasCiclo : 75);
 
         final diasTrans = fechaRef.difference(fInicio).inDays;
-        if (diasTrans >= diasReq) {
+        if (diasTrans >= diasReq && diasTrans >= 30) {
           debeEliminarse = true;
         }
       }
