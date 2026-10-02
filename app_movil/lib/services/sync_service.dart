@@ -68,16 +68,29 @@ class SyncService {
     return fallback;
   }
 
+  /// Normaliza cualquier URL dada para garantizar que termine en /api y no tenga barras sobrantes
+  static String normalizarUrl(String rawUrl) {
+    var url = rawUrl.trim();
+    while (url.endsWith('/')) {
+      url = url.substring(0, url.length - 1);
+    }
+    if (!url.endsWith('/api')) {
+      url = '$url/api';
+    }
+    return url;
+  }
+
   /// Guarda una nueva URL base para el servidor backend
   Future<void> setBaseUrl(String newUrl) async {
-    _cachedBaseUrl = newUrl.trim();
+    _cachedBaseUrl = normalizarUrl(newUrl);
     ultimaUrlProbada = _cachedBaseUrl;
     await dbRepo.guardarAjuste('server_url', _cachedBaseUrl!);
   }
 
   /// Prueba la conectividad con el backend
   Future<Map<String, dynamic>> probarConexion([String? customUrl]) async {
-    final targetUrl = customUrl?.trim() ?? await getBaseUrl();
+    final rawTarget = customUrl?.trim() ?? await getBaseUrl();
+    final targetUrl = normalizarUrl(rawTarget);
     final stopwatch = Stopwatch()..start();
     try {
       final clean = targetUrl.endsWith('/') ? targetUrl.substring(0, targetUrl.length - 1) : targetUrl;
@@ -85,7 +98,7 @@ class SyncService {
       final resp = await http.get(
         uri,
         headers: {'X-API-Key': apiKey},
-      ).timeout(const Duration(seconds: 4));
+      ).timeout(const Duration(seconds: 8));
       stopwatch.stop();
       if (resp.statusCode == 200) {
         return {
@@ -123,7 +136,8 @@ class SyncService {
         ultimoError = null;
         return true;
       }
-    } catch (e) {
+    } catch (e, st) {
+      print('[SyncService] Error al descargar catálogos desde $url: $e\n$st');
       // Si la URL inicial falló y no era la LAN, intentar con la LAN como respaldo
       if (url != fallbackLanUrl) {
         try {
@@ -188,7 +202,13 @@ class SyncService {
 
       // Catálogo Lirios Tabla 187 (Proveedor, Contenedor, Lote, Variedad)
       if (data['lirios_187'] != null) {
-        final List<LirioItem187> lirios187 = (data['lirios_187'] as List)
+        final rawLirios = data['lirios_187'];
+        final List listLirios = rawLirios is List
+            ? rawLirios
+            : (rawLirios is Map && rawLirios['registros'] is List
+                ? rawLirios['registros'] as List
+                : []);
+        final List<LirioItem187> lirios187 = listLirios
             .map((l) => LirioItem187.fromMap(l))
             .toList();
         await dbRepo.reemplazarLirios187(lirios187);

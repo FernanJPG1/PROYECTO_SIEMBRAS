@@ -475,6 +475,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       if (catalogosExito && subidaExito) {
         final urlUsada = syncSvc.ultimaUrlProbada ?? 'Servidor';
         ScaffoldMessenger.of(context).showSnackBar(
@@ -497,6 +498,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       } else {
         final String url = syncSvc.ultimaUrlProbada ?? 'http://192.168.1.39:8000/api';
+        final String detalleError = syncSvc.ultimoError != null ? '\nDetalle: ${syncSvc.ultimoError}' : '';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Column(
@@ -517,7 +519,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   'URL: $url\n'
                   '• En la PC, ejecuta "iniciar_backend.bat".\n'
-                  '• Verifica que la tablet y la PC estén en la misma red Wi-Fi.',
+                  '• Verifica que la tablet y la PC estén en la misma red Wi-Fi.$detalleError',
                   style: const TextStyle(fontSize: 12),
                 ),
               ],

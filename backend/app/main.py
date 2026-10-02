@@ -54,6 +54,9 @@ def startup_event():
     except Exception as e:
         logger.error(f"⚠️ Advertencia al conectar con la base de datos en el inicio: {e}")
 
+from app.api.endpoints import health
+
+app.include_router(health.router, tags=["Health"])
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/", include_in_schema=False)
