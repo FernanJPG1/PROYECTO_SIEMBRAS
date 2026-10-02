@@ -845,6 +845,29 @@ class DbRepository {
     await PersistentBackupService.instance.resguardarSiembras(dbExecutor: db);
   }
 
+  /// Libera de forma inmediata una cama finalizando todas las siembras activas o pendientes previas
+  /// por corte anticipado (factores climáticos/naturales) o descarte agronómico.
+  /// Retorna la cantidad de siembras que fueron finalizadas.
+  Future<int> liberarCamaPorCorteAnticipado(int camaId, String fechaFin) async {
+    final siembrasActivas = await obtenerSiembrasActivasPorCama(camaId);
+    int liberadas = 0;
+    for (final s in siembrasActivas) {
+      if (s.idLocal != null) {
+        await finalizarCicloSiembra(s.idLocal!, fechaFin);
+        liberadas++;
+      }
+    }
+    // Si no había siembras marcadas como activas pero la última siembra registrada tenía estado no finalizado:
+    final ultima = await obtenerUltimaSiembraPorCama(camaId);
+    if (ultima != null && ultima.estado != 'FINALIZADA' && ultima.idLocal != null) {
+      if (!siembrasActivas.any((s) => s.idLocal == ultima.idLocal)) {
+        await finalizarCicloSiembra(ultima.idLocal!, fechaFin);
+        liberadas++;
+      }
+    }
+    return liberadas;
+  }
+
   Future<List<Siembra>> obtenerSiembrasPendientesSync() async {
     final db = await LocalDatabase.instance.database;
     final result = await db.query('tb_siembras', where: 'sincronizado = ?', whereArgs: [0]);

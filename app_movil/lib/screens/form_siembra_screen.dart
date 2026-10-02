@@ -327,6 +327,7 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
             ? 'Cama con Capacidad Completa'
             : (esExcesoCupo ? 'Cupo de Cama Excedido' : 'Restricción de Ciclo Agronómico');
 
+        bool liberarYSembrar = false;
         await showDialog(
           context: context,
           barrierDismissible: false,
@@ -377,23 +378,70 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
                       Text('• Ocupación actual: ${validacionCiclo.cantidadOcupada} de ${validacionCiclo.limiteMaximo} plantas'),
                       Text('• Cupo disponible restante: ${validacionCiclo.cupoDisponible} plantas', style: TextStyle(fontWeight: FontWeight.bold, color: esExcesoCupo ? Colors.orange.shade900 : Colors.red)),
                       if (validacionCiclo.diasFaltantes > 0)
-                        Text('• Días faltantes para liberar ciclo: ${validacionCiclo.diasFaltantes} días', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                        Text('• Días faltantes según ciclo teórico: ${validacionCiclo.diasFaltantes} días', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
+                if (!esExcesoCupo) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF81C784)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.bolt, color: Color(0xFF2E7D32), size: 22),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '¿La flor de esta cama ya fue cortada por adelanto de ciclo natural? Puede liberarla y registrar la nueva siembra de inmediato.',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF1B5E20), fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
             actions: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: esExcesoCupo ? Colors.orange.shade800 : Colors.red),
+              TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text(esExcesoCupo ? 'Corregir Cantidad' : 'Entendido (Corregir Cama)', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text(esExcesoCupo ? 'Corregir Cantidad' : 'Cancelar / Corregir', style: TextStyle(color: Colors.grey.shade700)),
               ),
+              if (!esExcesoCupo)
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7D32),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+                  label: const Text(
+                    'Liberar y Sembrar Ya',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                  ),
+                  onPressed: () {
+                    liberarYSembrar = true;
+                    Navigator.pop(ctx);
+                  },
+                ),
             ],
           ),
         );
+
+        if (liberarYSembrar) {
+          await _db.liberarCamaPorCorteAnticipado(
+            _camaSeleccionada!.id,
+            _fechaSeleccionada!,
+          );
+        } else {
+          return; // BLOQUEAR REGISTRO SI CANCELÓ
+        }
       }
-      return; // BLOQUEAR REGISTRO
     }
 
     if (!mounted) return;
@@ -727,9 +775,72 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
                                                 borderRadius: BorderRadius.circular(6),
                                                 border: Border.all(color: info.esCicloActivo ? Colors.red.shade300 : Colors.orange.shade300),
                                               ),
-                                              child: Text(
-                                                info.mensaje,
-                                                style: TextStyle(fontSize: 11, color: info.esCicloActivo ? Colors.red.shade900 : Colors.orange.shade900),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    info.mensaje,
+                                                    style: TextStyle(fontSize: 11, color: info.esCicloActivo ? Colors.red.shade900 : Colors.orange.shade900),
+                                                  ),
+                                                  if (!info.esCamaCompartida) ...[
+                                                    const SizedBox(height: 6),
+                                                    SizedBox(
+                                                      width: double.infinity,
+                                                      child: ElevatedButton.icon(
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor: const Color(0xFF2E7D32),
+                                                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                                          elevation: 1,
+                                                        ),
+                                                        icon: const Icon(Icons.bolt, color: Colors.white, size: 16),
+                                                        label: const Text(
+                                                          '¿Cama ya cortada? Liberar Cama Ahora',
+                                                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                                        ),
+                                                        onPressed: () async {
+                                                          final confirmar = await showDialog<bool>(
+                                                            context: context,
+                                                            builder: (ctx) => AlertDialog(
+                                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                                              title: const Row(
+                                                                children: [
+                                                                  Icon(Icons.bolt, color: Color(0xFF2E7D32)),
+                                                                  SizedBox(width: 8),
+                                                                  Text('Liberar Cama', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                                                ],
+                                                              ),
+                                                              content: Text(
+                                                                '¿Desea marcar como cortada la siembra previa en Cama ${_camaSeleccionada!.cama} y liberarla de inmediato para sembrar hoy?',
+                                                                style: const TextStyle(fontSize: 13.5),
+                                                              ),
+                                                              actions: [
+                                                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                                                                ElevatedButton(
+                                                                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32)),
+                                                                  onPressed: () => Navigator.pop(ctx, true),
+                                                                  child: const Text('Sí, Liberar Cama', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          );
+                                                          if (confirmar == true) {
+                                                            await _db.liberarCamaPorCorteAnticipado(_camaSeleccionada!.id, _fechaSeleccionada ?? '');
+                                                            await _recargarCiclosCamas();
+                                                            if (context.mounted) {
+                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text('✓ Cama ${_camaSeleccionada!.cama} liberada. Ya puede registrar la nueva siembra.'),
+                                                                  backgroundColor: const Color(0xFF2E7D32),
+                                                                ),
+                                                              );
+                                                            }
+                                                          }
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
                                               ),
                                             );
                                           }

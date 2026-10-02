@@ -682,7 +682,8 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
           ? 'Cama con Capacidad Completa'
           : (esExcesoCupo ? 'Cupo de Cama Excedido' : 'Restricción de Ciclo Agronómico');
 
-      showDialog(
+      bool liberarYSembrar = false;
+      await showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
@@ -735,22 +736,70 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
                     Text('• Ocupación actual: ${validacionCiclo.cantidadOcupada} de ${validacionCiclo.limiteMaximo} plantas'),
                     Text('• Cupo disponible restante: ${validacionCiclo.cupoDisponible} plantas', style: TextStyle(color: esExcesoCupo ? Colors.orange.shade900 : Colors.red, fontWeight: FontWeight.bold)),
                     if (validacionCiclo.diasFaltantes > 0)
-                      Text('• Días faltantes para liberar la cama: ${validacionCiclo.diasFaltantes} días', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                      Text('• Días faltantes según ciclo teórico: ${validacionCiclo.diasFaltantes} días', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
+              if (!esExcesoCupo) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFF81C784)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.bolt, color: Color(0xFF2E7D32), size: 22),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '¿La flor de esta cama ya fue cortada por adelanto de ciclo natural? Puede liberarla y registrar la nueva siembra de inmediato.',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF1B5E20), fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
           actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: esExcesoCupo ? Colors.orange.shade800 : Colors.red),
+            TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text(esExcesoCupo ? 'Corregir Cantidad' : 'Entendido (Corregir Cama)', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: Text(esExcesoCupo ? 'Corregir Cantidad' : 'Cancelar / Corregir', style: TextStyle(color: Colors.grey.shade700)),
             ),
+            if (!esExcesoCupo)
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E7D32),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+                label: const Text(
+                  'Liberar y Sembrar Ya',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                ),
+                onPressed: () {
+                  liberarYSembrar = true;
+                  Navigator.pop(ctx);
+                },
+              ),
           ],
         ),
       );
-      return; // ESTRICTAMENTE BLOQUEADO POR CICLO O CUPO
+
+      if (liberarYSembrar) {
+        // Liberar la cama por corte anticipado en 1 toque
+        await _db.liberarCamaPorCorteAnticipado(
+          _camaSeleccionada!.id,
+          _fechaSeleccionada ?? '',
+        );
+      } else {
+        return; // El usuario canceló o va a corregir cama
+      }
     }
 
     // Validación 2: Verificar límite agronómico estricto fijado por el Administrador
@@ -1271,6 +1320,64 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
                                           info.mensaje,
                                           style: TextStyle(fontSize: 10.5, color: esActiva ? Colors.red.shade900 : Colors.brown.shade900),
                                         ),
+                                        if (!info.esCamaCompartida) ...[
+                                          const SizedBox(height: 6),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: ElevatedButton.icon(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF2E7D32),
+                                                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                                elevation: 1,
+                                              ),
+                                              icon: const Icon(Icons.bolt, color: Colors.white, size: 16),
+                                              label: const Text(
+                                                '¿Cama ya cortada? Liberar Cama Ahora',
+                                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                              ),
+                                              onPressed: () async {
+                                                final confirmar = await showDialog<bool>(
+                                                  context: context,
+                                                  builder: (ctx) => AlertDialog(
+                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                                    title: const Row(
+                                                      children: [
+                                                        Icon(Icons.bolt, color: Color(0xFF2E7D32)),
+                                                        SizedBox(width: 8),
+                                                        Text('Liberar Cama', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                                      ],
+                                                    ),
+                                                    content: Text(
+                                                      '¿Desea marcar como cortada la siembra previa en Cama ${_camaSeleccionada!.cama} y liberarla de inmediato para sembrar hoy?',
+                                                      style: const TextStyle(fontSize: 13.5),
+                                                    ),
+                                                    actions: [
+                                                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                                                      ElevatedButton(
+                                                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32)),
+                                                        onPressed: () => Navigator.pop(ctx, true),
+                                                        child: const Text('Sí, Liberar Cama', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                                if (confirmar == true) {
+                                                  await _db.liberarCamaPorCorteAnticipado(_camaSeleccionada!.id, _fechaSeleccionada ?? '');
+                                                  await _recargarCiclosCamas();
+                                                  if (context.mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('✓ Cama ${_camaSeleccionada!.cama} liberada. Ya puede registrar la nueva siembra.'),
+                                                        backgroundColor: const Color(0xFF2E7D32),
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   );
