@@ -633,7 +633,10 @@ class DbRepository {
         int diasTrans = fechaNueva.difference(fInicio).inDays;
         if (diasTrans < 0) diasTrans = 0;
 
-        if (diasTrans < diasReq) {
+        if (ultimaSiembra.estado == 'FINALIZADA') {
+          // El ciclo previo fue cortado y finalizado formalmente (por cosecha normal o anticipada por factores climáticos).
+          // La cama se encuentra físicamente libre y disponible para la nueva siembra.
+        } else if (diasTrans < diasReq) {
           final int diasFalt = diasReq - diasTrans;
           final fechaMin = fInicio.add(Duration(days: diasReq));
           final fechaMinStr = "${fechaMin.day.toString().padLeft(2, '0')}/${fechaMin.month.toString().padLeft(2, '0')}/${fechaMin.year}";
@@ -641,7 +644,7 @@ class DbRepository {
           return ValidacionCicloResultado(
             esValido: false,
             esCicloIncompleto: true,
-            mensaje: 'Restricción de Ciclo Agronómico: La siembra previa de ${varPrevia?.nombre ?? "Variedad #${ultimaSiembra.variedadId}"} (iniciada el ${ultimaSiembra.fecha}) requiere un ciclo mínimo de $diasReq días. Han transcurrido $diasTrans días (faltan $diasFalt días). La cama estará disponible a partir del $fechaMinStr.',
+            mensaje: 'Restricción de Ciclo Agronómico: La siembra previa de ${varPrevia?.nombre ?? "Variedad #${ultimaSiembra.variedadId}"} (iniciada el ${ultimaSiembra.fecha}) requiere un ciclo de $diasReq días (faltan $diasFalt días). Si la flor ya fue cortada o cosechada, seleccione "Finalizar Ciclo" en el registro previo para liberarla inmediatamente.',
             siembraPrevia: ultimaSiembra,
             variedadPreviaNombre: varPrevia?.nombre,
             diasTranscurridos: diasTrans,
