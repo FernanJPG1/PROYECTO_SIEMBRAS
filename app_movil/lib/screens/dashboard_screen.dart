@@ -76,7 +76,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _cargarDatos();
     _networkService = NetworkService(
-      onNetworkRestored: _autoSincronizar,
+      onNetworkRestored: () {
+        // Modo manual: No auto-sincronizar automáticamente en segundo plano.
+        // La sincronización se realiza únicamente cuando el usuario presiona el botón.
+      },
     );
   }
 
