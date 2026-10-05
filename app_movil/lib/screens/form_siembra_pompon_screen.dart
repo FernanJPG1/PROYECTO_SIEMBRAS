@@ -373,9 +373,62 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                                   ],
                                 ),
                                 subtitle: Text('Código: ${item.codigo}${item.colorNombre != null ? ' | Color: ${item.colorNombre}' : ''}${item.familiaNombre != null ? ' | ${item.familiaNombre}' : ''}'),
-                                trailing: isSelected
-                                    ? const Icon(Icons.check_circle, color: Color(0xFF7CB342))
-                                    : null,
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (item.esTemporal || item.id < 0)
+                                      IconButton(
+                                        icon: Icon(Icons.delete_outline, color: Colors.red.shade400, size: 22),
+                                        tooltip: 'Eliminar variedad temporal',
+                                        onPressed: () async {
+                                          final totalSiembras = await _db.contarSiembrasPorVariedad(item.id);
+                                          if (!ctx.mounted) return;
+                                          final confirmar = await showDialog<bool>(
+                                            context: context,
+                                            builder: (dCtx) => AlertDialog(
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                              title: Row(
+                                                children: [
+                                                  Icon(Icons.delete_outline, color: Colors.red.shade700),
+                                                  const SizedBox(width: 8),
+                                                  const Text('Eliminar Variedad'),
+                                                ],
+                                              ),
+                                              content: Text(
+                                                totalSiembras > 0
+                                                    ? '¿Deseas eliminar "${item.nombre}"? Tiene $totalSiembras siembra(s) que también serán eliminadas.'
+                                                    : '¿Estás seguro de eliminar la variedad temporal "${item.nombre}"?',
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(dCtx, false),
+                                                  child: const Text('Cancelar'),
+                                                ),
+                                                ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.red.shade700,
+                                                    foregroundColor: Colors.white,
+                                                  ),
+                                                  onPressed: () => Navigator.pop(dCtx, true),
+                                                  child: const Text('Eliminar'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirmar == true) {
+                                            await _db.eliminarVariedadTemporal(item.id, eliminarSiembrasAsociadas: true);
+                                            await _cargarCatalogos();
+                                            if (_variedadSeleccionada?.id == item.id) {
+                                              setState(() => _variedadSeleccionada = null);
+                                            }
+                                            setModalState(() {});
+                                          }
+                                        },
+                                      ),
+                                    if (isSelected)
+                                      const Icon(Icons.check_circle, color: Color(0xFF7CB342)),
+                                  ],
+                                ),
                                 onTap: () => Navigator.pop(ctx, item),
                               );
                             },

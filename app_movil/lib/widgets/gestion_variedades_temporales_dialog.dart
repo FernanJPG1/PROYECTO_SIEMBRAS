@@ -261,6 +261,142 @@ class _GestionVariedadesTemporalesDialogState extends State<GestionVariedadesTem
     }
   }
 
+  Future<void> _confirmarEliminarVariedad(Variedad v, int totalSiembras) async {
+    bool eliminarSiembras = false;
+
+    final bool? confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dCtx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.delete_forever, color: Colors.red.shade700, size: 28),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text('Eliminar Variedad Temporal', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '¿Estás seguro de que deseas eliminar la variedad "${v.nombre}" (Código: ${v.codigo}) de SQLite?',
+                style: const TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              if (totalSiembras > 0) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.amber.shade300),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Atención: Tiene $totalSiembras siembra(s) registrada(s)',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber.shade900, fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: eliminarSiembras,
+                        activeColor: Colors.red.shade700,
+                        title: const Text(
+                          'Eliminar también las siembras asociadas a esta variedad en este dispositivo.',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        onChanged: (val) {
+                          setDialogState(() => eliminarSiembras = val ?? false);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                Text(
+                  'Esta variedad no tiene ninguna siembra registrada. Se eliminará inmediatamente de forma segura.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dCtx, false),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade700,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('Eliminar'),
+              onPressed: () {
+                if (totalSiembras > 0 && !eliminarSiembras) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Debes marcar la casilla para confirmar la eliminación de las siembras asociadas.'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
+                Navigator.pop(dCtx, true);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmar == true) {
+      setState(() => _procesando = true);
+      try {
+        await _db.eliminarVariedadTemporal(v.id, eliminarSiembrasAsociadas: eliminarSiembras);
+        await _cargarDatos();
+        if (mounted) {
+          setState(() => _procesando = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFF2E7D32),
+              content: Text('Variedad "${v.nombre}" eliminada exitosamente.'),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _procesando = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al eliminar: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -488,6 +624,16 @@ class _GestionVariedadesTemporalesDialogState extends State<GestionVariedadesTem
                   runSpacing: 8,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red.shade700,
+                        side: BorderSide(color: Colors.red.shade300),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      icon: const Icon(Icons.delete_outline, size: 16),
+                      label: const Text('Eliminar', style: TextStyle(fontSize: 12)),
+                      onPressed: () => _confirmarEliminarVariedad(v, totalSiembras),
+                    ),
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF1565C0),

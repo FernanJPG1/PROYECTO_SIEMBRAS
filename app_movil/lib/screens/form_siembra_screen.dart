@@ -298,6 +298,59 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
                                   ],
                                 ),
                                 subtitle: Text('Código: ${v.codigo} (ID: ${v.id}) | ${v.familiaNombre ?? ""}'),
+                                trailing: (v.esTemporal || v.id < 0)
+                                    ? IconButton(
+                                        icon: Icon(Icons.delete_outline, color: Colors.red.shade400, size: 22),
+                                        tooltip: 'Eliminar variedad temporal',
+                                        onPressed: () async {
+                                          final totalSiembras = await _db.contarSiembrasPorVariedad(v.id);
+                                          if (!ctx.mounted) return;
+                                          final confirmar = await showDialog<bool>(
+                                            context: context,
+                                            builder: (dCtx) => AlertDialog(
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                              title: Row(
+                                                children: [
+                                                  Icon(Icons.delete_outline, color: Colors.red.shade700),
+                                                  const SizedBox(width: 8),
+                                                  const Text('Eliminar Variedad'),
+                                                ],
+                                              ),
+                                              content: Text(
+                                                totalSiembras > 0
+                                                    ? '¿Deseas eliminar "${v.nombre}"? Tiene $totalSiembras siembra(s) que también serán eliminadas.'
+                                                    : '¿Estás seguro de eliminar la variedad temporal "${v.nombre}"?',
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(dCtx, false),
+                                                  child: const Text('Cancelar'),
+                                                ),
+                                                ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.red.shade700,
+                                                    foregroundColor: Colors.white,
+                                                  ),
+                                                  onPressed: () => Navigator.pop(dCtx, true),
+                                                  child: const Text('Eliminar'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirmar == true) {
+                                            await _db.eliminarVariedadTemporal(v.id, eliminarSiembrasAsociadas: true);
+                                            await _cargarCatalogos();
+                                            if (_variedadSeleccionada?.id == v.id) {
+                                              setState(() {
+                                                _variedadSeleccionada = null;
+                                                _configAgronomica = null;
+                                              });
+                                            }
+                                            setModalState(() {});
+                                          }
+                                        },
+                                      )
+                                    : null,
                                 onTap: () => Navigator.pop(ctx, v),
                               );
                             },

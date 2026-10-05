@@ -414,6 +414,51 @@ class DbRepository {
     return resultado;
   }
 
+  /// Cuenta el número de siembras asociadas a una variedad
+  Future<int> contarSiembrasPorVariedad(int variedadId) async {
+    final db = await LocalDatabase.instance.database;
+    final cRes = await db.rawQuery('SELECT COUNT(*) as total FROM tb_siembras WHERE variedad_id = ?', [variedadId]);
+    return Sqflite.firstIntValue(cRes) ?? 0;
+  }
+
+  /// Elimina una variedad temporal creada en SQLite.
+  /// Si tiene siembras asociadas y [eliminarSiembrasAsociadas] es true,
+  /// también elimina esas siembras locales.
+  /// Si [eliminarSiembrasAsociadas] es false y tiene siembras, arroja una excepción.
+  Future<int> eliminarVariedadTemporal(int variedadId, {bool eliminarSiembrasAsociadas = false}) async {
+    final db = await LocalDatabase.instance.database;
+
+    final check = await db.query(
+      'tb_variedades',
+      where: 'id = ? AND (es_temporal = 1 OR id < 0)',
+      whereArgs: [variedadId],
+    );
+    if (check.isEmpty) {
+      throw Exception('Solo se pueden eliminar variedades temporales o de prueba creadas localmente.');
+    }
+
+    final totalSiembras = await contarSiembrasPorVariedad(variedadId);
+
+    if (totalSiembras > 0 && !eliminarSiembrasAsociadas) {
+      throw Exception('La variedad tiene $totalSiembras siembra(s) asociada(s).');
+    }
+
+    return await db.transaction((txn) async {
+      if (totalSiembras > 0 && eliminarSiembrasAsociadas) {
+        await txn.delete(
+          'tb_siembras',
+          where: 'variedad_id = ?',
+          whereArgs: [variedadId],
+        );
+      }
+      return await txn.delete(
+        'tb_variedades',
+        where: 'id = ?',
+        whereArgs: [variedadId],
+      );
+    });
+  }
+
   /// Sincroniza y reconcilia automáticamente las variedades temporales creadas en la app
   /// con las variedades reales recién descargadas de la base de datos empresarial (Access).
   /// Si encuentra una variedad en Access con el mismo nombre (o código), actualiza
