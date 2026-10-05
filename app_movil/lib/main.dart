@@ -44,7 +44,7 @@ class _SiembrasAppState extends State<SiembrasApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Si la tablet entra en pausa, bajo consumo, apagado o suspensión, forzar persistencia inmediata
+    // Si el dispositivo Android entra en pausa, bajo consumo, apagado o suspensión, forzar persistencia inmediata
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.detached) {

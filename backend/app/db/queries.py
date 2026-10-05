@@ -1034,7 +1034,7 @@ def eliminar_siembras_por_uuid(conn: pyodbc.Connection, uuids: List[str]) -> int
 def get_siembras_activas(conn: pyodbc.Connection) -> List[SiembraSync]:
     """
     Retorna todas las siembras activas registradas en Access (t_siembras_app)
-    para alimentar el 'pull' de sincronización bidireccional en las tablets.
+    para alimentar el 'pull' de sincronización bidireccional en los dispositivos Android.
     """
     cursor = conn.cursor()
     try:

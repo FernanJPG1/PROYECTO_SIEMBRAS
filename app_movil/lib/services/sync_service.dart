@@ -27,7 +27,7 @@ class SyncService {
       _cachedBaseUrl = saved.trim();
       return _cachedBaseUrl!;
     }
-    _cachedBaseUrl = fallbackLanUrl; // Preferir la IP de LAN para tablets físicas
+    _cachedBaseUrl = fallbackLanUrl; // Preferir la IP de LAN para dispositivos Android en campo
     return _cachedBaseUrl!;
   }
 
@@ -44,7 +44,7 @@ class SyncService {
       }
     }
 
-    // 2. Probar LAN Wi-Fi (usada por tablets físicas en campo)
+    // 2. Probar LAN Wi-Fi (usada por dispositivos Android en campo)
     final resLan = await probarConexion(fallbackLanUrl);
     if (resLan['exito'] == true) {
       _cachedBaseUrl = fallbackLanUrl;

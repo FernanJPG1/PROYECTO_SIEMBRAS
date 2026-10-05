@@ -28,8 +28,8 @@ class ResultadoRecuperacion {
 /// Servicio de Almacenamiento Permanente y Respaldo Antidescarga/Reinicio
 ///
 /// Protege las siembras offline contra:
-/// 1. Apagado repentino de tablets (corte abrupto de energía / 0% batería).
-/// 2. Reinicio de tablets (reboots forzados o actualizaciones).
+/// 1. Apagado repentino de dispositivos Android (corte abrupto de energía / 0% batería).
+/// 2. Reinicio de dispositivos Android (reboots forzados o actualizaciones).
 /// 3. Limpieza de memoria caché del sistema operativo Android o aplicaciones de limpieza.
 ///
 /// Implementa escritura atómica con fsync en almacenamiento permanente (Files/Documents),
@@ -218,7 +218,7 @@ class PersistentBackupService {
   }
 
   /// Verifica la integridad entre SQLite y el Respaldo Persistente.
-  /// Si la tablet se apagó, se reinició o la caché fue eliminada, restaura automáticamente
+  /// Si el dispositivo Android se apagó, se reinició o la caché fue eliminada, restaura automáticamente
   /// las siembras que falten en SQLite, garantizando que NINGUNA siembra pendiente de sincronizar se pierda.
   Future<ResultadoRecuperacion> verificarYRecuperar(Database db) async {
     try {
@@ -354,7 +354,7 @@ class PersistentBackupService {
     }
   }
 
-  // === GESTIÓN DE BORRADORES DE FORMULARIO (Si la tablet se apaga mientras digitan) ===
+  // === GESTIÓN DE BORRADORES DE FORMULARIO (Si el dispositivo Android se apaga mientras digitan) ===
 
   /// Guarda en almacenamiento permanente el borrador que el operario está digitando
   Future<void> guardarBorrador(String formularioId, Map<String, dynamic> datos) async {
@@ -383,7 +383,7 @@ class PersistentBackupService {
     }
   }
 
-  /// Recupera un borrador no guardado si la tablet se apagó o reinició a mitad de digitación
+  /// Recupera un borrador no guardado si el dispositivo Android se apagó o reinició a mitad de digitación
   Future<Map<String, dynamic>?> obtenerBorrador(String formularioId) async {
     try {
       final directorios = await _obtenerDirectoriosSeguros();

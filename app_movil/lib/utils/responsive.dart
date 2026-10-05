@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
 /// Utilidades y breakpoints para diseño 100% responsivo adaptable a:
-/// - Celulares en vertical (pantalla estrecha: < 650px)
-/// - Celulares en horizontal (landscape: altura reducida)
-/// - Tablets de 7", 8", 10", 12" (portrait y landscape: >= 650px)
+/// - Dispositivos Android en vertical (pantalla compacta: < 650px)
+/// - Dispositivos Android en horizontal (landscape: altura reducida)
+/// - Dispositivos Android de pantalla amplia o intermedia (>= 650px)
 class Responsive {
-  /// Retorna verdadero si el ancho de pantalla corresponde a un celular / pantalla estrecha
+  /// Retorna verdadero si el ancho de pantalla corresponde a un celular o pantalla compacta
   static bool isMobile(BuildContext context) =>
       MediaQuery.sizeOf(context).width < 650;
 
-  /// Retorna verdadero si el ancho de pantalla corresponde a una tablet en portrait o pantalla intermedia
+  /// Retorna verdadero si el ancho de pantalla corresponde a un dispositivo Android con pantalla intermedia
   static bool isTablet(BuildContext context) {
     final w = MediaQuery.sizeOf(context).width;
     return w >= 650 && w < 1100;
   }
 
-  /// Retorna verdadero si es tablet grande o monitor/pantalla ancha
+  /// Retorna verdadero si es dispositivo Android con pantalla amplia o monitor
   static bool isDesktop(BuildContext context) =>
       MediaQuery.sizeOf(context).width >= 1100;
 

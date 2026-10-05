@@ -119,7 +119,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '🛡️ Se recuperaron ${resultado.recuperadas} siembras guardadas de forma permanente antes de que la tablet se apagara o reiniciara.',
+                  '🛡️ Se recuperaron ${resultado.recuperadas} siembras guardadas de forma permanente antes de que el dispositivo Android se apagara o reiniciara.',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
@@ -524,7 +524,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   'URL: $url\n'
                   '• En la PC, ejecuta "iniciar_backend.bat".\n'
-                  '• Verifica que la tablet y la PC estén en la misma red Wi-Fi.$detalleError',
+                  '• Verifica que el dispositivo Android y la PC estén en la misma red Wi-Fi.$detalleError',
                   style: const TextStyle(fontSize: 12),
                 ),
               ],
@@ -839,7 +839,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
                 const SizedBox(height: 10),
-                const Text('Atajos rápidos para Tablets / Emulador:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const Text('Atajos rápidos para Dispositivos Android / Emulador:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 4),
                 Wrap(
                   spacing: 6,
@@ -931,7 +931,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Protección Activa contra Apagado y Reinicio de Tablet',
+                        'Protección Activa contra Apagado y Reinicio del Dispositivo Android',
                         style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade900, fontSize: 13),
                       ),
                     ),
@@ -939,7 +939,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              _buildStatRow('Total Registros en Tablet:', '${_siembras.length}'),
+              _buildStatRow('Total Registros en Dispositivo Android:', '${_siembras.length}'),
               const Divider(),
               _buildStatRow('Pendientes de Sincronizar:', '$pendientes', color: pendientes > 0 ? Colors.orange.shade900 : Colors.green),
               const Divider(),
@@ -951,7 +951,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 5),
               const Text(
-                'Cada siembra se escribe directamente con sincronización física obligatoria (fsync) en la memoria interna permanente y en archivos espejo fuera de la memoria caché. Si la tablet se apaga, se reinicia o se descarga al 0%, los registros pendientes NO se pierden y se recuperan automáticamente.',
+                'Cada siembra se escribe directamente con sincronización física obligatoria (fsync) en la memoria interna permanente y en archivos espejo fuera de la memoria caché. Si el dispositivo Android se apaga, se reinicia o se descarga al 0%, los registros pendientes NO se pierden y se recuperan automáticamente.',
                 style: TextStyle(fontSize: 12, color: Colors.black87, height: 1.35),
               ),
             ],
