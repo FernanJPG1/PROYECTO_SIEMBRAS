@@ -5,6 +5,7 @@ import 'package:app_movil/services/reporte_service.dart';
 import 'package:app_movil/screens/rendimiento_dialog.dart';
 import 'package:app_movil/screens/pdf_viewer_screen.dart';
 import 'package:app_movil/utils/calendario_util.dart';
+import 'package:app_movil/utils/responsive.dart';
 
 class ReporteDialog extends StatefulWidget {
   final List<Siembra> siembras;
@@ -814,6 +815,100 @@ class _ReporteDialogState extends State<ReporteDialog> {
     );
   }
 
+  Widget _buildSelectorSemanaWidget() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Semana (EE. UU.):',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
+            ),
+            InkWell(
+              onTap: _seleccionarSemanaUS,
+              child: const Text(
+                'Elegir semana',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF558B2F), decoration: TextDecoration.underline),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        InkWell(
+          onTap: _seleccionarSemanaUS,
+          child: TextFormField(
+            controller: _semanaController,
+            enabled: false,
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF33691E)),
+            decoration: InputDecoration(
+              hintText: 'Ej: Semana #40',
+              suffixIcon: const Icon(Icons.arrow_drop_down, color: Color(0xFF558B2F)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              filled: true,
+              fillColor: const Color(0xFFF9FBE7),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFC5E1A5)),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectorRangoWidget() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Filtro por Rango (Opcional):',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
+        ),
+        const SizedBox(height: 6),
+        InkWell(
+          onTap: _seleccionarRangoFechas,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade400),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.date_range, color: Color(0xFF7CB342), size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _rangoFechas != null
+                        ? '${DateFormat('dd/MM').format(_rangoFechas!.start)} - ${DateFormat('dd/MM').format(_rangoFechas!.end)}'
+                        : 'Todas las fechas',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: _rangoFechas != null ? FontWeight.bold : FontWeight.normal,
+                      color: _rangoFechas != null ? const Color(0xFF33691E) : Colors.grey.shade700,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (_rangoFechas != null)
+                  GestureDetector(
+                    onTap: () => setState(() => _rangoFechas = null),
+                    child: const Icon(Icons.close, size: 16, color: Colors.grey),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filtradas = _filtrarSiembras();
@@ -823,16 +918,28 @@ class _ReporteDialogState extends State<ReporteDialog> {
       totalTallos += s.cantidad;
     }
 
+    final esMovil = Responsive.isMobile(context);
+    final dialogMaxW = Responsive.dialogMaxWidth(context);
+    final dialogMaxH = Responsive.dialogMaxHeight(context);
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       backgroundColor: Colors.white,
-      child: Container(
-        width: 620,
-        padding: const EdgeInsets.all(22),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: esMovil ? 12 : 24,
+        vertical: esMovil ? 16 : 24,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: dialogMaxW.clamp(320.0, 620.0),
+          maxHeight: dialogMaxH,
+        ),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(esMovil ? 14 : 22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Encabezado del Diálogo
             Row(
               children: [
@@ -944,7 +1051,7 @@ class _ReporteDialogState extends State<ReporteDialog> {
                     ),
                     Switch(
                       value: _separarPorCultivo,
-                      activeColor: const Color(0xFF2E7D32),
+                      activeThumbColor: const Color(0xFF2E7D32),
                       onChanged: (val) => setState(() => _separarPorCultivo = val),
                     ),
                   ],
@@ -955,105 +1062,19 @@ class _ReporteDialogState extends State<ReporteDialog> {
             const SizedBox(height: 14),
 
             // Selector 2: Semana y Rango de Fechas (Calendario EE. UU.)
-            Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Semana (EE. UU.):',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
-                          ),
-                          InkWell(
-                            onTap: _seleccionarSemanaUS,
-                            child: const Text(
-                              'Elegir semana',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF558B2F), decoration: TextDecoration.underline),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      InkWell(
-                        onTap: _seleccionarSemanaUS,
-                        child: TextFormField(
-                          controller: _semanaController,
-                          enabled: false,
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF33691E)),
-                          decoration: InputDecoration(
-                            hintText: 'Ej: Semana #40',
-                            suffixIcon: const Icon(Icons.arrow_drop_down, color: Color(0xFF558B2F)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            filled: true,
-                            fillColor: const Color(0xFFF9FBE7),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                            disabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Color(0xFFC5E1A5)),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  flex: 4,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Filtro por Rango (Opcional):',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
-                      ),
-                      const SizedBox(height: 6),
-                      InkWell(
-                        onTap: _seleccionarRangoFechas,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade400),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.date_range, color: Color(0xFF7CB342), size: 18),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _rangoFechas != null
-                                      ? '${DateFormat('dd/MM').format(_rangoFechas!.start)} - ${DateFormat('dd/MM').format(_rangoFechas!.end)}'
-                                      : 'Todas las fechas',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: _rangoFechas != null ? FontWeight.bold : FontWeight.normal,
-                                    color: _rangoFechas != null ? const Color(0xFF33691E) : Colors.grey.shade700,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (_rangoFechas != null)
-                                GestureDetector(
-                                  onTap: () => setState(() => _rangoFechas = null),
-                                  child: const Icon(Icons.close, size: 16, color: Colors.grey),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            if (esMovil) ...[
+              _buildSelectorSemanaWidget(),
+              const SizedBox(height: 10),
+              _buildSelectorRangoWidget(),
+            ] else ...[
+              Row(
+                children: [
+                  Expanded(flex: 3, child: _buildSelectorSemanaWidget()),
+                  const SizedBox(width: 14),
+                  Expanded(flex: 4, child: _buildSelectorRangoWidget()),
+                ],
+              ),
+            ],
 
             const SizedBox(height: 16),
 
@@ -1310,6 +1331,7 @@ class _ReporteDialogState extends State<ReporteDialog> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }

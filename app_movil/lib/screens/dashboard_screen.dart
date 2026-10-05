@@ -7,6 +7,7 @@ import 'package:app_movil/services/network_service.dart';
 import 'package:app_movil/services/sync_service.dart' as app_sync;
 import 'package:app_movil/services/persistent_backup_service.dart';
 import 'package:app_movil/utils/calendario_util.dart';
+import 'package:app_movil/utils/responsive.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -17,6 +18,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final DbRepository _db = DbRepository();
+  bool? _forzarModoTarjetas;
   List<Siembra> _siembras = [];
   List<Variedad> _variedades = [];
   List<Cama> _camas = [];
@@ -1380,7 +1382,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 12),
 
                   DropdownButtonFormField<int>(
-                    value: _variedades.any((v) => v.id == selVariedadId) ? selVariedadId : null,
+                    initialValue: _variedades.any((v) => v.id == selVariedadId) ? selVariedadId : null,
                     decoration: InputDecoration(
                       labelText: 'Variedad',
                       prefixIcon: const Icon(Icons.local_florist, color: Color(0xFF7CB342)),
@@ -1399,7 +1401,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 12),
 
                   DropdownButtonFormField<int>(
-                    value: _operarios.any((o) => o.id == selOperarioId) ? selOperarioId : null,
+                    initialValue: _operarios.any((o) => o.id == selOperarioId) ? selOperarioId : null,
                     decoration: InputDecoration(
                       labelText: 'Empleado / Operario',
                       prefixIcon: const Icon(Icons.person, color: Color(0xFF7CB342)),
@@ -1788,11 +1790,414 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildChipCultivo(Map<String, dynamic> cfg, Map<String, int> conteoCultivos) {
+    final nombre = cfg['nombre'] as String;
+    final label = cfg['label'] as String;
+    final icono = cfg['icono'] as IconData;
+    final color = cfg['color'] as Color;
+    final isSelected = _cultivoFiltro == nombre;
+    final count = conteoCultivos[nombre] ?? 0;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _cultivoFiltro = nombre;
+          });
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? color : color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? color : color.withValues(alpha: 0.35),
+              width: isSelected ? 1.8 : 1.0,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    )
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icono,
+                size: 15,
+                color: isSelected ? Colors.white : color,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected ? Colors.white : color,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.28)
+                      : color.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.white : color,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSiembraCardMobile(
+    Siembra s,
+    Operario op,
+    Variedad va,
+    Cama ca,
+    int diasCiclo,
+    bool isSynced,
+    bool esActiva,
+  ) {
+    final cultivo = _obtenerCultivoDeSiembra(s);
+    final fSiembra = CalendarioUtil.parsearFecha(s.fecha);
+    final semStr = fSiembra != null ? 'Sem. ${CalendarioUtil.obtenerSemanaUS(fSiembra)}' : '';
+    final esLirioItem = cultivo == 'LIRIOS';
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: esActiva ? Colors.green.shade200 : Colors.grey.shade300,
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _mostrarDetalleSiembra(s, op, va, ca, diasCiclo),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Fila superior: Variedad + Estado badge + Sync
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          va.nombre,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2E7D32),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF558B2F).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                cultivo,
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF33691E),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                op.nombreCompleto,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: esActiva ? Colors.green.shade50 : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: esActiva ? Colors.green.shade300 : Colors.grey.shade400,
+                      ),
+                    ),
+                    child: Text(
+                      esActiva ? '🟢 ACTIVA' : '⚪ FINALIZADA',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        color: esActiva ? Colors.green.shade800 : Colors.grey.shade800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    isSynced ? Icons.check_circle : Icons.cloud_upload_outlined,
+                    size: 18,
+                    color: isSynced ? const Color(0xFF7CB342) : Colors.amber.shade800,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Fila de datos en píldoras (Bloque/Cama, Cantidad/Esquejes, Fecha/Semana, Ciclo)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FBF7),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildPildoraInfo('UBICACIÓN', '${s.bloqueCodigo ?? ca.bloque} - C${ca.cama}'),
+                    Container(width: 1, height: 24, color: Colors.grey.shade300),
+                    _buildPildoraInfo('CANTIDAD', '${s.cantidad} esq'),
+                    Container(width: 1, height: 24, color: Colors.grey.shade300),
+                    _buildPildoraInfo('FECHA', '${s.fecha} ${semStr.isNotEmpty ? "($semStr)" : ""}'),
+                    Container(width: 1, height: 24, color: Colors.grey.shade300),
+                    _buildPildoraInfo('CICLO', '$diasCiclo d'),
+                  ],
+                ),
+              ),
+
+              // Datos adicionales (líneas, lote, proveedor si lirios, o notas)
+              if ((esLirioItem && (s.lote != null || s.proveedor != null)) || (s.observaciones != null && s.observaciones!.isNotEmpty)) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    if (s.lineas != null) ...[
+                      Text('Lín: ${s.lineas}', style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 8),
+                    ],
+                    if (esLirioItem && s.lote != null && s.lote!.isNotEmpty) ...[
+                      Text('Lote: ${s.lote}', style: TextStyle(fontSize: 11, color: Colors.grey.shade700)),
+                      const SizedBox(width: 8),
+                    ],
+                    if (s.observaciones != null && s.observaciones!.isNotEmpty)
+                      Expanded(
+                        child: Text(
+                          'Obs: ${s.observaciones}',
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+
+              const SizedBox(height: 8),
+              // Acciones en tarjeta
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (esActiva)
+                    InkWell(
+                      onTap: () => _confirmarFinalizarCiclo(s, ca, va),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF7CB342),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check, size: 14, color: Colors.white),
+                            SizedBox(width: 4),
+                            Text('Finalizar Ciclo', style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.info_outline, size: 20, color: Color(0xFF558B2F)),
+                    tooltip: 'Ver detalle',
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    onPressed: () => _mostrarDetalleSiembra(s, op, va, ca, diasCiclo),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                    tooltip: 'Eliminar',
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    onPressed: () => _confirmarYEliminarSiembra(s),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPildoraInfo(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.grey.shade600, letterSpacing: 0.2),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF33691E)),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  int _calcularDiasCiclo(Siembra s) {
+    try {
+      DateTime fInicio = DateTime.now();
+      if (s.fecha.contains('/')) {
+        final p = s.fecha.split('/');
+        fInicio = DateTime(int.parse(p[2]), int.parse(p[1]), int.parse(p[0]));
+      } else {
+        final pIso = DateTime.tryParse(s.fecha);
+        if (pIso != null) fInicio = pIso;
+      }
+      DateTime fFin = DateTime.now();
+      if (s.estado == 'FINALIZADA' && s.fechaFin != null && s.fechaFin!.isNotEmpty) {
+        if (s.fechaFin!.contains('/')) {
+          final p = s.fechaFin!.split('/');
+          fFin = DateTime(int.parse(p[2]), int.parse(p[1]), int.parse(p[0]));
+        } else {
+          final pIsoFin = DateTime.tryParse(s.fechaFin!);
+          if (pIsoFin != null) fFin = pIsoFin;
+        }
+      }
+      final diff = fFin.difference(fInicio).inDays;
+      return diff < 0 ? 0 : diff;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Widget _buildSelectorFecha({double? width}) {
+    final bool tieneFiltro = _fechaFiltro != null || _semanaFiltro != null;
+    String labelFiltro = "Fecha / Sem.";
+    if (_semanaFiltro != null) {
+      labelFiltro = "Semana #$_semanaFiltro";
+    } else if (_fechaFiltro != null) {
+      final sem = CalendarioUtil.obtenerSemanaUS(_fechaFiltro!);
+      labelFiltro = "${_fechaFiltro!.day.toString().padLeft(2, '0')}/${_fechaFiltro!.month.toString().padLeft(2, '0')} (S$sem)";
+    }
+
+    final child = InkWell(
+      onTap: _seleccionarFechaFiltro,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: tieneFiltro ? const Color(0xFFE8F5E9) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: tieneFiltro ? const Color(0xFF558B2F) : Colors.grey.shade400,
+            width: tieneFiltro ? 2 : 1.2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                labelFiltro,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: tieneFiltro ? FontWeight.bold : FontWeight.w500,
+                  color: tieneFiltro ? const Color(0xFF33691E) : Colors.grey.shade700,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (tieneFiltro)
+              GestureDetector(
+                onTap: () => setState(() {
+                  _fechaFiltro = null;
+                  _semanaFiltro = null;
+                }),
+                child: const Icon(Icons.close, size: 16, color: Colors.grey),
+              )
+            else
+              const Icon(Icons.arrow_drop_down, color: Color(0xFF558B2F), size: 18),
+          ],
+        ),
+      ),
+    );
+
+    if (width != null) {
+      return SizedBox(width: width, child: child);
+    }
+    return child;
+  }
+
   @override
   Widget build(BuildContext context) {
     final listaMostrar = _siembrasFiltradas;
     final conteoCultivos = _calcularConteoCultivos();
     final pendientesSync = _siembras.where((s) => s.sincronizado == 0).length;
+    final esMovil = Responsive.isMobile(context);
+    final esModoTarjetas = _forzarModoTarjetas ?? esMovil;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F8E9),
@@ -1822,100 +2227,219 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        actions: [
-          // === BOTÓN DE SINCRONIZACIÓN GRANDE, LLAMATIVO Y DISTINGUIBLE ===
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(24),
-                onTap: _sincronizando ? null : _autoSincronizar,
-                onLongPress: _mostrarSincronizacionDialog,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: _sincronizando
-                          ? [const Color(0xFF1976D2), const Color(0xFF0D47A1)]
-                          : (pendientesSync > 0
-                              ? [const Color(0xFFFF9100), const Color(0xFFE65100)]
-                              : [const Color(0xFF2E7D32), const Color(0xFF1B5E20)]),
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white, width: 2.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (_sincronizando
-                                ? Colors.blue.shade900
-                                : (pendientesSync > 0 ? Colors.orange.shade900 : Colors.green.shade900))
-                            .withValues(alpha: 0.5),
-                        blurRadius: 7,
-                        spreadRadius: 1,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+        actions: esMovil
+            ? [
+                // Mobile Sync Button (compact icon button with badge)
+                IconButton(
+                  tooltip: _sincronizando
+                      ? 'Sincronizando...'
+                      : (pendientesSync > 0 ? '$pendientesSync pendientes por sincronizar' : 'Sincronizar'),
+                  onPressed: _sincronizando ? null : _autoSincronizar,
+                  icon: Stack(
+                    clipBehavior: Clip.none,
                     children: [
-                      if (_sincronizando)
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.4),
-                        )
-                      else
-                        const Icon(Icons.sync, color: Colors.white, size: 24),
-                      const SizedBox(width: 8),
-                      Text(
-                        _sincronizando
-                            ? 'SINCRONIZANDO...'
-                            : (pendientesSync > 0 ? 'SINCRONIZAR ($pendientesSync)' : 'SINCRONIZAR'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                          letterSpacing: 0.8,
+                      _sincronizando
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Icon(Icons.sync, color: Colors.white, size: 24),
+                      if (!_sincronizando && pendientesSync > 0)
+                        Positioned(
+                          right: -4,
+                          top: -4,
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFFF9100),
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                            child: Text(
+                              '$pendientesSync',
+                              style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.tune, color: Colors.white, size: 22),
-            tooltip: 'Configurar IP y Servidor Backend',
-            onPressed: _mostrarSincronizacionDialog,
-          ),
-          IconButton(
-            icon: const Icon(Icons.security, color: Colors.white, size: 26),
-            tooltip: 'Almacenamiento Permanente Seguro (Antiapagado)',
-            onPressed: _mostrarDialogoRespaldoPersistente,
-          ),
-          IconButton(
-            icon: const Icon(Icons.shield, color: Colors.white, size: 26),
-            tooltip: 'Panel de Administrador',
-            onPressed: _abrirAdminVariedades,
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white, size: 26),
-            tooltip: 'Refrescar Datos',
-            onPressed: () => _cargarDatos(mostrarNotificacionRespaldo: false),
-          ),
-          const SizedBox(width: 8),
-        ],
+                IconButton(
+                  icon: Icon(esModoTarjetas ? Icons.table_chart : Icons.view_agenda, color: Colors.white, size: 22),
+                  tooltip: esModoTarjetas ? 'Ver como Tabla' : 'Ver como Tarjetas',
+                  onPressed: () {
+                    setState(() {
+                      _forzarModoTarjetas = !esModoTarjetas;
+                    });
+                  },
+                ),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: Colors.white),
+                  tooltip: 'Más opciones',
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'sync_config':
+                        _mostrarSincronizacionDialog();
+                        break;
+                      case 'seguridad':
+                        _mostrarDialogoRespaldoPersistente();
+                        break;
+                      case 'admin':
+                        _abrirAdminVariedades();
+                        break;
+                      case 'refrescar':
+                        _cargarDatos(mostrarNotificacionRespaldo: false);
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'sync_config',
+                      child: Row(
+                        children: [
+                          Icon(Icons.tune, color: Color(0xFF558B2F), size: 20),
+                          SizedBox(width: 10),
+                          Text('Configurar IP / Servidor'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'seguridad',
+                      child: Row(
+                        children: [
+                          Icon(Icons.security, color: Color(0xFF558B2F), size: 20),
+                          SizedBox(width: 10),
+                          Text('Respaldo Permanente'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'admin',
+                      child: Row(
+                        children: [
+                          Icon(Icons.shield, color: Color(0xFF558B2F), size: 20),
+                          SizedBox(width: 10),
+                          Text('Panel de Administrador'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'refrescar',
+                      child: Row(
+                        children: [
+                          Icon(Icons.refresh, color: Color(0xFF558B2F), size: 20),
+                          SizedBox(width: 10),
+                          Text('Refrescar Datos'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ]
+            : [
+                IconButton(
+                  icon: Icon(esModoTarjetas ? Icons.table_chart : Icons.view_agenda, color: Colors.white, size: 22),
+                  tooltip: esModoTarjetas ? 'Ver como Tabla' : 'Ver como Tarjetas',
+                  onPressed: () {
+                    setState(() {
+                      _forzarModoTarjetas = !esModoTarjetas;
+                    });
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: _sincronizando ? null : _autoSincronizar,
+                      onLongPress: _mostrarSincronizacionDialog,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: _sincronizando
+                                ? [const Color(0xFF1976D2), const Color(0xFF0D47A1)]
+                                : (pendientesSync > 0
+                                    ? [const Color(0xFFFF9100), const Color(0xFFE65100)]
+                                    : [const Color(0xFF2E7D32), const Color(0xFF1B5E20)]),
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: Colors.white, width: 2.2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (_sincronizando
+                                      ? Colors.blue.shade900
+                                      : (pendientesSync > 0 ? Colors.orange.shade900 : Colors.green.shade900))
+                                  .withValues(alpha: 0.5),
+                              blurRadius: 7,
+                              spreadRadius: 1,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_sincronizando)
+                              const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.4),
+                              )
+                            else
+                              const Icon(Icons.sync, color: Colors.white, size: 24),
+                            const SizedBox(width: 8),
+                            Text(
+                              _sincronizando
+                                  ? 'SINCRONIZANDO...'
+                                  : (pendientesSync > 0 ? 'SINCRONIZAR ($pendientesSync)' : 'SINCRONIZAR'),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.tune, color: Colors.white, size: 22),
+                  tooltip: 'Configurar IP y Servidor Backend',
+                  onPressed: _mostrarSincronizacionDialog,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.security, color: Colors.white, size: 26),
+                  tooltip: 'Almacenamiento Permanente Seguro (Antiapagado)',
+                  onPressed: _mostrarDialogoRespaldoPersistente,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.shield, color: Colors.white, size: 26),
+                  tooltip: 'Panel de Administrador',
+                  onPressed: _abrirAdminVariedades,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: Colors.white, size: 26),
+                  tooltip: 'Refrescar Datos',
+                  onPressed: () => _cargarDatos(mostrarNotificacionRespaldo: false),
+                ),
+                const SizedBox(width: 8),
+              ],
       ),
       body: Column(
         children: [
-          // --- BARRA DE FILTROS SEGÚN EL BOCETO ---
+          // --- BARRA DE FILTROS SEGÚN EL DISPOSITIVO ---
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -1926,257 +2450,164 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
-            child: Row(
-              children: [
-                // Ícono de embudo / filtro
-                const Icon(Icons.filter_alt, color: Color(0xFF558B2F), size: 24),
-                const SizedBox(width: 8),
-
-                // Filtro 1: [ Fecha / Sem. v ]
-                Builder(
-                  builder: (context) {
-                    final bool tieneFiltro = _fechaFiltro != null || _semanaFiltro != null;
-                    String labelFiltro = "Fecha / Sem.";
-                    if (_semanaFiltro != null) {
-                      labelFiltro = "Semana #$_semanaFiltro";
-                    } else if (_fechaFiltro != null) {
-                      final sem = CalendarioUtil.obtenerSemanaUS(_fechaFiltro!);
-                      labelFiltro = "${_fechaFiltro!.day.toString().padLeft(2, '0')}/${_fechaFiltro!.month.toString().padLeft(2, '0')} (S$sem)";
-                    }
-
-                    return SizedBox(
-                      width: 145,
-                      child: InkWell(
-                        onTap: _seleccionarFechaFiltro,
-                        borderRadius: BorderRadius.circular(8),
+            child: esMovil
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.filter_alt, color: Color(0xFF558B2F), size: 22),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: _buildSelectorFecha(),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFF7CB342), width: 1.5),
+                              color: Colors.white,
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.bar_chart, color: Color(0xFF558B2F), size: 20),
+                              tooltip: 'Métricas de Siembra',
+                              onPressed: _mostrarMetricasDialog,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFF7CB342), width: 1.5),
+                              color: Colors.white,
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.edit_note, color: Color(0xFF558B2F), size: 21),
+                              tooltip: 'Editar Registros',
+                              onPressed: _abrirModalEditarRegistro,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          children: _cultivosConfig.map((cfg) => _buildChipCultivo(cfg, conteoCultivos)).toList(),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      const Icon(Icons.filter_alt, color: Color(0xFF558B2F), size: 24),
+                      const SizedBox(width: 8),
+                      _buildSelectorFecha(width: 145),
+                      const SizedBox(width: 8),
+                      Container(width: 1.2, height: 26, color: Colors.grey.shade300),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          child: Row(
+                            children: _cultivosConfig.map((cfg) => _buildChipCultivo(cfg, conteoCultivos)).toList(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF7CB342), width: 1.8),
+                          color: Colors.white,
+                        ),
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(Icons.bar_chart, color: Color(0xFF558B2F), size: 20),
+                          tooltip: 'Métricas de Siembra',
+                          onPressed: _mostrarMetricasDialog,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: _mostrarSincronizacionDialog,
+                        borderRadius: BorderRadius.circular(18),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          height: 36,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
                           decoration: BoxDecoration(
-                            color: tieneFiltro ? const Color(0xFFE8F5E9) : Colors.white,
-                            borderRadius: BorderRadius.circular(8),
+                            color: pendientesSync > 0 ? Colors.orange.shade50 : const Color(0xFFF1F8E9),
+                            borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: tieneFiltro ? const Color(0xFF558B2F) : Colors.grey.shade400,
-                              width: tieneFiltro ? 2 : 1.2,
+                              color: pendientesSync > 0 ? Colors.orange.shade800 : const Color(0xFF7CB342),
+                              width: 1.8,
                             ),
                           ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  labelFiltro,
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: tieneFiltro ? FontWeight.bold : FontWeight.w500,
-                                    color: tieneFiltro ? const Color(0xFF33691E) : Colors.grey.shade700,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                              Icon(
+                                pendientesSync > 0 ? Icons.sync_problem : Icons.sync,
+                                color: pendientesSync > 0 ? Colors.orange.shade800 : const Color(0xFF33691E),
+                                size: 18,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                pendientesSync > 0 ? '$pendientesSync pend.' : 'Sync OK',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: pendientesSync > 0 ? Colors.orange.shade900 : const Color(0xFF33691E),
                                 ),
                               ),
-                              if (tieneFiltro)
-                                GestureDetector(
-                                  onTap: () => setState(() {
-                                    _fechaFiltro = null;
-                                    _semanaFiltro = null;
-                                  }),
-                                  child: const Icon(Icons.close, size: 16, color: Colors.grey),
-                                )
-                              else
-                                const Icon(Icons.arrow_drop_down, color: Color(0xFF558B2F), size: 18),
                             ],
                           ),
                         ),
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-
-                // Separador vertical sutil
-                Container(width: 1.2, height: 26, color: Colors.grey.shade300),
-                const SizedBox(width: 8),
-
-                // Filtro 2: CHIPS RÁPIDOS POR FLOR / CULTIVO (POMPÓN, CREMÓN, MATSUMOTO, LIRIOS, GIRASOL)
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        ..._cultivosConfig.map((cfg) {
-                          final nombre = cfg['nombre'] as String;
-                          final label = cfg['label'] as String;
-                          final icono = cfg['icono'] as IconData;
-                          final color = cfg['color'] as Color;
-                          final isSelected = _cultivoFiltro == nombre;
-                          final count = conteoCultivos[nombre] ?? 0;
-
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _cultivoFiltro = nombre;
-                                });
-                              },
-                              borderRadius: BorderRadius.circular(20),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? color : color.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: isSelected ? color : color.withValues(alpha: 0.35),
-                                    width: isSelected ? 1.8 : 1.0,
-                                  ),
-                                  boxShadow: isSelected
-                                      ? [
-                                          BoxShadow(
-                                            color: color.withValues(alpha: 0.3),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
-                                          )
-                                        ]
-                                      : null,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      icono,
-                                      size: 15,
-                                      color: isSelected ? Colors.white : color,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      label,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                        color: isSelected ? Colors.white : color,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? Colors.white.withValues(alpha: 0.28)
-                                            : color.withValues(alpha: 0.18),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        '$count',
-                                        style: TextStyle(
-                                          fontSize: 10.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: isSelected ? Colors.white : color,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Botón redondo 1: Gráfica de barras (Métricas)
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF7CB342), width: 1.8),
-                    color: Colors.white,
-                  ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.bar_chart, color: Color(0xFF558B2F), size: 20),
-                    tooltip: 'Métricas de Siembra',
-                    onPressed: _mostrarMetricasDialog,
-                  ),
-                ),
-                const SizedBox(width: 6),
-
-                // Botón Sincronización y Estado en la barra de herramientas
-                InkWell(
-                  onTap: _mostrarSincronizacionDialog,
-                  borderRadius: BorderRadius.circular(18),
-                  child: Container(
-                    height: 36,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: pendientesSync > 0 ? Colors.orange.shade50 : const Color(0xFFF1F8E9),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: pendientesSync > 0 ? Colors.orange.shade800 : const Color(0xFF7CB342),
-                        width: 1.8,
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF7CB342), width: 1.8),
+                          color: Colors.white,
+                        ),
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(Icons.edit_note, color: Color(0xFF558B2F), size: 21),
+                          tooltip: 'Editar Registros de Siembra',
+                          onPressed: _abrirModalEditarRegistro,
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          pendientesSync > 0 ? Icons.sync_problem : Icons.sync,
-                          color: pendientesSync > 0 ? Colors.orange.shade800 : const Color(0xFF33691E),
-                          size: 18,
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF7CB342), width: 1.8),
+                          color: Colors.white,
                         ),
-                        const SizedBox(width: 5),
-                        Text(
-                          pendientesSync > 0 ? '$pendientesSync pend.' : 'Sync OK',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.bold,
-                            color: pendientesSync > 0 ? Colors.orange.shade900 : const Color(0xFF33691E),
-                          ),
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(Icons.security, color: Color(0xFF558B2F), size: 19),
+                          tooltip: 'Almacenamiento Permanente Seguro (Antiapagado)',
+                          onPressed: _mostrarDialogoRespaldoPersistente,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 6),
-
-                // Botón redondo 3: Lápiz / Editar Registros de Siembra
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF7CB342), width: 1.8),
-                    color: Colors.white,
-                  ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.edit_note, color: Color(0xFF558B2F), size: 21),
-                    tooltip: 'Editar Registros de Siembra',
-                    onPressed: _abrirModalEditarRegistro,
-                  ),
-                ),
-                const SizedBox(width: 6),
-
-                // Botón redondo 4: Escudo / Seguridad Antiapagado
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF7CB342), width: 1.8),
-                    color: Colors.white,
-                  ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.security, color: Color(0xFF558B2F), size: 19),
-                    tooltip: 'Almacenamiento Permanente Seguro (Antiapagado)',
-                    onPressed: _mostrarDialogoRespaldoPersistente,
-                  ),
-                ),
-              ],
-            ),
           ),
 
           // Indicador de filtro activo
@@ -2216,86 +2647,113 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-          // --- TABLA COMPLETA CON LAS COLUMNAS EXACTAS DEL BOCETO ---
-          // Boceto: Fecha | Empleado | Variedad | Bloque | Cama | Esq | Line | Lote | Provee | Cont | Obses
+          // --- VISTA DE SIEMBRAS: TARJETAS (MÓVIL) O TABLA (TABLET / ESCRITORIO) ---
           Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Ancho base garantizado para todas las columnas detalladas
-                const double tableMinWidth = 1620.0;
-                final tableWidth = constraints.maxWidth < tableMinWidth ? tableMinWidth : constraints.maxWidth;
-
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: SizedBox(
-                    width: tableWidth,
-                    child: Column(
-                      children: [
-                        // Encabezados de Tabla exactos del boceto
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          color: const Color(0xFFE8F5E9),
-                          child: const Row(
-                            children: [
-                              _HeaderCol('FECHA', width: 105),
-                              Expanded(flex: 3, child: _HeaderCol('EMPLEADO', width: 0)),
-                              Expanded(flex: 3, child: _HeaderCol('VARIEDAD', width: 0)),
-                              _HeaderCol('BLOQUE', width: 80),
-                              _HeaderCol('CAMA', width: 75),
-                              _HeaderCol('ESQ', width: 90),
-                              _HeaderCol('LINE', width: 70),
-                              _HeaderCol('LOTE', width: 100),
-                              _HeaderCol('PROVEE', width: 100),
-                              _HeaderCol('CONT', width: 90),
-                              Expanded(flex: 3, child: _HeaderCol('CLON / OBS', width: 0)),
-                              _HeaderCol('ESTADO', width: 115),
-                              _HeaderCol('CICLO', width: 90),
-                              _HeaderCol('ACCIÓN', width: 105),
-                              _HeaderCol('SYNC', width: 60),
-                              _HeaderCol('DEL', width: 45),
+            child: _cargando
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFF7CB342)))
+                : listaMostrar.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.inventory_2_outlined, size: 54, color: Colors.grey.shade400),
+                            const SizedBox(height: 12),
+                            Text(
+                              _fechaFiltro != null || _cultivoFiltro != 'TODOS'
+                                  ? 'No hay registros con los filtros seleccionados'
+                                  : 'No hay siembras registradas aún',
+                              style: TextStyle(fontSize: 15, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                            ),
+                            if (_fechaFiltro != null || _cultivoFiltro != 'TODOS') ...[
+                              const SizedBox(height: 8),
+                              TextButton.icon(
+                                icon: const Icon(Icons.filter_alt_off, color: Color(0xFF7CB342)),
+                                label: const Text('Limpiar Filtros', style: TextStyle(color: Color(0xFF7CB342))),
+                                onPressed: () {
+                                  setState(() {
+                                    _fechaFiltro = null;
+                                    _cultivoFiltro = 'TODOS';
+                                  });
+                                },
+                              ),
                             ],
-                          ),
+                          ],
                         ),
+                      )
+                    : esModoTarjetas
+                        ? ResponsiveContentContainer(
+                            maxWidth: 850,
+                            child: ListView.builder(
+                              physics: const BouncingScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              itemCount: listaMostrar.length,
+                              itemBuilder: (context, index) {
+                                final s = listaMostrar[index];
+                                final op = _operarios.firstWhere(
+                                  (o) => o.id == s.operarioId,
+                                  orElse: () => Operario(id: 0, cedula: '', nombreCompleto: s.operarioId.toString()),
+                                );
+                                final va = _variedades.firstWhere(
+                                  (v) => v.id == s.variedadId,
+                                  orElse: () => Variedad(id: 0, codigo: '', nombre: s.variedadId.toString()),
+                                );
+                                final ca = _camas.firstWhere(
+                                  (c) => c.id == s.camaId,
+                                  orElse: () => Cama(id: 0, cama: s.camaId.toString(), bloque: s.bloqueCodigo ?? '', nave: ''),
+                                );
+                                final isSynced = s.sincronizado == 1;
+                                final diasCiclo = _calcularDiasCiclo(s);
+                                final esActiva = s.estado == 'ACTIVA';
+                                return _buildSiembraCardMobile(s, op, va, ca, diasCiclo, isSynced, esActiva);
+                              },
+                            ),
+                          )
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              // Ancho base garantizado para todas las columnas detalladas
+                              const double tableMinWidth = 1620.0;
+                              final tableWidth = constraints.maxWidth < tableMinWidth ? tableMinWidth : constraints.maxWidth;
 
-                        // Lista de Filas
-                        Expanded(
-                          child: _cargando
-                              ? const Center(child: CircularProgressIndicator(color: Color(0xFF7CB342)))
-                              : listaMostrar.isEmpty
-                                  ? Center(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.inventory_2_outlined, size: 54, color: Colors.grey.shade400),
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            _fechaFiltro != null || _cultivoFiltro != 'TODOS'
-                                                ? 'No hay registros con los filtros seleccionados'
-                                                : 'No hay siembras registradas aún',
-                                            style: TextStyle(fontSize: 15, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
-                                          ),
-                                          if (_fechaFiltro != null || _cultivoFiltro != 'TODOS') ...[
-                                            const SizedBox(height: 8),
-                                            TextButton.icon(
-                                              icon: const Icon(Icons.filter_alt_off, color: Color(0xFF7CB342)),
-                                              label: const Text('Limpiar Filtros', style: TextStyle(color: Color(0xFF7CB342))),
-                                              onPressed: () {
-                                                setState(() {
-                                                  _fechaFiltro = null;
-                                                  _cultivoFiltro = 'TODOS';
-                                                });
-                                              },
-                                            ),
+                              return SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                child: SizedBox(
+                                  width: tableWidth,
+                                  child: Column(
+                                    children: [
+                                      // Encabezados de Tabla exactos del boceto
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                        color: const Color(0xFFE8F5E9),
+                                        child: const Row(
+                                          children: [
+                                            _HeaderCol('FECHA', width: 105),
+                                            Expanded(flex: 3, child: _HeaderCol('EMPLEADO', width: 0)),
+                                            Expanded(flex: 3, child: _HeaderCol('VARIEDAD', width: 0)),
+                                            _HeaderCol('BLOQUE', width: 80),
+                                            _HeaderCol('CAMA', width: 75),
+                                            _HeaderCol('ESQ', width: 90),
+                                            _HeaderCol('LINE', width: 70),
+                                            _HeaderCol('LOTE', width: 100),
+                                            _HeaderCol('PROVEE', width: 100),
+                                            _HeaderCol('CONT', width: 90),
+                                            Expanded(flex: 3, child: _HeaderCol('CLON / OBS', width: 0)),
+                                            _HeaderCol('ESTADO', width: 115),
+                                            _HeaderCol('CICLO', width: 90),
+                                            _HeaderCol('ACCIÓN', width: 105),
+                                            _HeaderCol('SYNC', width: 60),
+                                            _HeaderCol('DEL', width: 45),
                                           ],
-                                        ],
+                                        ),
                                       ),
-                                    )
-                                  : ListView.separated(
-                                      physics: const BouncingScrollPhysics(),
-                                      itemCount: listaMostrar.length,
-                                      separatorBuilder: (ctx, i) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
-                                      itemBuilder: (context, index) {
+
+                                      // Lista de Filas en Tabla
+                                      Expanded(
+                                        child: ListView.separated(
+                                          physics: const BouncingScrollPhysics(),
+                                          itemCount: listaMostrar.length,
+                                          separatorBuilder: (ctx, i) => const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                                          itemBuilder: (context, index) {
                                         final s = listaMostrar[index];
                                         final op = _operarios.firstWhere(
                                           (o) => o.id == s.operarioId,

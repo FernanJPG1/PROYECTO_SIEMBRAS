@@ -4,6 +4,8 @@ import 'package:app_movil/repositories/db_repository.dart';
 import 'package:app_movil/screens/reporte_dialog.dart';
 import 'package:app_movil/screens/rendimiento_dialog.dart';
 import 'package:app_movil/utils/calendario_util.dart';
+import 'package:app_movil/widgets/gestion_variedades_temporales_dialog.dart';
+import 'package:app_movil/utils/responsive.dart';
 
 class AdminPanelHubScreen extends StatefulWidget {
   final List<Siembra> siembras;
@@ -35,6 +37,7 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
   late List<Variedad> _variedades;
   late List<Cama> _camas;
   late List<Operario> _operarios;
+  int _totalTemporales = 0;
   bool _cargando = false;
 
   @override
@@ -60,6 +63,7 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
     final variedadesDb = await db.obtenerVariedades();
     final camasDb = await db.obtenerCamas();
     final operariosDb = await db.obtenerOperarios();
+    final tempsDb = await db.obtenerVariedadesTemporales();
 
     if (mounted) {
       setState(() {
@@ -68,9 +72,18 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
         _variedades = variedadesDb;
         _camas = camasDb;
         _operarios = operariosDb;
+        _totalTemporales = tempsDb.length;
         _cargando = false;
       });
     }
+  }
+
+  void _abrirGestionTemporales() async {
+    await showDialog(
+      context: context,
+      builder: (context) => const GestionVariedadesTemporalesDialog(),
+    );
+    _recargarDatos();
   }
 
   void _abrirRendimiento() {
@@ -106,6 +119,7 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
   @override
   Widget build(BuildContext context) {
     final totalTallos = _siembras.fold<int>(0, (sum, s) => sum + s.cantidad);
+    final esMovil = Responsive.isMobile(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F8E9),
@@ -133,11 +147,13 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF7CB342)),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+          : ResponsiveContentContainer(
+              maxWidth: 850,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(esMovil ? 12.0 : 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   // Banner Encabezado
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -192,22 +208,53 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
 
                   // Resumen rápido de datos en el sistema
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.green.shade100),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildKpiItem('Siembras', '${_siembras.length}', Icons.grass, const Color(0xFF558B2F)),
-                        _buildDivider(),
-                        _buildKpiItem('Tallos / Esquejes', '$totalTallos', Icons.eco, const Color(0xFF2E7D32)),
-                        _buildDivider(),
-                        _buildKpiItem('Operarios', '${_operarios.length}', Icons.people, const Color(0xFFF57F17)),
-                      ],
-                    ),
+                    child: esMovil
+                        ? Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    _buildKpiItem('Siembras', '${_siembras.length}', Icons.grass, const Color(0xFF558B2F)),
+                                    const SizedBox(height: 8),
+                                    _buildKpiItem('Operarios', '${_operarios.length}', Icons.people, const Color(0xFFF57F17)),
+                                  ],
+                                ),
+                              ),
+                              Container(width: 1, height: 60, color: Colors.grey.shade200),
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    _buildKpiItem('Tallos / Esq.', '$totalTallos', Icons.eco, const Color(0xFF2E7D32)),
+                                    const SizedBox(height: 8),
+                                    if (_totalTemporales > 0)
+                                      _buildKpiItem('Pruebas', '$_totalTemporales', Icons.science_rounded, const Color(0xFFD84315))
+                                    else
+                                      _buildKpiItem('Camas', '${_camas.length}', Icons.view_week, const Color(0xFF00796B)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildKpiItem('Siembras', '${_siembras.length}', Icons.grass, const Color(0xFF558B2F)),
+                              _buildDivider(),
+                              _buildKpiItem('Tallos / Esquejes', '$totalTallos', Icons.eco, const Color(0xFF2E7D32)),
+                              _buildDivider(),
+                              _buildKpiItem('Operarios', '${_operarios.length}', Icons.people, const Color(0xFFF57F17)),
+                              if (_totalTemporales > 0) ...[
+                                _buildDivider(),
+                                _buildKpiItem('Pruebas', '$_totalTemporales', Icons.science_rounded, const Color(0xFFD84315)),
+                              ],
+                            ],
+                          ),
                   ),
 
                   const SizedBox(height: 20),
@@ -241,9 +288,26 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
                     actionLabel: 'Generar Reporte PDF',
                     onTap: _abrirReportes,
                   ),
+
+                  const SizedBox(height: 16),
+
+                  // OPCIÓN 3: GESTIÓN Y VINCULACIÓN DE VARIEDADES TEMPORALES
+                  _buildAdminCard(
+                    icon: Icons.science_rounded,
+                    iconBgColor: const Color(0xFFEDE7F6),
+                    iconColor: const Color(0xFF512DA8),
+                    badgeText: _totalTemporales > 0 ? '$_totalTemporales PENDIENTE(S) DE ACCESS' : 'SINCRONIZACIÓN AL DÍA',
+                    badgeColor: _totalTemporales > 0 ? const Color(0xFFE65100) : const Color(0xFF2E7D32),
+                    title: 'Variedades de Prueba y Temporales',
+                    subtitle:
+                        'Control de variedades creadas en campo para registrar rendimientos de corte y siembra antes de su registro oficial en Access, con vinculación y auto-reconciliación.',
+                    actionLabel: 'Gestionar y Sincronizar Variedades',
+                    onTap: _abrirGestionTemporales,
+                  ),
                 ],
               ),
             ),
+          ),
     );
   }
 

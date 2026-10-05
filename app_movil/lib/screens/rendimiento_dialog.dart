@@ -4,6 +4,7 @@ import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/services/reporte_service.dart';
 import 'package:app_movil/screens/pdf_viewer_screen.dart';
 import 'package:app_movil/utils/calendario_util.dart';
+import 'package:app_movil/utils/responsive.dart';
 
 class RendimientoDialog extends StatefulWidget {
   final List<Siembra> siembras;
@@ -103,14 +104,21 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
         ? (totalTallosGlobal / rendimientos.length).round()
         : 0;
 
+    final esMovil = Responsive.isMobile(context);
+    final dialogMaxW = Responsive.dialogMaxWidth(context);
+    final dialogMaxH = Responsive.dialogMaxHeight(context);
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.white,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: EdgeInsets.symmetric(horizontal: esMovil ? 10 : 20, vertical: esMovil ? 12 : 24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 820, maxHeight: 720),
+        constraints: BoxConstraints(
+          maxWidth: dialogMaxW.clamp(320.0, 840.0),
+          maxHeight: dialogMaxH,
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(22),
+          padding: EdgeInsets.all(esMovil ? 12 : 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -213,7 +221,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                         ),
                         Switch(
                           value: _separarPorCultivo,
-                          activeColor: const Color(0xFF2E7D32),
+                          activeThumbColor: const Color(0xFF2E7D32),
                           onChanged: (val) => setState(() => _separarPorCultivo = val),
                         ),
                       ],
@@ -224,61 +232,110 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
               ],
 
               // KPI Cards Row
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      icon: Icons.people_alt,
-                      label: 'Sembradores Activos',
-                      value: '${rendimientos.length}',
-                      color: const Color(0xFF33691E),
-                      bg: const Color(0xFFF1F8E9),
+              if (esMovil)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _buildMetricCard(
+                            icon: Icons.people_alt,
+                            label: 'Sembradores',
+                            value: '${rendimientos.length}',
+                            color: const Color(0xFF33691E),
+                            bg: const Color(0xFFF1F8E9),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildMetricCard(
+                            icon: Icons.view_week,
+                            label: 'Total Camas',
+                            value: formatterNum.format(totalCamasGlobal),
+                            color: const Color(0xFF00796B),
+                            bg: const Color(0xFFE0F2F1),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildMetricCard(
-                      icon: Icons.grass,
-                      label: 'Total Tallos Sembrados',
-                      value: formatterNum.format(totalTallosGlobal),
-                      color: const Color(0xFF2E7D32),
-                      bg: const Color(0xFFE8F5E9),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _buildMetricCard(
+                            icon: Icons.grass,
+                            label: 'Total Tallos',
+                            value: formatterNum.format(totalTallosGlobal),
+                            color: const Color(0xFF2E7D32),
+                            bg: const Color(0xFFE8F5E9),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildMetricCard(
+                            icon: Icons.speed,
+                            label: 'Promedio/Sembr.',
+                            value: formatterNum.format(promPorSembrador),
+                            color: const Color(0xFFEF6C00),
+                            bg: const Color(0xFFFFF3E0),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildMetricCard(
-                      icon: Icons.view_week,
-                      label: 'Total Camas',
-                      value: formatterNum.format(totalCamasGlobal),
-                      color: const Color(0xFF00796B),
-                      bg: const Color(0xFFE0F2F1),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildMetricCard(
+                        icon: Icons.people_alt,
+                        label: 'Sembradores Activos',
+                        value: '${rendimientos.length}',
+                        color: const Color(0xFF33691E),
+                        bg: const Color(0xFFF1F8E9),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildMetricCard(
-                      icon: Icons.speed,
-                      label: 'Promedio / Sembrador',
-                      value: '${formatterNum.format(promPorSembrador)} tallos',
-                      color: const Color(0xFFEF6C00),
-                      bg: const Color(0xFFFFF3E0),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildMetricCard(
+                        icon: Icons.grass,
+                        label: 'Total Tallos Sembrados',
+                        value: formatterNum.format(totalTallosGlobal),
+                        color: const Color(0xFF2E7D32),
+                        bg: const Color(0xFFE8F5E9),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildMetricCard(
+                        icon: Icons.view_week,
+                        label: 'Total Camas',
+                        value: formatterNum.format(totalCamasGlobal),
+                        color: const Color(0xFF00796B),
+                        bg: const Color(0xFFE0F2F1),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildMetricCard(
+                        icon: Icons.speed,
+                        label: 'Promedio / Sembrador',
+                        value: '${formatterNum.format(promPorSembrador)} tallos',
+                        color: const Color(0xFFEF6C00),
+                        bg: const Color(0xFFFFF3E0),
+                      ),
+                    ),
+                  ],
+                ),
               const SizedBox(height: 14),
 
               // Buscador y Selector de Ordenamiento
-              Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
+              if (esMovil)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
                       decoration: InputDecoration(
-                        hintText: 'Buscar sembrador por nombre o cédula...',
+                        hintText: 'Buscar sembrador...',
                         prefixIcon: const Icon(Icons.search, size: 20, color: Color(0xFF7CB342)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         filled: true,
                         fillColor: const Color(0xFFF9FBE7),
                         border: OutlineInputBorder(
@@ -292,26 +349,75 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                       ),
                       onChanged: (val) => setState(() => _filtroTexto = val),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text('Ordenar por:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E))),
-                  const SizedBox(width: 8),
-                  DropdownButton<String>(
-                    value: _orden,
-                    dropdownColor: Colors.white,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF33691E), fontSize: 13),
-                    items: const [
-                      DropdownMenuItem(value: 'TALLOS', child: Text('Más Tallos Sembrados')),
-                      DropdownMenuItem(value: 'CAMAS', child: Text('Más Camas')),
-                      DropdownMenuItem(value: 'PROMEDIO', child: Text('Mejor Promedio/Cama')),
-                      DropdownMenuItem(value: 'NOMBRE', child: Text('Nombre (A-Z)')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _orden = val);
-                    },
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Text('Ordenar por:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF33691E))),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButton<String>(
+                            value: _orden,
+                            isExpanded: true,
+                            dropdownColor: Colors.white,
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF33691E), fontSize: 12),
+                            items: const [
+                              DropdownMenuItem(value: 'TALLOS', child: Text('Más Tallos Sembrados')),
+                              DropdownMenuItem(value: 'CAMAS', child: Text('Más Camas')),
+                              DropdownMenuItem(value: 'PROMEDIO', child: Text('Mejor Promedio/Cama')),
+                              DropdownMenuItem(value: 'NOMBRE', child: Text('Nombre (A-Z)')),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) setState(() => _orden = val);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Buscar sembrador por nombre o cédula...',
+                          prefixIcon: const Icon(Icons.search, size: 20, color: Color(0xFF7CB342)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          filled: true,
+                          fillColor: const Color(0xFFF9FBE7),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFC5E1A5)),
+                          ),
+                        ),
+                        onChanged: (val) => setState(() => _filtroTexto = val),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('Ordenar por:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E))),
+                    const SizedBox(width: 8),
+                    DropdownButton<String>(
+                      value: _orden,
+                      dropdownColor: Colors.white,
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF33691E), fontSize: 13),
+                      items: const [
+                        DropdownMenuItem(value: 'TALLOS', child: Text('Más Tallos Sembrados')),
+                        DropdownMenuItem(value: 'CAMAS', child: Text('Más Camas')),
+                        DropdownMenuItem(value: 'PROMEDIO', child: Text('Mejor Promedio/Cama')),
+                        DropdownMenuItem(value: 'NOMBRE', child: Text('Nombre (A-Z)')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setState(() => _orden = val);
+                      },
+                    ),
+                  ],
+                ),
               const SizedBox(height: 12),
 
               // Lista de Sembradores con Rendimiento
@@ -375,117 +481,107 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                                 ),
                               ],
                             ),
-                            child: Row(
-                              children: [
-                                // Badge Posición
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: posBg,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: posColor, width: 1.5),
-                                  ),
-                                  child: Text(
-                                    medal.isNotEmpty ? medal : '#${r.posicion}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: medal.isNotEmpty ? 18 : 13,
-                                      color: posColor,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-
-                                // Nombre y Cédula
-                                Expanded(
-                                  flex: 3,
-                                  child: Column(
+                            child: esMovil
+                                ? Row(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        r.operario.nombreCompleto,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14.5,
-                                          color: Color(0xFF263238),
+                                      // Badge Posición
+                                      Container(
+                                        width: 38,
+                                        height: 38,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: posBg,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: posColor, width: 1.5),
                                         ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Cédula: ${r.operario.cedula.isNotEmpty ? r.operario.cedula : "S/C"} | ${r.diasTrabajados} días activos',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                // Métricas de rendimiento
-                                Expanded(
-                                  flex: 4,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            '${formatterNum.format(r.totalTallos)} tallos',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                              color: Color(0xFF2E7D32),
-                                            ),
-                                          ),
-                                          Text(
-                                            '${r.porcentajeTotal.toStringAsFixed(1)}% del total',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 12,
-                                              color: Colors.grey.shade700,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(4),
-                                        child: LinearProgressIndicator(
-                                          value: (r.porcentajeTotal / 100).clamp(0.0, 1.0),
-                                          minHeight: 7,
-                                          backgroundColor: Colors.grey.shade200,
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                            esTop1
-                                                ? const Color(0xFFFBC02D)
-                                                : const Color(0xFF7CB342),
+                                        child: Text(
+                                          medal.isNotEmpty ? medal : '#${r.posicion}',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: medal.isNotEmpty ? 16 : 12,
+                                            color: posColor,
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            '${r.totalCamas} camas',
-                                            style: TextStyle(fontSize: 11.5, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              r.operario.nombreCompleto,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                                color: Color(0xFF263238),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Cédula: ${r.operario.cedula.isNotEmpty ? r.operario.cedula : "S/C"} | ${r.diasTrabajados} días',
+                                              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            _buildMetricasOperario(r, esTop1, formatterNum),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    children: [
+                                      // Badge Posición
+                                      Container(
+                                        width: 44,
+                                        height: 44,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: posBg,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: posColor, width: 1.5),
+                                        ),
+                                        child: Text(
+                                          medal.isNotEmpty ? medal : '#${r.posicion}',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: medal.isNotEmpty ? 18 : 13,
+                                            color: posColor,
                                           ),
-                                          const Text(' • ', style: TextStyle(color: Colors.grey)),
-                                          Text(
-                                            'Prom: ${formatterNum.format(r.promedioTallosPorCama.round())} tallos/cama',
-                                            style: TextStyle(fontSize: 11.5, color: Colors.grey.shade700),
-                                          ),
-                                          const Text(' • ', style: TextStyle(color: Colors.grey)),
-                                          Text(
-                                            '${formatterNum.format(r.promedioTallosPorDia.round())} t/día',
-                                            style: TextStyle(fontSize: 11.5, color: Colors.grey.shade700),
-                                          ),
-                                        ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 14),
+
+                                      // Nombre y Cédula
+                                      Expanded(
+                                        flex: 3,
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              r.operario.nombreCompleto,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14.5,
+                                                color: Color(0xFF263238),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Cédula: ${r.operario.cedula.isNotEmpty ? r.operario.cedula : "S/C"} | ${r.diasTrabajados} días activos',
+                                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      // Métricas de rendimiento
+                                      Expanded(
+                                        flex: 4,
+                                        child: _buildMetricasOperario(r, esTop1, formatterNum),
                                       ),
                                     ],
                                   ),
-                                ),
-                              ],
-                            ),
                           );
                         },
                       ),
@@ -496,11 +592,14 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
               const SizedBox(height: 12),
 
               // Botones de Acción
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   Text(
-                    'Evaluación generada con ${widget.siembras.length} registros',
+                    'Evaluación con ${widget.siembras.length} registros',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                   Wrap(
@@ -610,6 +709,68 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMetricasOperario(RendimientoOperario r, bool esTop1, NumberFormat formatterNum) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${formatterNum.format(r.totalTallos)} tallos',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Color(0xFF2E7D32),
+              ),
+            ),
+            Text(
+              '${r.porcentajeTotal.toStringAsFixed(1)}% del total',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: (r.porcentajeTotal / 100).clamp(0.0, 1.0),
+            minHeight: 7,
+            backgroundColor: Colors.grey.shade200,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              esTop1 ? const Color(0xFFFBC02D) : const Color(0xFF7CB342),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Wrap(
+          spacing: 4,
+          runSpacing: 2,
+          children: [
+            Text(
+              '${r.totalCamas} camas',
+              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+            ),
+            const Text('•', style: TextStyle(color: Colors.grey, fontSize: 11)),
+            Text(
+              'Prom: ${formatterNum.format(r.promedioTallosPorCama.round())} tallos/cama',
+              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade700),
+            ),
+            const Text('•', style: TextStyle(color: Colors.grey, fontSize: 11)),
+            Text(
+              '${formatterNum.format(r.promedioTallosPorDia.round())} t/día',
+              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade700),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

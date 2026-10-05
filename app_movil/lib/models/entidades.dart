@@ -43,6 +43,7 @@ class Variedad {
   final int? limiteEsquejes;
   final int? diasCiclo;
   final int? densidadLinea; // Densidad: factor de esquejes/plantas por línea
+  final bool esTemporal; // true si es variedad local/prueba pendiente de sincronizar con Access
 
   Variedad({
     required this.id,
@@ -57,6 +58,7 @@ class Variedad {
     this.limiteEsquejes,
     this.diasCiclo,
     this.densidadLinea,
+    this.esTemporal = false,
   });
 
   @override
@@ -81,12 +83,17 @@ class Variedad {
       'limite_esquejes': limiteEsquejes,
       'dias_ciclo': diasCiclo,
       'densidad_linea': densidadLinea,
+      'es_temporal': esTemporal ? 1 : 0,
     };
   }
 
   factory Variedad.fromMap(Map<String, dynamic> map) {
+    final int? rawId = map['id'] != null ? int.tryParse(map['id'].toString()) : null;
+    final bool isTemp = map['es_temporal'] == 1 ||
+        map['es_temporal'] == true ||
+        (rawId != null && rawId < 0);
     return Variedad(
-      id: map['id'],
+      id: rawId ?? 0,
       codigo: map['codigo']?.toString() ?? '00',
       nombre: map['nombre']?.toString() ?? '',
       estado: map['estado'] ?? 1,
@@ -98,6 +105,7 @@ class Variedad {
       limiteEsquejes: map['limite_esquejes'] != null ? int.tryParse(map['limite_esquejes'].toString()) : null,
       diasCiclo: map['dias_ciclo'] != null ? int.tryParse(map['dias_ciclo'].toString()) : null,
       densidadLinea: map['densidad_linea'] != null ? int.tryParse(map['densidad_linea'].toString()) : null,
+      esTemporal: isTemp,
     );
   }
 
@@ -114,6 +122,7 @@ class Variedad {
     int? limiteEsquejes,
     int? diasCiclo,
     int? densidadLinea,
+    bool? esTemporal,
   }) {
     return Variedad(
       id: id ?? this.id,
@@ -128,6 +137,7 @@ class Variedad {
       limiteEsquejes: limiteEsquejes ?? this.limiteEsquejes,
       diasCiclo: diasCiclo ?? this.diasCiclo,
       densidadLinea: densidadLinea ?? this.densidadLinea,
+      esTemporal: esTemporal ?? this.esTemporal,
     );
   }
 }

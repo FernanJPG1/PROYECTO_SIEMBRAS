@@ -128,9 +128,12 @@ class LocalDatabase {
             SET limite_esquejes = 600, dias_ciclo = 21, densidad_linea = 12 
             WHERE familia_id = 214 OR UPPER(familia_nombre) LIKE '%RANUNCULUS%'
           ''');
-          // Asegurar que la columna densidad_linea exista
+          // Asegurar que la columna densidad_linea y es_temporal existan
           try {
             await db.execute('ALTER TABLE tb_variedades ADD COLUMN densidad_linea INTEGER');
+          } catch (_) {}
+          try {
+            await db.execute('ALTER TABLE tb_variedades ADD COLUMN es_temporal INTEGER NOT NULL DEFAULT 0');
           } catch (_) {}
           try {
             await db.execute('ALTER TABLE tb_config_agronomica ADD COLUMN densidad_linea INTEGER NOT NULL DEFAULT 20');
@@ -374,7 +377,8 @@ class LocalDatabase {
         subvar_nombre TEXT,
         limite_esquejes INTEGER,
         dias_ciclo INTEGER,
-        densidad_linea INTEGER
+        densidad_linea INTEGER,
+        es_temporal INTEGER NOT NULL DEFAULT 0
       )
     ''');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_variedades_familia ON tb_variedades (familia_id)');

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:app_movil/screens/form_siembra_lirios_screen.dart';
+import 'package:app_movil/utils/responsive.dart';
 
 class LirioSubgrupoOption {
   final String codigo;
@@ -89,7 +90,8 @@ class SubgrupoLiriosScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: Padding(
+        child: ResponsiveContentContainer(
+          maxWidth: 960,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

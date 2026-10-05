@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS tb_variedades (
   familia_nombre TEXT,
   color TEXT,
   color_nombre TEXT,
-  subvar_nombre TEXT
+  subvar_nombre TEXT,
+  es_temporal INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_variedades_familia ON tb_variedades (familia_id);

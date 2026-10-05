@@ -634,16 +634,37 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
             var_nombre = ""
             dias_ciclo = 75
             esq_x_cama = s.cantidad_esquejes or 2600
-            if s.variedad_id:
-                if s.variedad_id in variedad_cache:
-                    var_nombre, dias_ciclo, esq_x_cama = variedad_cache[s.variedad_id]
+            var_id_real = s.variedad_id
+
+            # Si variedad_id es temporal o se incluye variedad_nombre, buscar auto-vinculación en t11_mcolorsseries
+            nom_variedad_sugerido = getattr(s, 'variedad_nombre', None)
+            if nom_variedad_sugerido:
+                try:
+                    cursor.execute("""
+                        SELECT t11_interno, t11_nombre, t11_ciclo_destronque, t11_esqxcama 
+                        FROM t11_mcolorsseries 
+                        WHERE UCASE(TRIM(t11_nombre)) = ?
+                    """, (nom_variedad_sugerido.strip().upper(),))
+                    vmatch = cursor.fetchone()
+                    if vmatch:
+                        var_id_real = int(vmatch[0])
+                        var_nombre = str(vmatch[1]).strip() if vmatch[1] else ""
+                        if vmatch[2] is not None: dias_ciclo = int(vmatch[2])
+                        if vmatch[3] is not None: esq_x_cama = int(vmatch[3])
+                        variedad_cache[var_id_real] = (var_nombre, dias_ciclo, esq_x_cama)
+                except Exception as ex_match:
+                    logger.warning(f"Error resolviendo variedad por nombre '{nom_variedad_sugerido}': {ex_match}")
+
+            if var_id_real and var_id_real > 0:
+                if var_id_real in variedad_cache:
+                    var_nombre, dias_ciclo, esq_x_cama = variedad_cache[var_id_real]
                 else:
                     try:
                         cursor.execute("""
                             SELECT t11_nombre, t11_ciclo_destronque, t11_esqxcama 
                             FROM t11_mcolorsseries 
                             WHERE t11_interno = ?
-                        """, (s.variedad_id,))
+                        """, (var_id_real,))
                         vrow = cursor.fetchone()
                         if vrow:
                             var_nombre = str(vrow[0]).strip() if vrow[0] else ""
@@ -651,7 +672,7 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                                 dias_ciclo = int(vrow[1])
                             if vrow[2] is not None:
                                 esq_x_cama = int(vrow[2])
-                            variedad_cache[s.variedad_id] = (var_nombre, dias_ciclo, esq_x_cama)
+                            variedad_cache[var_id_real] = (var_nombre, dias_ciclo, esq_x_cama)
                     except Exception:
                         pass
 
@@ -671,8 +692,9 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                 if s.estado == "FINALIZADA" and cama_id:
                     fec_liberacion = fecha_fin_dt or extraer_fecha_pura(None)
                     try:
-                        if s.variedad_id:
-                            cursor.execute("DELETE FROM t50_mcomposcama WHERE t50_cama = ? AND t50_referencia = ?", (cama_id, s.variedad_id))
+                        var_ref_del = var_id_real if (var_id_real and var_id_real > 0) else s.variedad_id
+                        if var_ref_del and var_ref_del > 0:
+                            cursor.execute("DELETE FROM t50_mcomposcama WHERE t50_cama = ? AND t50_referencia = ?", (cama_id, var_ref_del))
                         else:
                             cursor.execute("DELETE FROM t50_mcomposcama WHERE t50_cama = ?", (cama_id,))
 
@@ -724,7 +746,7 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                 s.bloque_codigo,
                 cama_id,
                 cama_cod,
-                s.variedad_id,
+                var_id_real or s.variedad_id,
                 s.operario_id,
                 s.cantidad_esquejes,
                 s.lineas,
@@ -735,8 +757,8 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                 s.estado
             ))
 
-            # Si es siembra ACTIVA y tenemos cama y variedad, registrar en las tablas empresariales
-            if s.estado == "ACTIVA" and cama_id and s.variedad_id:
+            # Si es siembra ACTIVA y tenemos cama y una variedad válida en Access (> 0), registrar en las tablas empresariales
+            if s.estado == "ACTIVA" and cama_id and var_id_real and var_id_real > 0:
                 # REGLA ESTRICTA DE CAMAS MULTIVARIEDAD Y MULTISEMBRADOR:
                 # Al registrar/sincronizar otra variedad u operario en una cama multivariedad, NUNCA se elimina
                 # el registro anterior si su ciclo aún no ha concluido.
@@ -781,7 +803,7 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                         current_t51,
                         current_t31,
                         cama_id,
-                        s.variedad_id,
+                        var_id_real,
                         float(s.lineas) if s.lineas else 1.0,
                         float(s.cantidad_esquejes) if s.cantidad_esquejes else 0.0,
                         s.observaciones,
@@ -802,7 +824,7 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                     """, (
                         current_t102,
                         current_t51,
-                        s.variedad_id,
+                        var_id_real,
                         float(s.lineas) if s.lineas else 1.0,
                         float(s.cantidad_esquejes) if s.cantidad_esquejes else 0.0,
                         s.observaciones,
@@ -818,7 +840,7 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                     logger.warning(f"Advertencia insertando en t102: {ex_t102}")
 
                 # 4.1 PRESERVACIÓN ESTRICTA DE VARIEDADES PREVIAS EN CAMAS MULTIVARIEDAD
-                # Si t49_mcamas ya tenía una variedad activa previa (t49_referencia != s.variedad_id y activa),
+                # Si t49_mcamas ya tenía una variedad activa previa (t49_referencia != var_id_real y activa),
                 # o si t_siembras_app tiene variedades activas del ciclo actual que no estén en t50_mcomposcama,
                 # preservarlas en t50_mcomposcama para que NUNCA se borre la variedad previa al ingresar una nueva.
                 try:
@@ -828,7 +850,7 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                         WHERE t49_interno = ?
                     """, (cama_id,))
                     t49_curr = cursor.fetchone()
-                    if t49_curr and t49_curr[0] and int(t49_curr[0]) != s.variedad_id:
+                    if t49_curr and t49_curr[0] and int(t49_curr[0]) != var_id_real:
                         prev_var_id = int(t49_curr[0])
                         # Solo si la siembra previa es de un ciclo vigente (menos de dias_limpieza días) o estado activo (1)
                         prev_fecha_est = t49_curr[3]
@@ -873,7 +895,7 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                     """, (
                         current_t50,
                         cama_id,
-                        s.variedad_id,
+                        var_id_real,
                         float(s.lineas) if s.lineas else 1.0,
                         float(s.cantidad_esquejes) if s.cantidad_esquejes else 0.0,
                         fecha_dt,
@@ -921,7 +943,7 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                             t49_obaserv = ?
                         WHERE t49_interno = ?
                     """, (
-                        s.variedad_id,
+                        var_id_real,
                         fecha_dt,
                         fecha_dt,
                         total_cama_lineas,

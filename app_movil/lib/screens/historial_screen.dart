@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:app_movil/repositories/db_repository.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/services/sync_service.dart' as app_sync;
+import 'package:app_movil/utils/responsive.dart';
 
 class HistorialScreen extends StatefulWidget {
   const HistorialScreen({super.key});
@@ -38,11 +39,16 @@ class _HistorialScreenState extends State<HistorialScreen> {
         backgroundColor: Colors.white,
         elevation: 1,
       ),
-      body: cargando 
-        ? const Center(child: CircularProgressIndicator())
-        : pendientes.isEmpty
-          ? _buildEmptyState()
-          : _buildListaPendientes(),
+      body: SafeArea(
+        child: cargando 
+          ? const Center(child: CircularProgressIndicator())
+          : ResponsiveContentContainer(
+              maxWidth: 800,
+              child: pendientes.isEmpty
+                ? _buildEmptyState()
+                : _buildListaPendientes(),
+            ),
+      ),
     );
   }
 
@@ -71,8 +77,13 @@ class _HistorialScreenState extends State<HistorialScreen> {
     return Column(
       children: [
         Container(
+          margin: const EdgeInsets.all(12),
           padding: const EdgeInsets.all(16),
-          color: const Color(0xFFFEF3C7),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEF3C7),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFFDE68A)),
+          ),
           child: Row(
             children: [
               const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706)),
@@ -92,7 +103,7 @@ class _HistorialScreenState extends State<HistorialScreen> {
             itemBuilder: (ctx, i) {
               final s = pendientes[i];
               return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: ListTile(
                   leading: const CircleAvatar(
                     backgroundColor: Color(0xFFE2E8F0),
@@ -111,7 +122,7 @@ class _HistorialScreenState extends State<HistorialScreen> {
           color: Colors.white,
           child: SizedBox(
             width: double.infinity,
-            height: 56,
+            height: 54,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3B82F6),
@@ -125,6 +136,7 @@ class _HistorialScreenState extends State<HistorialScreen> {
                 
                 final syncSvc = app_sync.SyncService();
                 final exito = await syncSvc.sincronizarPendientes();
+                if (!mounted) return;
                 
                 if (exito) {
                   ScaffoldMessenger.of(context).showSnackBar(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
 import 'package:app_movil/utils/calendario_util.dart';
+import 'package:app_movil/utils/responsive.dart';
+import 'package:app_movil/widgets/crear_variedad_dialog.dart';
 
 class FormularioSiembraScreen extends StatefulWidget {
   const FormularioSiembraScreen({super.key});
@@ -171,30 +173,135 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
                     decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2)),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: TextField(
-                      autofocus: false,
-                      decoration: InputDecoration(
-                        hintText: 'Escribe para buscar variedad...',
-                        prefixIcon: const Icon(Icons.search, color: Color(0xFF7CB342)),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      onChanged: (val) => setModalState(() => query = val),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            autofocus: false,
+                            decoration: InputDecoration(
+                              hintText: 'Escribe para buscar variedad...',
+                              prefixIcon: const Icon(Icons.search, color: Color(0xFF7CB342)),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            ),
+                            onChanged: (val) => setModalState(() => query = val),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton.filled(
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF2E7D32),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          icon: const Icon(Icons.add_rounded),
+                          tooltip: 'Crear nueva variedad / prueba',
+                          onPressed: () async {
+                            final nueva = await showDialog<Variedad>(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (dCtx) => CrearVariedadDialog(
+                                cultivoSugerido: 'GENERAL',
+                                nombreInicial: query.isNotEmpty ? query : null,
+                              ),
+                            );
+                            if (nueva != null) {
+                              final v = await _db.obtenerVariedades(soloActivas: true);
+                              if (mounted) {
+                                setState(() {
+                                  _variedades = v;
+                                });
+                              }
+                              if (ctx.mounted) Navigator.pop(ctx, nueva);
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ),
                   Expanded(
-                    child: ListView.builder(
-                      controller: scrollController,
-                      itemCount: lista.length,
-                      itemBuilder: (context, idx) {
-                        final v = lista[idx];
-                        return ListTile(
-                          title: Text(v.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text('Código: ${v.codigo} (ID: ${v.id})'),
-                          onTap: () => Navigator.pop(ctx, v),
-                        );
-                      },
-                    ),
+                    child: lista.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.search_off_rounded, size: 48, color: Colors.grey.shade400),
+                                const SizedBox(height: 8),
+                                Text(
+                                  query.isNotEmpty ? 'No se encontró "$query"' : 'No hay variedades registradas',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  '¿Llegó una variedad de prueba no registrada en Access?',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                                const SizedBox(height: 12),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2E7D32),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  icon: const Icon(Icons.add_rounded),
+                                  label: Text(query.isNotEmpty ? 'Crear "$query" en SQLite' : 'Agregar Nueva Variedad'),
+                                  onPressed: () async {
+                                    final nueva = await showDialog<Variedad>(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder: (dCtx) => CrearVariedadDialog(
+                                        cultivoSugerido: 'GENERAL',
+                                        nombreInicial: query.isNotEmpty ? query : null,
+                                      ),
+                                    );
+                                    if (nueva != null) {
+                                      final v = await _db.obtenerVariedades(soloActivas: true);
+                                      if (mounted) {
+                                        setState(() {
+                                          _variedades = v;
+                                        });
+                                      }
+                                      if (ctx.mounted) Navigator.pop(ctx, nueva);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: scrollController,
+                            itemCount: lista.length,
+                            itemBuilder: (context, idx) {
+                              final v = lista[idx];
+                              return ListTile(
+                                title: Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(v.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    ),
+                                    if (v.esTemporal || v.id < 0) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber.shade100,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: Colors.amber.shade400),
+                                        ),
+                                        child: Text(
+                                          'PRUEBA',
+                                          style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                subtitle: Text('Código: ${v.codigo} (ID: ${v.id}) | ${v.familiaNombre ?? ""}'),
+                                onTap: () => Navigator.pop(ctx, v),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
@@ -213,6 +320,17 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
       _recalcularTallosPorLineas();
       if (_formKey.currentState != null) {
         _formKey.currentState!.validate();
+      }
+      if (seleccionada.esTemporal || seleccionada.id < 0) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFF2E7D32),
+              content: Text('Variedad de prueba "${seleccionada.nombre}" guardada localmente en SQLite. ¡Rendimiento listo para registrar!'),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
       }
     }
   }
@@ -583,11 +701,14 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: ResponsiveContentContainer(
+                maxWidth: 800,
+                padding: EdgeInsets.zero,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     Builder(
                       builder: (context) {
                         final cfg = _configAgronomica;
@@ -1081,45 +1202,53 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
               ),
             ),
           ),
+        ),
 
           // BARRA INFERIOR DE BOTONES
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Colors.grey.shade300)),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, -2)),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade400,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Cancelar', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(top: BorderSide(color: Colors.grey.shade300)),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, -2)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey.shade400,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('Cancelar', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton.icon(
+                          onPressed: _guardarTodo,
+                          icon: const Icon(Icons.save, color: Colors.white),
+                          label: const Text('Guardar Siembra', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7CB342),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton.icon(
-                    onPressed: _guardarTodo,
-                    icon: const Icon(Icons.save, color: Colors.white),
-                    label: const Text('Guardar Siembra', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF7CB342),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],

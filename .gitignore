@@ -49,6 +49,8 @@ build/
 .pub/
 app_movil/build/
 app_movil/.dart_tool/
+*.apk
+*.aab
 
 # IDE & Editor files
 .idea/

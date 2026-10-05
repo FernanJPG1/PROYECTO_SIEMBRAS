@@ -96,12 +96,16 @@ class DbRepository {
     try {
       final batch = db.batch();
       for (var v in variedades) {
-        batch.insert('tb_variedades', v.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+        final map = v.toMap();
+        map['es_temporal'] = 0; // Las variedades del backend Access son oficiales
+        batch.insert('tb_variedades', map, conflictAlgorithm: ConflictAlgorithm.replace);
       }
       await batch.commit(noResult: true);
     } finally {
       await db.execute('PRAGMA foreign_keys = ON');
     }
+    // Sincronizar y reconciliar automáticamente variedades temporales con las oficiales recién insertadas
+    await reconciliarVariedadesTemporales();
   }
 
   Future<void> reemplazarCamas(List<Cama> camas) async {
@@ -290,14 +294,19 @@ class DbRepository {
     return result.map((json) => Variedad.fromMap(json)).toList();
   }
 
-  Future<List<Variedad>> obtenerVariedadesPorFamilia(List<int> familiaIds, {bool soloActivas = true}) async {
+  Future<List<Variedad>> obtenerVariedadesPorFamilia(List<int> familiaIds, {bool soloActivas = true, bool incluirTemporales = true}) async {
     final db = await LocalDatabase.instance.database;
     if (familiaIds.isEmpty) {
       return obtenerVariedades(soloActivas: soloActivas);
     }
     final placeholders = List.filled(familiaIds.length, '?').join(',');
     final whereArgs = [...familiaIds];
-    String whereClause = 'familia_id IN ($placeholders)';
+    String whereClause = '(familia_id IN ($placeholders)';
+    if (incluirTemporales) {
+      whereClause += ' OR es_temporal = 1 OR id < 0)';
+    } else {
+      whereClause += ')';
+    }
     if (soloActivas) {
       whereClause += ' AND estado = 1';
     }
@@ -311,6 +320,199 @@ class DbRepository {
       return obtenerVariedades(soloActivas: soloActivas);
     }
     return result.map((json) => Variedad.fromMap(json)).toList();
+  }
+
+  Future<Variedad?> obtenerVariedadPorId(int id) async {
+    final db = await LocalDatabase.instance.database;
+    final res = await db.query('tb_variedades', where: 'id = ?', whereArgs: [id], limit: 1);
+    if (res.isEmpty) return null;
+    return Variedad.fromMap(res.first);
+  }
+
+  /// Registra una nueva variedad temporal en SQLite para permitir la captura inmediata de siembras
+  /// y rendimientos de cortadores/sembradores mientras se oficializa en la base de datos empresarial.
+  Future<Variedad> crearVariedadTemporal({
+    required String nombre,
+    String? codigo,
+    required int familiaId,
+    String? familiaNombre,
+    String? color,
+    String? colorNombre,
+    int? limiteEsquejes,
+    int? diasCiclo,
+    int? densidadLinea,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+
+    // Generar un ID negativo único para evitar cualquier colisión con IDs de Access
+    final minRes = await db.rawQuery('SELECT MIN(id) as min_id FROM tb_variedades WHERE id < 0');
+    int nextTempId = -1;
+    if (minRes.isNotEmpty && minRes.first['min_id'] != null) {
+      final currentMin = minRes.first['min_id'] as int;
+      nextTempId = currentMin - 1;
+    }
+
+    final String finalCod = (codigo != null && codigo.trim().isNotEmpty)
+        ? codigo.trim().toUpperCase()
+        : 'TEMP-${DateTime.now().millisecondsSinceEpoch % 10000}';
+
+    final nueva = Variedad(
+      id: nextTempId,
+      codigo: finalCod,
+      nombre: nombre.trim().toUpperCase(),
+      estado: 1,
+      familiaId: familiaId,
+      familiaNombre: familiaNombre ?? 'GENERAL',
+      color: color,
+      colorNombre: colorNombre,
+      subvarNombre: 'VARIEDAD TEMPORAL / PRUEBA',
+      limiteEsquejes: limiteEsquejes,
+      diasCiclo: diasCiclo,
+      densidadLinea: densidadLinea,
+      esTemporal: true,
+    );
+
+    await db.insert(
+      'tb_variedades',
+      nueva.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+
+    return nueva;
+  }
+
+  /// Obtiene la lista de variedades temporales creadas en SQLite
+  Future<List<Variedad>> obtenerVariedadesTemporales() async {
+    final db = await LocalDatabase.instance.database;
+    final result = await db.query(
+      'tb_variedades',
+      where: 'es_temporal = 1 OR id < 0',
+      orderBy: 'nombre ASC',
+    );
+    return result.map((json) => Variedad.fromMap(json)).toList();
+  }
+
+  /// Obtiene la lista de variedades temporales junto con el número de siembras asociadas
+  Future<List<Map<String, dynamic>>> obtenerVariedadesTemporalesConConteo() async {
+    final db = await LocalDatabase.instance.database;
+    final temps = await db.query(
+      'tb_variedades',
+      where: 'es_temporal = 1 OR id < 0',
+      orderBy: 'nombre ASC',
+    );
+
+    final List<Map<String, dynamic>> resultado = [];
+    for (var t in temps) {
+      final id = t['id'] as int;
+      final cRes = await db.rawQuery('SELECT COUNT(*) as total FROM tb_siembras WHERE variedad_id = ?', [id]);
+      final count = Sqflite.firstIntValue(cRes) ?? 0;
+      resultado.add({
+        'variedad': Variedad.fromMap(t),
+        'total_siembras': count,
+      });
+    }
+    return resultado;
+  }
+
+  /// Sincroniza y reconcilia automáticamente las variedades temporales creadas en la app
+  /// con las variedades reales recién descargadas de la base de datos empresarial (Access).
+  /// Si encuentra una variedad en Access con el mismo nombre (o código), actualiza
+  /// todas las siembras en SQLite que tenían el ID temporal para usar el ID real de Access.
+  Future<int> reconciliarVariedadesTemporales() async {
+    final db = await LocalDatabase.instance.database;
+    final temps = await db.query(
+      'tb_variedades',
+      where: 'es_temporal = 1 OR id < 0',
+    );
+    if (temps.isEmpty) return 0;
+
+    int totalReconciliadas = 0;
+
+    for (var tMap in temps) {
+      final tempId = tMap['id'] as int;
+      final tempNombre = (tMap['nombre'] as String? ?? '').trim().toUpperCase();
+      final tempCodigo = (tMap['codigo'] as String? ?? '').trim().toUpperCase();
+
+      if (tempNombre.isEmpty) continue;
+
+      // Buscar si ya existe una variedad oficial de Access (id > 0 y es_temporal = 0)
+      List<Map<String, dynamic>> matches = [];
+      if (tempCodigo.isNotEmpty && tempCodigo != '00' && !tempCodigo.startsWith('TEMP')) {
+        matches = await db.query(
+          'tb_variedades',
+          where: '(id > 0 AND (es_temporal IS NULL OR es_temporal = 0)) AND (UPPER(TRIM(nombre)) = ? OR UPPER(TRIM(codigo)) = ?)',
+          whereArgs: [tempNombre, tempCodigo],
+          limit: 1,
+        );
+      } else {
+        matches = await db.query(
+          'tb_variedades',
+          where: '(id > 0 AND (es_temporal IS NULL OR es_temporal = 0)) AND UPPER(TRIM(nombre)) = ?',
+          whereArgs: [tempNombre],
+          limit: 1,
+        );
+      }
+
+      if (matches.isNotEmpty) {
+        final realId = matches.first['id'] as int;
+
+        // Migrar todas las siembras asociadas al ID temporal
+        await db.update(
+          'tb_siembras',
+          {'variedad_id': realId},
+          where: 'variedad_id = ?',
+          whereArgs: [tempId],
+        );
+
+        // Actualizar camas que apunten a este ID
+        await db.update(
+          'tb_camas',
+          {'referencia_actual_id': realId},
+          where: 'referencia_actual_id = ?',
+          whereArgs: [tempId],
+        );
+
+        // Eliminar la variedad temporal de SQLite porque ya existe la oficial de Access
+        await db.delete(
+          'tb_variedades',
+          where: 'id = ?',
+          whereArgs: [tempId],
+        );
+
+        totalReconciliadas++;
+      }
+    }
+
+    return totalReconciliadas;
+  }
+
+  /// Vincula manualmente una variedad temporal con una variedad real de Access seleccionada por el usuario
+  Future<int> vincularVariedadTemporalManual({
+    required int tempVariedadId,
+    required int realVariedadId,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    final count = await db.update(
+      'tb_siembras',
+      {'variedad_id': realVariedadId},
+      where: 'variedad_id = ?',
+      whereArgs: [tempVariedadId],
+    );
+
+    await db.update(
+      'tb_camas',
+      {'referencia_actual_id': realVariedadId},
+      where: 'referencia_actual_id = ?',
+      whereArgs: [tempVariedadId],
+    );
+
+    await db.delete(
+      'tb_variedades',
+      where: 'id = ?',
+      whereArgs: [tempVariedadId],
+    );
+
+    return count;
   }
 
   Future<void> guardarVariedadLocal(Variedad variedad) async {
@@ -644,7 +846,7 @@ class DbRepository {
           return ValidacionCicloResultado(
             esValido: false,
             esCicloIncompleto: true,
-            mensaje: 'Restricción de Ciclo Agronómico: La siembra previa de ${varPrevia?.nombre ?? "Variedad #${ultimaSiembra.variedadId}"} (iniciada el ${ultimaSiembra.fecha}) requiere un ciclo de $diasReq días (faltan $diasFalt días). Si la flor ya fue cortada o cosechada, seleccione "Finalizar Ciclo" en el registro previo para liberarla inmediatamente.',
+            mensaje: 'Restricción de Ciclo Agronómico: La siembra previa de ${varPrevia?.nombre ?? "Variedad #${ultimaSiembra.variedadId}"} (iniciada el ${ultimaSiembra.fecha}) requiere un ciclo de $diasReq días (faltan $diasFalt días, estimado hasta: $fechaMinStr). Si la flor ya fue cortada o cosechada, seleccione "Finalizar Ciclo" en el registro previo para liberarla inmediatamente.',
             siembraPrevia: ultimaSiembra,
             variedadPreviaNombre: varPrevia?.nombre,
             diasTranscurridos: diasTrans,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
 import 'package:app_movil/utils/calendario_util.dart';
+import 'package:app_movil/utils/responsive.dart';
+import 'package:app_movil/widgets/crear_variedad_dialog.dart';
 
 class FormSiembraPomponScreen extends StatefulWidget {
   final String cultivo;
@@ -192,68 +194,146 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                         v.codigo.toLowerCase().contains(q);
                   }).toList();
 
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.88,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade400,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Barra de filtro con toggle
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: Responsive.dialogMaxWidth(context),
+                  maxHeight: MediaQuery.of(context).size.height * 0.88,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade400,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Barra de filtro con toggle
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          Text(
+                            'Catálogo: ${verTodas ? "Todas (${_todasLasVariedades.length})" : "${widget.cultivo} (${_variedades.length})"}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF33691E)),
+                          ),
+                          TextButton.icon(
+                            icon: Icon(verTodas ? Icons.filter_alt : Icons.all_inclusive, size: 16, color: const Color(0xFF7CB342)),
+                            label: Text(
+                              verTodas ? 'Filtrar por ${widget.cultivo}' : 'Ver todo el catálogo',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF558B2F)),
+                            ),
+                            onPressed: () {
+                              setModalState(() {
+                                verTodas = !verTodas;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          'Catálogo: ${verTodas ? "Todas las Variedades (${_todasLasVariedades.length})" : "Variedades de ${widget.cultivo} (${_variedades.length})"}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF33691E)),
+                        child: TextField(
+                          autofocus: false,
+                          decoration: InputDecoration(
+                            hintText: 'Escribe para buscar variedad...',
+                            prefixIcon: const Icon(Icons.search, color: Color(0xFF7CB342)),
+                            filled: true,
+                            fillColor: Colors.grey.shade100,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Color(0xFF7CB342), width: 2),
+                            ),
+                          ),
+                          onChanged: (val) {
+                            setModalState(() => query = val);
+                          },
                         ),
                       ),
-                      TextButton.icon(
-                        icon: Icon(verTodas ? Icons.filter_alt : Icons.all_inclusive, size: 16, color: const Color(0xFF7CB342)),
-                        label: Text(
-                          verTodas ? 'Filtrar por ${widget.cultivo}' : 'Ver todo el catálogo',
-                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF558B2F)),
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFF2E7D32),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        onPressed: () {
-                          setModalState(() {
-                            verTodas = !verTodas;
-                          });
+                        icon: const Icon(Icons.add_rounded),
+                        tooltip: 'Agregar Nueva Variedad / Prueba',
+                        onPressed: () async {
+                          final nueva = await showDialog<Variedad>(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (dCtx) => CrearVariedadDialog(
+                              cultivoSugerido: widget.cultivo,
+                              nombreInicial: query.isNotEmpty ? query : null,
+                            ),
+                          );
+                          if (nueva != null) {
+                            await _cargarCatalogos();
+                            if (ctx.mounted) Navigator.pop(ctx, nueva);
+                          }
                         },
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    autofocus: false,
-                    decoration: InputDecoration(
-                      hintText: 'Escribe para buscar variedad...',
-                      prefixIcon: const Icon(Icons.search, color: Color(0xFF7CB342)),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFF7CB342), width: 2),
-                      ),
-                    ),
-                    onChanged: (val) {
-                      setModalState(() => query = val);
-                    },
-                  ),
                   const SizedBox(height: 10),
                   Expanded(
                     child: lista.isEmpty
-                        ? const Center(child: Text('No se encontraron variedades'))
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.search_off_rounded, size: 48, color: Colors.grey.shade400),
+                                const SizedBox(height: 8),
+                                Text(
+                                  query.isNotEmpty ? 'No se encontró "$query"' : 'No hay variedades registradas',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  '¿Llegó una variedad de prueba no registrada en Access?',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                                const SizedBox(height: 12),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2E7D32),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  icon: const Icon(Icons.add_rounded),
+                                  label: Text(query.isNotEmpty ? 'Crear "$query" en SQLite' : 'Agregar Nueva Variedad'),
+                                  onPressed: () async {
+                                    final nueva = await showDialog<Variedad>(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder: (dCtx) => CrearVariedadDialog(
+                                        cultivoSugerido: widget.cultivo,
+                                        nombreInicial: query.isNotEmpty ? query : null,
+                                      ),
+                                    );
+                                    if (nueva != null) {
+                                      await _cargarCatalogos();
+                                      if (ctx.mounted) Navigator.pop(ctx, nueva);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          )
                         : ListView.separated(
                             itemCount: lista.length,
                             separatorBuilder: (ctx, i) => const Divider(height: 1),
@@ -264,12 +344,33 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                                 tileColor: isSelected
                                     ? const Color(0xFF7CB342).withValues(alpha: 0.15)
                                     : null,
-                                title: Text(
-                                  item.nombre,
-                                  style: TextStyle(
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                    color: isSelected ? const Color(0xFF33691E) : Colors.black87,
-                                  ),
+                                title: Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        item.nombre,
+                                        style: TextStyle(
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                          color: isSelected ? const Color(0xFF33691E) : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    if (item.esTemporal || item.id < 0) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber.shade100,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: Colors.amber.shade400),
+                                        ),
+                                        child: Text(
+                                          'PRUEBA',
+                                          style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 subtitle: Text('Código: ${item.codigo}${item.colorNombre != null ? ' | Color: ${item.colorNombre}' : ''}${item.familiaNombre != null ? ' | ${item.familiaNombre}' : ''}'),
                                 trailing: isSelected
@@ -282,7 +383,9 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                   ),
                 ],
               ),
-            );
+            ),
+          ),
+        );
           },
         );
       },
@@ -297,6 +400,17 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
       _recalcularTallosPorLineas();
       if (_formKey.currentState != null) {
         _formKey.currentState!.validate();
+      }
+      if (seleccionada.esTemporal || seleccionada.id < 0) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFF2E7D32),
+              content: Text('Variedad de prueba "${seleccionada.nombre}" guardada localmente en SQLite. ¡Rendimiento listo para registrar!'),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
       }
     }
   }
@@ -676,9 +790,733 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
     );
   }
 
+  Widget _buildCampoFecha() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Fecha'),
+        InkWell(
+          onTap: _seleccionarFecha,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade400),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Builder(
+                    builder: (context) {
+                      final fActual = CalendarioUtil.parsearFecha(_fechaSeleccionada) ?? DateTime.now();
+                      final semTxt = CalendarioUtil.obtenerEtiquetaCorta(fActual);
+                      return Text(
+                        '${_fechaSeleccionada ?? 'dd/mm/aaaa'} ($semTxt)',
+                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
+                      );
+                    },
+                  ),
+                ),
+                const Icon(Icons.calendar_today, color: Color(0xFF7CB342), size: 20),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCampoBloque() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Bloque'),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade400),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<Bloque>(
+              isExpanded: true,
+              hint: const Text('Seleccionar bloque...'),
+              value: _bloqueSeleccionado,
+              items: _bloques.map((b) {
+                return DropdownMenuItem(
+                  value: b,
+                  child: Text(
+                    '${b.codigo} - ${b.nombre}',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: _onBloqueCambiado,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCampoCama() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Cama'),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: _bloqueSeleccionado == null ? Colors.grey.shade100 : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade400),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<Cama>(
+              isExpanded: true,
+              hint: Text(
+                _cargandoCamas
+                    ? 'Cargando...'
+                    : (_bloqueSeleccionado == null ? 'Elija bloque' : 'Cama...'),
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+              ),
+              value: _camaSeleccionada,
+              items: _camasDelBloque.map((c) {
+                final info = _estadoCicloCamas[c.id];
+                final bool esCompartida = info?.esCamaCompartida == true;
+                final bool esLlena = info?.esCamaLlena == true || (info?.esCicloActivo == true && info?.esValido == false);
+                final bool esIncompleta = info?.esCicloIncompleto == true;
+                final String estadoTexto = esCompartida
+                    ? '🟡 PARCIAL (${info!.cupoDisponible} disp)'
+                    : (esLlena
+                        ? '🔴 LLENA (${info!.cantidadOcupada}/${info.limiteMaximo})'
+                        : (esIncompleta ? '🟠 CICLO (-${info!.diasFaltantes}d)' : '🟢 DISPONIBLE'));
+                final Color estadoColor = esCompartida
+                    ? const Color(0xFFE65100)
+                    : (esLlena
+                        ? Colors.red.shade800
+                        : (esIncompleta ? Colors.orange.shade800 : Colors.green.shade800));
+                final Color estadoBg = esCompartida
+                    ? const Color(0xFFFFF8E1)
+                    : (esLlena
+                        ? Colors.red.shade50
+                        : (esIncompleta ? Colors.orange.shade50 : Colors.green.shade50));
+                final Color estadoBorder = esCompartida
+                    ? const Color(0xFFFFB300)
+                    : (esLlena
+                        ? Colors.red.shade200
+                        : (esIncompleta ? Colors.orange.shade300 : Colors.green.shade200));
+
+                return DropdownMenuItem(
+                  value: c,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Cama ${c.cama}', style: const TextStyle(fontSize: 14)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: estadoBg,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: estadoBorder),
+                        ),
+                        child: Text(
+                          estadoTexto,
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.bold,
+                            color: estadoColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: _bloqueSeleccionado == null
+                  ? null
+                  : (val) {
+                      setState(() => _camaSeleccionada = val);
+                    },
+            ),
+          ),
+        ),
+        if (_camaSeleccionada != null) ...[
+          Builder(
+            builder: (context) {
+              final info = _estadoCicloCamas[_camaSeleccionada!.id];
+              if (info == null) return const SizedBox.shrink();
+
+              if (info.esCamaCompartida) {
+                return Container(
+                  margin: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF8E1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFFFB300)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.group_work, color: Color(0xFFE65100), size: 14),
+                          const SizedBox(width: 4),
+                          const Expanded(
+                            child: Text(
+                              'Cama Compartida (Multisembrador / Multi-variedad)',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFE65100)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text('• Ocupado: ${info.cantidadOcupada} de ${info.limiteMaximo} plantas (Cupo: ${info.cupoDisponible} disp)', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
+                      if (info.variedadesPresentes.isNotEmpty)
+                        Text('• Variedades: ${info.variedadesPresentes.join(", ")}', style: const TextStyle(fontSize: 10, color: Colors.black87)),
+                      if (info.operariosPresentes.isNotEmpty)
+                        Text('• Sembradores: ${info.operariosPresentes.join(", ")}', style: const TextStyle(fontSize: 10, color: Colors.black87)),
+                    ],
+                  ),
+                );
+              } else if (!info.esValido) {
+                final esActiva = info.esCicloActivo;
+                return Container(
+                  margin: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: esActiva ? Colors.red.shade50 : Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: esActiva ? Colors.red.shade300 : Colors.orange.shade300),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(esActiva ? Icons.block : Icons.timelapse, color: esActiva ? Colors.red : Colors.orange.shade900, size: 15),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              esActiva ? '🚫 CAPACIDAD COMPLETA EN CICLO' : '⚠️ CICLO INCOMPLETO',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: esActiva ? Colors.red.shade900 : Colors.orange.shade900,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        info.mensaje,
+                        style: TextStyle(fontSize: 10.5, color: esActiva ? Colors.red.shade900 : Colors.brown.shade900),
+                      ),
+                      if (!info.esCamaCompartida) ...[
+                        const SizedBox(height: 6),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2E7D32),
+                              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              elevation: 1,
+                            ),
+                            icon: const Icon(Icons.bolt, color: Colors.white, size: 16),
+                            label: const Text(
+                              '¿Cama ya cortada? Liberar Cama Ahora',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                            ),
+                            onPressed: () async {
+                              final confirmar = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  title: const Row(
+                                    children: [
+                                      Icon(Icons.bolt, color: Color(0xFF2E7D32)),
+                                      SizedBox(width: 8),
+                                      Text('Liberar Cama', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                  content: Text(
+                                    '¿Desea marcar como cortada la siembra previa en Cama ${_camaSeleccionada!.cama} y liberarla de inmediato para sembrar hoy?',
+                                    style: const TextStyle(fontSize: 13.5),
+                                  ),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32)),
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      child: const Text('Sí, Liberar Cama', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirmar == true) {
+                                await _db.liberarCamaPorCorteAnticipado(_camaSeleccionada!.id, _fechaSeleccionada ?? '');
+                                await _recargarCiclosCamas();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('✓ Cama ${_camaSeleccionada!.cama} liberada. Ya puede registrar la nueva siembra.'),
+                                      backgroundColor: const Color(0xFF2E7D32),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCampoOperario() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildLabel('Operario'),
+            Row(
+              children: [
+                Text(
+                  'Fijar',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.bold),
+                ),
+                Transform.scale(
+                  scale: 0.7,
+                  child: Switch(
+                    value: _recordarOperario,
+                    activeThumbColor: const Color(0xFF7CB342),
+                    onChanged: (val) => setState(() => _recordarOperario = val),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade400),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<Operario>(
+              isExpanded: true,
+              hint: const Text('Seleccionar operario...'),
+              value: _operarioSeleccionado,
+              items: _operarios.map((o) {
+                return DropdownMenuItem(
+                  value: o,
+                  child: Text(
+                    o.nombreCompleto,
+                    style: const TextStyle(fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: (val) => setState(() => _operarioSeleccionado = val),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCampoVariedad() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Variedad'),
+        InkWell(
+          onTap: _abrirBuscadorVariedades,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _variedadSeleccionada != null
+                    ? const Color(0xFF7CB342)
+                    : Colors.grey.shade400,
+                width: _variedadSeleccionada != null ? 1.5 : 1.0,
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.local_florist, color: Color(0xFF7CB342), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _variedadSeleccionada != null
+                        ? '${_variedadSeleccionada!.nombre} (${_variedadSeleccionada!.codigo})'
+                        : 'Toca para buscar variedad...',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: _variedadSeleccionada != null
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: _variedadSeleccionada != null
+                          ? const Color(0xFF2E7D32)
+                          : Colors.grey.shade600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Icon(Icons.search, color: Color(0xFF7CB342)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCampoLineas() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('# Líneas'),
+        TextFormField(
+          controller: _lineasController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            hintText: 'Ej: 130',
+            helperText: 'Densidad: ${_variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 20} esq/l',
+            helperStyle: const TextStyle(color: Color(0xFF558B2F), fontWeight: FontWeight.bold),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          onChanged: (val) {
+            _recalcularTallosPorLineas();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCampoTallos() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Tallos x sembrar'),
+        Builder(
+          builder: (context) {
+            final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 4050;
+            final int tallosActuales = int.tryParse(_tallosController.text.trim()) ?? 0;
+            final bool excede = tallosActuales > limitePermitido;
+
+            return TextFormField(
+              controller: _tallosController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: 'Máx: $limitePermitido',
+                helperText: excede
+                    ? '⚠️ Excede límite de $limitePermitido esquejes'
+                    : 'Máximo: $limitePermitido esq/cama',
+                helperStyle: TextStyle(
+                  color: excede ? Colors.red.shade800 : const Color(0xFF558B2F),
+                  fontWeight: FontWeight.bold,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                filled: true,
+                fillColor: excede ? Colors.red.shade50 : Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: excede ? Colors.red : Colors.grey.shade400),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: excede ? Colors.red : const Color(0xFF7CB342), width: 2),
+                ),
+              ),
+              onChanged: (val) {
+                setState(() {});
+              },
+              validator: (val) {
+                if (val == null || val.trim().isEmpty) {
+                  return 'Obligatorio';
+                }
+                final int? cant = int.tryParse(val.trim());
+                if (cant == null || cant <= 0) {
+                  return 'Inválido';
+                }
+                if (cant > limitePermitido) {
+                  return '❌ Máx: $limitePermitido (Ingresó: $cant)';
+                }
+                return null;
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCampoObservaciones() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _buildLabel(_requiereClon ? 'Clon *' : 'Observaciones'),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: _requiereClon ? Colors.orange.shade50 : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: _requiereClon ? Colors.orange.shade300 : Colors.grey.shade300,
+                ),
+              ),
+              child: Text(
+                _requiereClon ? 'Obligatorio' : 'Opcional',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: _requiereClon ? Colors.orange.shade900 : Colors.grey.shade700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        TextFormField(
+          controller: _observacionesController,
+          textCapitalization: TextCapitalization.characters,
+          decoration: InputDecoration(
+            hintText: _requiereClon ? 'Ej: 4-25, 3-25...' : 'Notas adicionales (ej: 4d Atraso)...',
+            helperText: _requiereClon
+                ? 'Obligatorio para ${widget.cultivo} (ej: 4-25)'
+                : null,
+            helperStyle: TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.w600, fontSize: 11),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: _requiereClon ? Colors.orange.shade700 : const Color(0xFF7CB342),
+                width: 2,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCampoLote() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Lote (Opcional)'),
+        TextFormField(
+          controller: _loteController,
+          decoration: InputDecoration(
+            hintText: 'Ej: 7310',
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCampoProveedor() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Proveedor (Opcional)'),
+        TextFormField(
+          controller: _proveedorController,
+          decoration: InputDecoration(
+            hintText: 'Ej: Steenvoorden',
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCampoContenedor() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Contenedor (Opcional)'),
+        TextFormField(
+          controller: _contController,
+          decoration: InputDecoration(
+            hintText: 'Ej: 9 BN',
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBannerFormula() {
+    if (_lineasController.text.trim().isEmpty) return const SizedBox.shrink();
+    return Builder(builder: (context) {
+      final int? l = int.tryParse(_lineasController.text.trim());
+      final int factor = _variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 20;
+      final int total = (l ?? 0) * factor;
+      final String varNombre = _variedadSeleccionada?.nombre ?? widget.cultivo;
+      final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 4050;
+      final bool excede = total > limitePermitido;
+
+      return Container(
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: excede ? Colors.red.shade50 : const Color(0xFFF1F8E9),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: excede ? Colors.red.shade300 : const Color(0xFFC5E1A5)),
+        ),
+        child: Row(
+          children: [
+            Icon(excede ? Icons.warning_amber_rounded : Icons.calculate, color: excede ? Colors.red.shade800 : const Color(0xFF33691E), size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '📐 Fórmula: ${l ?? 0} líneas × $factor esq/línea = $total esquejes ($varNombre)${excede ? " ⚠️ (Supera límite de $limitePermitido)" : ""}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: excede ? Colors.red.shade800 : const Color(0xFF33691E),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildBotonesAccion(bool esMovil) {
+    if (esMovil) {
+      return Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontSize: 15)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF7CB342),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 3,
+              ),
+              onPressed: _guardando ? null : _guardarSiembra,
+              icon: _guardando
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save, color: Colors.white),
+              label: Text(
+                _guardando ? 'Guardando...' : 'Guardar Siembra',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontSize: 16)),
+        ),
+        const SizedBox(width: 16),
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF7CB342),
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            elevation: 3,
+          ),
+          onPressed: _guardando ? null : _guardarSiembra,
+          icon: _guardando
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                )
+              : const Icon(Icons.save, color: Colors.white),
+          label: Text(
+            _guardando ? 'Guardando...' : 'Guardar Siembra',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final tituloForm = 'Siembra ${widget.cultivo}';
+    final bool esMovil = Responsive.isMobile(context);
+    final tituloForm = esMovil ? widget.cultivo : 'Siembra ${widget.cultivo}';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FBE7),
@@ -686,7 +1524,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
         backgroundColor: const Color(0xFF7CB342),
         elevation: 2,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 26),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -694,7 +1532,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 18,
             letterSpacing: 0.5,
           ),
         ),
@@ -706,7 +1544,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF33691E),
                 elevation: 1,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: EdgeInsets.symmetric(horizontal: esMovil ? 10 : 16, vertical: 6),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: _guardando ? null : _guardarSiembra,
@@ -718,21 +1556,21 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                     )
                   : const Icon(Icons.check_circle, size: 18, color: Color(0xFF33691E)),
               label: Text(
-                _guardando ? 'GUARDANDO...' : 'GUARDAR',
+                _guardando ? '...' : 'GUARDAR',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Container(
-            margin: const EdgeInsets.only(right: 14),
+            margin: const EdgeInsets.only(right: 10),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
             ),
             child: IconButton(
-              icon: const Icon(Icons.home, color: Colors.white, size: 26),
+              icon: const Icon(Icons.home, color: Colors.white, size: 24),
               tooltip: 'Volver al Inicio',
               onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
             ),
@@ -743,774 +1581,163 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                                                // Banner Informativo de Parámetros Agronómicos Fijados por el Administrador
-                Builder(
-                  builder: (context) {
-                    final cfg = _configAgronomica;
-                    final int limite = _variedadSeleccionada?.limiteEsquejes ?? cfg?.limiteEsquejes ?? 4050;
-                    final int dias = _variedadSeleccionada?.diasCiclo ?? cfg?.diasCiclo ?? 98;
-                    final fInicio = parsearFechaSiembra(_fechaSeleccionada) ?? DateTime.now();
-                    final semSiembra = CalendarioUtil.obtenerSemanaUS(fInicio);
-                    final fEst = fInicio.add(Duration(days: dias));
-                    final semCosecha = CalendarioUtil.obtenerSemanaUS(fEst);
-                    final fEstStr = "${fEst.day.toString().padLeft(2, '0')}/${fEst.month.toString().padLeft(2, '0')}/${fEst.year}";
+            padding: EdgeInsets.symmetric(
+              horizontal: esMovil ? 14 : 24,
+              vertical: 10,
+            ),
+            child: ResponsiveContentContainer(
+              maxWidth: 960,
+              padding: EdgeInsets.zero,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Banner Informativo de Parámetros Agronómicos Fijados por el Administrador
+                  Builder(
+                    builder: (context) {
+                      final cfg = _configAgronomica;
+                      final int limite = _variedadSeleccionada?.limiteEsquejes ?? cfg?.limiteEsquejes ?? 4050;
+                      final int dias = _variedadSeleccionada?.diasCiclo ?? cfg?.diasCiclo ?? 98;
+                      final fInicio = parsearFechaSiembra(_fechaSeleccionada) ?? DateTime.now();
+                      final semSiembra = CalendarioUtil.obtenerSemanaUS(fInicio);
+                      final fEst = fInicio.add(Duration(days: dias));
+                      final semCosecha = CalendarioUtil.obtenerSemanaUS(fEst);
+                      final fEstStr = "${fEst.day.toString().padLeft(2, '0')}/${fEst.month.toString().padLeft(2, '0')}/${fEst.year}";
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F8E9),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFC5E1A5)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.verified_user, color: Color(0xFF558B2F), size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Parámetros Agronómicos (${_variedadSeleccionada?.nombre ?? widget.cultivo}): Máx: $limite plant/cama | Ciclo: $dias d | Sem. Siembra: Sem $semSiembra | Cosecha Est.: $fEstStr (Sem. $semCosecha)',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF2E7D32),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-// Fila 1: FECHA | BLOQUE | CAMA
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Fecha
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLabel('Fecha'),
-                          InkWell(
-                            onTap: _seleccionarFecha,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey.shade400),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Builder(
-                                    builder: (context) {
-                                      final fActual = CalendarioUtil.parsearFecha(_fechaSeleccionada) ?? DateTime.now();
-                                      final semTxt = CalendarioUtil.obtenerEtiquetaCorta(fActual);
-                                      return Text(
-                                        '${_fechaSeleccionada ?? 'dd/mm/aaaa'} ($semTxt)',
-                                        style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
-                                      );
-                                    },
-                                  ),
-                                  const Icon(Icons.calendar_today, color: Color(0xFF7CB342), size: 20),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    // Bloque
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLabel('Bloque'),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey.shade400),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<Bloque>(
-                                isExpanded: true,
-                                hint: const Text('Seleccionar bloque...'),
-                                value: _bloqueSeleccionado,
-                                items: _bloques.map((b) {
-                                  return DropdownMenuItem(
-                                    value: b,
-                                    child: Text(
-                                      '${b.codigo} - ${b.nombre}',
-                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: _onBloqueCambiado,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    // Cama
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLabel('Cama'),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: _bloqueSeleccionado == null ? Colors.grey.shade100 : Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey.shade400),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<Cama>(
-                                isExpanded: true,
-                                hint: Text(
-                                  _cargandoCamas
-                                      ? 'Cargando...'
-                                      : (_bloqueSeleccionado == null ? 'Elija bloque' : 'Cama...'),
-                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F8E9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFC5E1A5)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.verified_user, color: Color(0xFF558B2F), size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Parámetros Agronómicos (${_variedadSeleccionada?.nombre ?? widget.cultivo}): Máx: $limite plant/cama | Ciclo: $dias d | Sem. Siembra: Sem $semSiembra | Cosecha Est.: $fEstStr (Sem. $semCosecha)',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF2E7D32),
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                value: _camaSeleccionada,
-                                items: _camasDelBloque.map((c) {
-                                  final info = _estadoCicloCamas[c.id];
-                                  final bool esCompartida = info?.esCamaCompartida == true;
-                                  final bool esLlena = info?.esCamaLlena == true || (info?.esCicloActivo == true && info?.esValido == false);
-                                  final bool esIncompleta = info?.esCicloIncompleto == true;
-                                  final String estadoTexto = esCompartida
-                                      ? '🟡 PARCIAL (${info!.cupoDisponible} disp)'
-                                      : (esLlena
-                                          ? '🔴 LLENA (${info!.cantidadOcupada}/${info.limiteMaximo})'
-                                          : (esIncompleta ? '🟠 CICLO (-${info!.diasFaltantes}d)' : '🟢 DISPONIBLE'));
-                                  final Color estadoColor = esCompartida
-                                      ? const Color(0xFFE65100)
-                                      : (esLlena
-                                          ? Colors.red.shade800
-                                          : (esIncompleta ? Colors.orange.shade800 : Colors.green.shade800));
-                                  final Color estadoBg = esCompartida
-                                      ? const Color(0xFFFFF8E1)
-                                      : (esLlena
-                                          ? Colors.red.shade50
-                                          : (esIncompleta ? Colors.orange.shade50 : Colors.green.shade50));
-                                  final Color estadoBorder = esCompartida
-                                      ? const Color(0xFFFFB300)
-                                      : (esLlena
-                                          ? Colors.red.shade200
-                                          : (esIncompleta ? Colors.orange.shade300 : Colors.green.shade200));
-
-                                  return DropdownMenuItem(
-                                    value: c,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text('Cama ${c.cama}', style: const TextStyle(fontSize: 14)),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: estadoBg,
-                                            borderRadius: BorderRadius.circular(4),
-                                            border: Border.all(color: estadoBorder),
-                                          ),
-                                          child: Text(
-                                            estadoTexto,
-                                            style: TextStyle(
-                                              fontSize: 9.5,
-                                              fontWeight: FontWeight.bold,
-                                              color: estadoColor,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: _bloqueSeleccionado == null
-                                    ? null
-                                    : (val) {
-                                        setState(() => _camaSeleccionada = val);
-                                      },
                               ),
-                            ),
-                          ),
-                          if (_camaSeleccionada != null) ...[
-                            Builder(
-                              builder: (context) {
-                                final info = _estadoCicloCamas[_camaSeleccionada!.id];
-                                if (info == null) return const SizedBox.shrink();
-
-                                if (info.esCamaCompartida) {
-                                  return Container(
-                                    margin: const EdgeInsets.only(top: 6),
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFFF8E1),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: const Color(0xFFFFB300)),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.group_work, color: Color(0xFFE65100), size: 14),
-                                            const SizedBox(width: 4),
-                                            const Expanded(
-                                              child: Text(
-                                                'Cama Compartida (Multisembrador / Multi-variedad)',
-                                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFE65100)),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Text('• Ocupado: ${info.cantidadOcupada} de ${info.limiteMaximo} plantas (Cupo: ${info.cupoDisponible} disp)', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
-                                        if (info.variedadesPresentes.isNotEmpty)
-                                          Text('• Variedades: ${info.variedadesPresentes.join(", ")}', style: const TextStyle(fontSize: 10, color: Colors.black87)),
-                                        if (info.operariosPresentes.isNotEmpty)
-                                          Text('• Sembradores: ${info.operariosPresentes.join(", ")}', style: const TextStyle(fontSize: 10, color: Colors.black87)),
-                                      ],
-                                    ),
-                                  );
-                                } else if (!info.esValido) {
-                                  final esActiva = info.esCicloActivo;
-                                  return Container(
-                                    margin: const EdgeInsets.only(top: 6),
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: esActiva ? Colors.red.shade50 : Colors.orange.shade50,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: esActiva ? Colors.red.shade300 : Colors.orange.shade300),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Icon(esActiva ? Icons.block : Icons.timelapse, color: esActiva ? Colors.red : Colors.orange.shade900, size: 15),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              child: Text(
-                                                esActiva ? '🚫 CAPACIDAD COMPLETA EN CICLO' : '⚠️ CICLO INCOMPLETO',
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: esActiva ? Colors.red.shade900 : Colors.orange.shade900,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          info.mensaje,
-                                          style: TextStyle(fontSize: 10.5, color: esActiva ? Colors.red.shade900 : Colors.brown.shade900),
-                                        ),
-                                        if (!info.esCamaCompartida) ...[
-                                          const SizedBox(height: 6),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton.icon(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF2E7D32),
-                                                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                                                elevation: 1,
-                                              ),
-                                              icon: const Icon(Icons.bolt, color: Colors.white, size: 16),
-                                              label: const Text(
-                                                '¿Cama ya cortada? Liberar Cama Ahora',
-                                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
-                                              ),
-                                              onPressed: () async {
-                                                final confirmar = await showDialog<bool>(
-                                                  context: context,
-                                                  builder: (ctx) => AlertDialog(
-                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                                    title: const Row(
-                                                      children: [
-                                                        Icon(Icons.bolt, color: Color(0xFF2E7D32)),
-                                                        SizedBox(width: 8),
-                                                        Text('Liberar Cama', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                                      ],
-                                                    ),
-                                                    content: Text(
-                                                      '¿Desea marcar como cortada la siembra previa en Cama ${_camaSeleccionada!.cama} y liberarla de inmediato para sembrar hoy?',
-                                                      style: const TextStyle(fontSize: 13.5),
-                                                    ),
-                                                    actions: [
-                                                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-                                                      ElevatedButton(
-                                                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32)),
-                                                        onPressed: () => Navigator.pop(ctx, true),
-                                                        child: const Text('Sí, Liberar Cama', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                                if (confirmar == true) {
-                                                  await _db.liberarCamaPorCorteAnticipado(_camaSeleccionada!.id, _fechaSeleccionada ?? '');
-                                                  await _recargarCiclosCamas();
-                                                  if (context.mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(
-                                                        content: Text('✓ Cama ${_camaSeleccionada!.cama} liberada. Ya puede registrar la nueva siembra.'),
-                                                        backgroundColor: const Color(0xFF2E7D32),
-                                                      ),
-                                                    );
-                                                  }
-                                                }
-                                              },
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  );
-                                }
-                                return const SizedBox.shrink();
-                              },
                             ),
                           ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                // Fila 2: OPERARIO | VARIEDAD
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Operario
-                    Expanded(
-                      flex: 5,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _buildLabel('Operario'),
-                              Row(
-                                children: [
-                                  Text(
-                                    'Fijar',
-                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.bold),
-                                  ),
-                                  Transform.scale(
-                                    scale: 0.7,
-                                    child: Switch(
-                                      value: _recordarOperario,
-                                      activeColor: const Color(0xFF7CB342),
-                                      onChanged: (val) => setState(() => _recordarOperario = val),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey.shade400),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<Operario>(
-                                isExpanded: true,
-                                hint: const Text('Seleccionar operario...'),
-                                value: _operarioSeleccionado,
-                                items: _operarios.map((o) {
-                                  return DropdownMenuItem(
-                                    value: o,
-                                    child: Text(
-                                      o.nombreCompleto,
-                                      style: const TextStyle(fontSize: 14),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (val) => setState(() => _operarioSeleccionado = val),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    // Variedad (con modal buscador)
-                    Expanded(
-                      flex: 5,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 10),
-                          _buildLabel('Variedad'),
-                          InkWell(
-                            onTap: _abrirBuscadorVariedades,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: _variedadSeleccionada != null
-                                      ? const Color(0xFF7CB342)
-                                      : Colors.grey.shade400,
-                                  width: _variedadSeleccionada != null ? 1.5 : 1.0,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.local_florist, color: Color(0xFF7CB342), size: 20),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      _variedadSeleccionada != null
-                                          ? '${_variedadSeleccionada!.nombre} (${_variedadSeleccionada!.codigo})'
-                                          : 'Toca para buscar variedad...',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: _variedadSeleccionada != null
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                        color: _variedadSeleccionada != null
-                                            ? const Color(0xFF2E7D32)
-                                            : Colors.grey.shade600,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const Icon(Icons.search, color: Color(0xFF7CB342)),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                // Fila 3: # LÍNEAS | TALLOS X SEMBRAR | OBSERVACIONES
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // # Líneas
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLabel('# Líneas'),
-                          TextFormField(
-                            controller: _lineasController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              hintText: 'Ej: 130',
-                              helperText: 'Densidad: ${_variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 20} esq/l',
-                              helperStyle: const TextStyle(color: Color(0xFF558B2F), fontWeight: FontWeight.bold),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            onChanged: (val) {
-                              _recalcularTallosPorLineas();
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    // Tallos x sembrar
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLabel('Tallos x sembrar'),
-                          Builder(
-                            builder: (context) {
-                              final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 4050;
-                              final int tallosActuales = int.tryParse(_tallosController.text.trim()) ?? 0;
-                              final bool excede = tallosActuales > limitePermitido;
-
-                              return TextFormField(
-                                controller: _tallosController,
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  hintText: 'Máx: $limitePermitido',
-                                  helperText: excede
-                                      ? '⚠️ Excede el límite de $limitePermitido esquejes'
-                                      : 'Máximo: $limitePermitido esquejes/cama',
-                                  helperStyle: TextStyle(
-                                    color: excede ? Colors.red.shade800 : const Color(0xFF558B2F),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                  filled: true,
-                                  fillColor: excede ? Colors.red.shade50 : Colors.white,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide(color: excede ? Colors.red : Colors.grey.shade400),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide(color: excede ? Colors.red : const Color(0xFF7CB342), width: 2),
-                                  ),
-                                ),
-                                onChanged: (val) {
-                                  setState(() {});
-                                },
-                                validator: (val) {
-                                  if (val == null || val.trim().isEmpty) {
-                                    return 'Obligatorio';
-                                  }
-                                  final int? cant = int.tryParse(val.trim());
-                                  if (cant == null || cant <= 0) {
-                                    return 'Inválido';
-                                  }
-                                  if (cant > limitePermitido) {
-                                    return '❌ Máx: $limitePermitido (Ingresó: $cant)';
-                                  }
-                                  return null;
-                                },
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    // Observaciones / Clon
-                    Expanded(
-                      flex: 5,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              _buildLabel(_requiereClon ? 'Clon *' : 'Observaciones'),
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: _requiereClon ? Colors.orange.shade50 : Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: _requiereClon ? Colors.orange.shade300 : Colors.grey.shade300,
-                                  ),
-                                ),
-                                child: Text(
-                                  _requiereClon ? 'Obligatorio' : 'Opcional',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: _requiereClon ? Colors.orange.shade900 : Colors.grey.shade700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          TextFormField(
-                            controller: _observacionesController,
-                            textCapitalization: TextCapitalization.characters,
-                            decoration: InputDecoration(
-                              hintText: _requiereClon ? 'Ej: 4-25, 3-25...' : 'Notas adicionales (ej: 4d Atraso)...',
-                              helperText: _requiereClon
-                                  ? 'Obligatorio para ${widget.cultivo} (ej: 4-25)'
-                                  : null,
-                              helperStyle: TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.w600, fontSize: 11),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: _requiereClon ? Colors.orange.shade700 : const Color(0xFF7CB342),
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                if (_lineasController.text.trim().isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Builder(builder: (context) {
-                    final int? l = int.tryParse(_lineasController.text.trim());
-                    final int factor = _variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 20;
-                    final int total = (l ?? 0) * factor;
-                    final String varNombre = _variedadSeleccionada?.nombre ?? widget.cultivo;
-                    final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 4050;
-                    final bool excede = total > limitePermitido;
-
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: excede ? Colors.red.shade50 : const Color(0xFFF1F8E9),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: excede ? Colors.red.shade300 : const Color(0xFFC5E1A5)),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(excede ? Icons.warning_amber_rounded : Icons.calculate, color: excede ? Colors.red.shade800 : const Color(0xFF33691E), size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '📐 Fórmula: ${l ?? 0} líneas × $factor esq/línea = $total esquejes ($varNombre)${excede ? " ⚠️ (Supera límite de $limitePermitido)" : ""}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: excede ? Colors.red.shade800 : const Color(0xFF33691E),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ],
-
-                const SizedBox(height: 10),
-
-                // Fila 4: LOTE | PROVEEDOR | CONTENEDOR (Opcionales de campo)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLabel('Lote (Opcional)'),
-                          TextFormField(
-                            controller: _loteController,
-                            decoration: InputDecoration(
-                              hintText: 'Ej: 7310',
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLabel('Proveedor (Opcional)'),
-                          TextFormField(
-                            controller: _proveedorController,
-                            decoration: InputDecoration(
-                              hintText: 'Ej: Steenvoorden',
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLabel('Contenedor (Opcional)'),
-                          TextFormField(
-                            controller: _contController,
-                            decoration: InputDecoration(
-                              hintText: 'Ej: 9 BN',
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 14),
-
-                // Botones de Acción
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                    ),
-                    const SizedBox(width: 16),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7CB342),
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        elevation: 3,
-                      ),
-                      onPressed: _guardando ? null : _guardarSiembra,
-                      icon: _guardando
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                            )
-                          : const Icon(Icons.save, color: Colors.white),
-                      label: Text(
-                        _guardando ? 'Guardando...' : 'Guardar Siembra',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
                         ),
-                      ),
+                      );
+                    },
+                  ),
+
+                  // Fila 1: FECHA | BLOQUE | CAMA
+                  if (esMovil) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: _buildCampoFecha()),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildCampoBloque()),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _buildCampoCama(),
+                  ] else ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 3, child: _buildCampoFecha()),
+                        const SizedBox(width: 14),
+                        Expanded(flex: 4, child: _buildCampoBloque()),
+                        const SizedBox(width: 14),
+                        Expanded(flex: 4, child: _buildCampoCama()),
+                      ],
                     ),
                   ],
-                ),
-                const SizedBox(height: 20),
-              ],
+
+                  const SizedBox(height: 10),
+
+                  // Fila 2: OPERARIO | VARIEDAD
+                  if (esMovil) ...[
+                    _buildCampoOperario(),
+                    const SizedBox(height: 10),
+                    _buildCampoVariedad(),
+                  ] else ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 5, child: _buildCampoOperario()),
+                        const SizedBox(width: 14),
+                        Expanded(flex: 5, child: _buildCampoVariedad()),
+                      ],
+                    ),
+                  ],
+
+                  const SizedBox(height: 10),
+
+                  // Fila 3: # LÍNEAS | TALLOS X SEMBRAR | OBSERVACIONES / CLON
+                  if (esMovil) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: _buildCampoLineas()),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildCampoTallos()),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _buildCampoObservaciones(),
+                  ] else ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 2, child: _buildCampoLineas()),
+                        const SizedBox(width: 14),
+                        Expanded(flex: 3, child: _buildCampoTallos()),
+                        const SizedBox(width: 14),
+                        Expanded(flex: 5, child: _buildCampoObservaciones()),
+                      ],
+                    ),
+                  ],
+
+                  // Fórmula informativa
+                  _buildBannerFormula(),
+
+                  const SizedBox(height: 10),
+
+                  // Fila 4: LOTE | PROVEEDOR | CONTENEDOR (Opcionales)
+                  if (esMovil) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: _buildCampoLote()),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildCampoContenedor()),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _buildCampoProveedor(),
+                  ] else ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 3, child: _buildCampoLote()),
+                        const SizedBox(width: 14),
+                        Expanded(flex: 4, child: _buildCampoProveedor()),
+                        const SizedBox(width: 14),
+                        Expanded(flex: 3, child: _buildCampoContenedor()),
+                      ],
+                    ),
+                  ],
+
+                  const SizedBox(height: 16),
+
+                  // Botones de Acción
+                  _buildBotonesAccion(esMovil),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),

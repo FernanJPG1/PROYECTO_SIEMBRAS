@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_movil/screens/subgrupo_lirios_screen.dart';
 import 'package:app_movil/screens/form_siembra_pompon_screen.dart';
+import 'package:app_movil/utils/responsive.dart';
 
 class CultivoOption {
   final String nombre;
@@ -137,8 +138,9 @@ class MenuCultivosScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: ResponsiveContentContainer(
+          maxWidth: 1100,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -154,17 +156,21 @@ class MenuCultivosScreen extends StatelessWidget {
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final isTabletWide = constraints.maxWidth > 850;
-                    final crossAxisCount = isTabletWide
+                    final double w = constraints.maxWidth;
+                    final int crossAxisCount = w > 900
                         ? 5
-                        : (constraints.maxWidth > 550 ? 3 : 2);
+                        : (w > 650 ? 4 : (w > 450 ? 3 : 2));
+                    final double childAspectRatio = w > 900
+                        ? 1.75
+                        : (w > 650 ? 1.65 : (w > 450 ? 1.55 : 1.40));
+
                     return GridView.builder(
                       physics: const BouncingScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: isTabletWide ? 1.75 : 2.15,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: childAspectRatio,
                       ),
                       itemCount: cultivos.length,
                       itemBuilder: (context, index) {

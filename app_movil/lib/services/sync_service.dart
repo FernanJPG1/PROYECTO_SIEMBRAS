@@ -234,6 +234,9 @@ class SyncService {
   /// Sube las siembras y actualizaciones de ciclos offline al backend
   Future<bool> sincronizarPendientes() async {
     try {
+      // Reconciliar previamente cualquier variedad temporal que ya coincida con Access
+      await dbRepo.reconciliarVariedadesTemporales();
+
       final pendientes = await dbRepo.obtenerSiembrasPendientesSync();
       final eliminaciones = await dbRepo.obtenerUuidsEliminacionesPendientes();
 
@@ -284,11 +287,14 @@ class SyncService {
         // para evitar desfases de huso horario (ej: UTC vs UTC-5)
         final int fechaSiembraMiddayMillis = DateTime.utc(parsedDate.year, parsedDate.month, parsedDate.day, 12, 0, 0).millisecondsSinceEpoch;
 
+        final varItem = await dbRepo.obtenerVariedadPorId(s.variedadId);
+
         pushList.add({
           'uuid': syncUuid,
           'bloque_codigo': s.bloqueCodigo,
           'cama_id': s.camaId,
           'variedad_id': s.variedadId,
+          'variedad_nombre': varItem?.nombre,
           'operario_id': s.operarioId,
           'fecha_siembra': fechaSiembraMiddayMillis,
           'fecha_str': s.fecha,

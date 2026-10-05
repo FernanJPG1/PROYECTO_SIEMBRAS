@@ -132,6 +132,7 @@ class SiembraSync(BaseModel):
     cama_id: Optional[int] = None
     cama_codigo: Optional[str] = None
     variedad_id: Optional[int] = None  # t11_interno
+    variedad_nombre: Optional[str] = None  # Nombre para autovinculación
     operario_id: Optional[int] = None
     fecha_siembra: Optional[Union[int, str]] = None  # Epoch millis inicio ciclo o string
     fecha_fin: Optional[Union[int, str]] = None  # Epoch millis fin de ciclo o string
