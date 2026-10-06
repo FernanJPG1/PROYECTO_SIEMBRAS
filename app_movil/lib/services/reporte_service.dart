@@ -332,6 +332,7 @@ class ReporteService {
   static pw.Widget _buildTablaRendimientoOperarios({
     required List<Siembra> siembras,
     required List<Operario> operarios,
+    List<Variedad>? variedades,
     required NumberFormat formatterNum,
     required pw.Font fontBold,
     required pw.Font fontRegular,
@@ -339,6 +340,7 @@ class ReporteService {
     final rendimientos = RendimientoOperario.calcular(
       siembras: siembras,
       operarios: operarios,
+      variedades: variedades,
     );
 
     if (rendimientos.isEmpty) {
@@ -470,6 +472,7 @@ class ReporteService {
   static Future<Uint8List> generarPdfReporteRendimiento({
     required List<Siembra> siembras,
     required List<Operario> operarios,
+    List<Variedad>? variedades,
     required String cultivo,
     String? semana,
     String? rangoFechas,
@@ -513,6 +516,7 @@ class ReporteService {
           _buildTablaRendimientoOperarios(
             siembras: siembras,
             operarios: operarios,
+            variedades: variedades,
             formatterNum: formatterNum,
             fontBold: fontBold,
             fontRegular: fontRegular,

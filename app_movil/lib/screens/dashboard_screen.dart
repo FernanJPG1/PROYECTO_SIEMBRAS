@@ -378,8 +378,78 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _mostrarAvisoBloqueoModificacion(int dias) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.lock_rounded, color: Color(0xFFE65100), size: 28),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Registro Bloqueado (> 2 días)',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE65100), fontSize: 17),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Este registro tiene $dias días de antigüedad desde su fecha de siembra.',
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8E1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFFD54F)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, color: Color(0xFFF57F17), size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Por políticas de seguridad y auditoría agronómica, los registros no se pueden modificar ni eliminar desde la aplicación móvil después de 2 días transcurridos.\n\nCualquier corrección o modificación debe realizarse directamente desde la base de datos empresarial.',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF5D4037), height: 1.35),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7CB342),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Entendido', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _confirmarYEliminarSiembra(Siembra s) async {
     if (s.idLocal == null) return;
+
+    if (!CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha)) {
+      final diffDias = CalendarioUtil.diasDesdeFecha(s.fecha);
+      _mostrarAvisoBloqueoModificacion(diffDias);
+      return;
+    }
 
     final confirmar = await showDialog<bool>(
       context: context,
@@ -437,15 +507,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
 
     if (confirmar == true && mounted) {
-      await _db.eliminarSiembra(s.idLocal!);
-      await _cargarDatos();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Registro de siembra eliminado correctamente.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      try {
+        await _db.eliminarSiembra(s.idLocal!);
+        await _cargarDatos();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✓ Registro de siembra eliminado correctamente.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } on AgronomicValidationException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al eliminar: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -1243,39 +1333,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 return const SizedBox.shrink();
               },
             ),
-            const SizedBox(height: 16),
+            Builder(
+              builder: (_) {
+                final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
+                final diasAntiguedad = CalendarioUtil.diasDesdeFecha(s.fecha);
+                if (!puedeModificar) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF8E1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFFFD54F)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.lock_rounded, color: Color(0xFFE65100), size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Registro con $diasAntiguedad días de antigüedad (bloqueado > 2 días). Las modificaciones solo se permiten desde la Base de Datos Empresarial.',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFE65100)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF7CB342),
-                      side: const BorderSide(color: Color(0xFF7CB342)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    icon: const Icon(Icons.edit, size: 18),
-                    label: const Text('Editar', style: TextStyle(fontWeight: FontWeight.bold)),
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _dialogEditarSiembra(s);
+                  child: Builder(
+                    builder: (_) {
+                      final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
+                      return OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: puedeModificar ? const Color(0xFF7CB342) : Colors.grey,
+                          side: BorderSide(color: puedeModificar ? const Color(0xFF7CB342) : Colors.grey.shade400),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: Icon(puedeModificar ? Icons.edit : Icons.lock_outline, size: 18),
+                        label: Text(puedeModificar ? 'Editar' : 'Bloqueado', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          if (!puedeModificar) {
+                            _mostrarAvisoBloqueoModificacion(CalendarioUtil.diasDesdeFecha(s.fecha));
+                          } else {
+                            _dialogEditarSiembra(s);
+                          }
+                        },
+                      );
                     },
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text('Eliminar', style: TextStyle(fontWeight: FontWeight.bold)),
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _confirmarYEliminarSiembra(s);
+                  child: Builder(
+                    builder: (_) {
+                      final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
+                      return OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: puedeModificar ? Colors.red : Colors.grey,
+                          side: BorderSide(color: puedeModificar ? Colors.red : Colors.grey.shade400),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: Icon(puedeModificar ? Icons.delete_outline : Icons.lock_outline, size: 18),
+                        label: Text(puedeModificar ? 'Eliminar' : 'Bloqueado', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          if (!puedeModificar) {
+                            _mostrarAvisoBloqueoModificacion(CalendarioUtil.diasDesdeFecha(s.fecha));
+                          } else {
+                            _confirmarYEliminarSiembra(s);
+                          }
+                        },
+                      );
                     },
                   ),
                 ),
@@ -1300,6 +1437,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _dialogEditarSiembra(Siembra s) async {
+    final diffDias = CalendarioUtil.diasDesdeFecha(s.fecha);
+    if (!CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha)) {
+      _mostrarAvisoBloqueoModificacion(diffDias);
+      return;
+    }
     final fechaCtrl = TextEditingController(text: s.fecha);
     final cantidadCtrl = TextEditingController(text: s.cantidad.toString());
     final lineasCtrl = TextEditingController(text: s.lineas != null ? s.lineas.toString() : '');
@@ -1368,7 +1510,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           final picked = await showDatePicker(
                             context: context,
                             initialDate: DateTime.now(),
-                            firstDate: DateTime(2020),
+                            firstDate: DateTime.now().subtract(const Duration(days: CalendarioUtil.diasLimiteModificacionApp)),
                             lastDate: DateTime(2035),
                           );
                           if (picked != null) {
@@ -1543,6 +1685,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   // Validación 1: Conflicto de ciclo agronómico y capacidad de cama
                   final fNuevaStr = fechaCtrl.text.trim().isNotEmpty ? fechaCtrl.text.trim() : s.fecha;
+                  if (!CalendarioUtil.puedeModificarSiembraPorFecha(fNuevaStr)) {
+                    final dias = CalendarioUtil.diasDesdeFecha(fNuevaStr);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: Colors.red,
+                        content: Text('❌ Registro restringido: La fecha tiene $dias días de antigüedad. Solo se permite modificar siembras dentro de los primeros 2 días.'),
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                    return;
+                  }
                   final valCiclo = await _db.validarCicloYCamaParaSiembra(
                     s.camaId,
                     fNuevaStr,
@@ -1662,7 +1815,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (lista.length == 1) {
-      await _dialogEditarSiembra(lista.first);
+      final sUnica = lista.first;
+      if (!CalendarioUtil.puedeModificarSiembraPorFecha(sUnica.fecha)) {
+        _mostrarAvisoBloqueoModificacion(CalendarioUtil.diasDesdeFecha(sUnica.fecha));
+        return;
+      }
+      await _dialogEditarSiembra(sUnica);
       return;
     }
 
@@ -1678,7 +1836,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               if (busqueda.isEmpty) return true;
               final q = busqueda.toLowerCase();
               final va = _variedades.firstWhere((v) => v.id == s.variedadId, orElse: () => Variedad(id: 0, codigo: '', nombre: ''));
-              final op = _operarios.firstWhere((o) => o.id == s.operarioId, orElse: () => Operario(id: 0, cedula: '', nombreCompleto: ''));
+              final op = _operarios.firstWhere((o) => o.id == s.operarioId, orElse: () => Operario(id: 0, cedula: '', nombreCompleto: s.operarioId <= 0 ? 'Sin Sembrador' : ''));
               return va.nombre.toLowerCase().contains(q) ||
                   op.nombreCompleto.toLowerCase().contains(q) ||
                   s.fecha.contains(q) ||
@@ -1737,24 +1895,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               );
                               final op = _operarios.firstWhere(
                                 (o) => o.id == s.operarioId,
-                                orElse: () => Operario(id: 0, cedula: '', nombreCompleto: 'Operario #${s.operarioId}'),
+                                orElse: () => Operario(id: 0, cedula: '', nombreCompleto: s.operarioId <= 0 ? 'Sin Sembrador' : 'Operario #${s.operarioId}'),
                               );
                               final ca = _camas.firstWhere(
                                 (c) => c.id == s.camaId,
                                 orElse: () => Cama(id: 0, cama: s.camaId.toString(), bloque: s.bloqueCodigo ?? '', nave: ''),
                               );
+                              final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
+                              final diasAntiguedad = CalendarioUtil.diasDesdeFecha(s.fecha);
 
                               return ListTile(
-                                leading: const CircleAvatar(
-                                  backgroundColor: Color(0xFFE8F5E9),
-                                  child: Icon(Icons.edit_note, color: Color(0xFF7CB342)),
+                                leading: CircleAvatar(
+                                  backgroundColor: puedeModificar ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+                                  child: Icon(
+                                    puedeModificar ? Icons.edit_note : Icons.lock_outline,
+                                    color: puedeModificar ? const Color(0xFF7CB342) : const Color(0xFFE65100),
+                                  ),
                                 ),
-                                title: Text(
-                                  '${va.nombre} - ${s.fecha}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF33691E)),
+                                title: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${va.nombre} - ${s.fecha}',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: puedeModificar ? const Color(0xFF33691E) : Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ),
+                                    if (!puedeModificar)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFFF3E0),
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: const Color(0xFFFFB74D)),
+                                        ),
+                                        child: const Text(
+                                          '🔒 >2 días',
+                                          style: TextStyle(fontSize: 10, color: Color(0xFFE65100), fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                                subtitle: Text('Operario: ${op.nombreCompleto} | Cama: ${ca.cama} | Cantidad: ${s.cantidad} esq'),
-                                trailing: const Icon(Icons.chevron_right, color: Color(0xFF7CB342)),
+                                subtitle: Text(
+                                  'Operario: ${op.nombreCompleto} | Cama: ${ca.cama} | Cantidad: ${s.cantidad} esq${!puedeModificar ? ' ($diasAntiguedad días - Solo BD Empresarial)' : ''}',
+                                  style: TextStyle(fontSize: 12, color: puedeModificar ? Colors.black87 : Colors.grey.shade600),
+                                ),
+                                trailing: Icon(
+                                  puedeModificar ? Icons.chevron_right : Icons.lock,
+                                  color: puedeModificar ? const Color(0xFF7CB342) : Colors.grey,
+                                  size: puedeModificar ? 24 : 18,
+                                ),
                                 onTap: () {
                                   Navigator.pop(ctx);
                                   _dialogEditarSiembra(s);
@@ -2073,12 +2265,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onPressed: () => _mostrarDetalleSiembra(s, op, va, ca, diasCiclo),
                   ),
                   const SizedBox(width: 4),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                    tooltip: 'Eliminar',
-                    constraints: const BoxConstraints(),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    onPressed: () => _confirmarYEliminarSiembra(s),
+                  Builder(
+                    builder: (_) {
+                      final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
+                      return IconButton(
+                        icon: Icon(
+                          puedeModificar ? Icons.delete_outline : Icons.lock_outline,
+                          size: 20,
+                          color: puedeModificar ? Colors.red : Colors.grey.shade500,
+                        ),
+                        tooltip: puedeModificar ? 'Eliminar' : 'Bloqueado (> 2 días - Solo BD Empresarial)',
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        onPressed: () => _confirmarYEliminarSiembra(s),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -2691,7 +2892,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 final s = listaMostrar[index];
                                 final op = _operarios.firstWhere(
                                   (o) => o.id == s.operarioId,
-                                  orElse: () => Operario(id: 0, cedula: '', nombreCompleto: s.operarioId.toString()),
+                                  orElse: () => Operario(id: 0, cedula: '', nombreCompleto: s.operarioId <= 0 ? 'Sin Sembrador' : s.operarioId.toString()),
                                 );
                                 final va = _variedades.firstWhere(
                                   (v) => v.id == s.variedadId,
@@ -2757,7 +2958,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         final s = listaMostrar[index];
                                         final op = _operarios.firstWhere(
                                           (o) => o.id == s.operarioId,
-                                          orElse: () => Operario(id: 0, cedula: '', nombreCompleto: s.operarioId.toString()),
+                                          orElse: () => Operario(id: 0, cedula: '', nombreCompleto: s.operarioId <= 0 ? 'Sin Sembrador' : s.operarioId.toString()),
                                         );
                                         final va = _variedades.firstWhere(
                                           (v) => v.id == s.variedadId,
@@ -2934,18 +3135,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     ),
                                                   ),
                                                 ),
-                                                // 16. ELIMINAR
-                                                SizedBox(
-                                                  width: 45,
-                                                  child: Center(
-                                                    child: IconButton(
-                                                      padding: EdgeInsets.zero,
-                                                      constraints: const BoxConstraints(),
-                                                      icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                                                      tooltip: 'Eliminar Siembra',
-                                                      onPressed: () => _confirmarYEliminarSiembra(s),
-                                                    ),
-                                                  ),
+                                                // 16. ELIMINAR / BLOQUEADO
+                                                Builder(
+                                                  builder: (_) {
+                                                    final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
+                                                    return SizedBox(
+                                                      width: 45,
+                                                      child: Center(
+                                                        child: IconButton(
+                                                          padding: EdgeInsets.zero,
+                                                          constraints: const BoxConstraints(),
+                                                          icon: Icon(
+                                                            puedeModificar ? Icons.delete_outline : Icons.lock_outline,
+                                                            color: puedeModificar ? Colors.red : Colors.grey.shade400,
+                                                            size: 20,
+                                                          ),
+                                                          tooltip: puedeModificar ? 'Eliminar Siembra' : 'Bloqueado (> 2 días - Solo BD Empresarial)',
+                                                          onPressed: () => _confirmarYEliminarSiembra(s),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
                                               ],
                                             ),

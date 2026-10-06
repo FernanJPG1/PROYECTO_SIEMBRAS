@@ -450,18 +450,43 @@ class RendimientoOperario {
     this.posicion = 1,
   });
 
-  /// Calcula el rendimiento individual de cada sembrador a partir de las siembras y operarios dados
+  /// Calcula el rendimiento individual de cada sembrador a partir de las siembras y operarios dados.
+  /// Excluye explícitamente siembras de Plantas Madre, Bancos, Núcleos o sin sembrador asignado.
   static List<RendimientoOperario> calcular({
     required List<Siembra> siembras,
     required List<Operario> operarios,
+    List<Variedad>? variedades,
   }) {
     if (siembras.isEmpty) return [];
 
-    final totalTallosGlobal = siembras.fold<int>(0, (sum, s) => sum + s.cantidad);
+    // Excluir siembras sin sembrador (id <= 0) o de Plantas Madre, Bancos y Núcleos
+    final siembrasValidas = siembras.where((s) {
+      if (s.operarioId <= 0) return false;
+      final obs = (s.observaciones ?? '').toUpperCase();
+      final corte = (s.corte ?? '').toUpperCase();
+      if (obs.contains('MADRE') || obs.contains('BANCO') || obs.contains('NÚCLEO') || obs.contains('NUCLEO') ||
+          corte.contains('MADRE') || corte.contains('BANCO') || corte.contains('NÚCLEO') || corte.contains('NUCLEO')) {
+        return false;
+      }
+      if (variedades != null && variedades.isNotEmpty) {
+        final v = variedades.firstWhere((varItem) => varItem.id == s.variedadId, orElse: () => Variedad(id: 0, codigo: '', nombre: ''));
+        final fam = (v.familiaNombre ?? '').toUpperCase();
+        final nom = v.nombre.toUpperCase();
+        if (fam.contains('MADRE') || fam.contains('BANCO') || fam.contains('NÚCLEO') || fam.contains('NUCLEO') ||
+            nom.contains('MADRE') || nom.contains('BANCO') || nom.contains('NÚCLEO') || nom.contains('NUCLEO')) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+
+    if (siembrasValidas.isEmpty) return [];
+
+    final totalTallosGlobal = siembrasValidas.fold<int>(0, (sum, s) => sum + s.cantidad);
 
     // Agrupar siembras por operarioId
     final Map<int, List<Siembra>> porOperario = {};
-    for (var s in siembras) {
+    for (var s in siembrasValidas) {
       porOperario.putIfAbsent(s.operarioId, () => []).add(s);
     }
 

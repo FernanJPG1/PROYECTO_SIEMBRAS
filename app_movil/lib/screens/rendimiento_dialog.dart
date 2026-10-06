@@ -59,10 +59,30 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
   }
 
   List<Siembra> _filtrarSiembras() {
+    final validas = widget.siembras.where((s) {
+      if (s.operarioId <= 0) return false;
+      final obs = (s.observaciones ?? '').toUpperCase();
+      final corte = (s.corte ?? '').toUpperCase();
+      if (obs.contains('MADRE') || obs.contains('BANCO') || obs.contains('NÚCLEO') || obs.contains('NUCLEO') ||
+          corte.contains('MADRE') || corte.contains('BANCO') || corte.contains('NÚCLEO') || corte.contains('NUCLEO')) {
+        return false;
+      }
+      if (widget.variedades != null && widget.variedades!.isNotEmpty) {
+        final v = widget.variedades!.firstWhere((varItem) => varItem.id == s.variedadId, orElse: () => Variedad(id: 0, codigo: '', nombre: ''));
+        final fam = (v.familiaNombre ?? '').toUpperCase();
+        final nom = v.nombre.toUpperCase();
+        if (fam.contains('MADRE') || fam.contains('BANCO') || fam.contains('NÚCLEO') || fam.contains('NUCLEO') ||
+            nom.contains('MADRE') || nom.contains('BANCO') || nom.contains('NÚCLEO') || nom.contains('NUCLEO')) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+
     if (_cultivoSeleccionado == 'TODOS' || widget.variedades == null || widget.variedades!.isEmpty) {
-      return widget.siembras;
+      return validas;
     }
-    return widget.siembras.where((s) {
+    return validas.where((s) {
       final c = ReporteService.clasificarCultivo(siembra: s, variedades: widget.variedades!);
       return c == _cultivoSeleccionado;
     }).toList();
@@ -75,6 +95,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
     var rendimientos = RendimientoOperario.calcular(
       siembras: siembrasActivas,
       operarios: widget.operarios,
+      variedades: widget.variedades,
     );
 
     // Filtrar por texto si hay búsqueda
@@ -803,6 +824,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
               generadorPdf: () => ReporteService.generarPdfReporteRendimiento(
                 siembras: agrupados[cultUnico]!,
                 operarios: widget.operarios,
+                variedades: widget.variedades,
                 cultivo: cultUnico,
                 semana: _semanaActual,
                 rangoFechas: widget.rangoFechas,
@@ -827,6 +849,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
           generadorPdf: () => ReporteService.generarPdfReporteRendimiento(
             siembras: activas,
             operarios: widget.operarios,
+            variedades: widget.variedades,
             cultivo: _cultivoSeleccionado,
             semana: _semanaActual,
             rangoFechas: widget.rangoFechas,
@@ -884,6 +907,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                             generadorPdf: () => ReporteService.generarPdfReporteRendimiento(
                               siembras: list,
                               operarios: widget.operarios,
+                              variedades: widget.variedades,
                               cultivo: cult,
                               semana: _semanaActual,
                               rangoFechas: widget.rangoFechas,
@@ -951,6 +975,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
       final pdfBytes = await ReporteService.generarPdfReporteRendimiento(
         siembras: activas,
         operarios: widget.operarios,
+        variedades: widget.variedades,
         cultivo: _cultivoSeleccionado,
         semana: _semanaActual,
         rangoFechas: widget.rangoFechas,

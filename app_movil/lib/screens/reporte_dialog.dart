@@ -1154,6 +1154,7 @@ class _ReporteDialogState extends State<ReporteDialog> {
                 final rendimientos = RendimientoOperario.calcular(
                   siembras: filtradas,
                   operarios: widget.operarios,
+                  variedades: widget.variedades,
                 );
 
                 if (rendimientos.isEmpty) {

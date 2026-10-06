@@ -1,6 +1,7 @@
 import 'package:app_movil/database/local_db.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/services/persistent_backup_service.dart';
+import 'package:app_movil/utils/calendario_util.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Excepción lanzada cuando una operación viola las restricciones agronómicas de densidad o ciclos
@@ -1193,10 +1194,18 @@ class DbRepository {
   /// Elimina un registro de siembra de la base de datos local SQLite
   Future<void> eliminarSiembra(int idLocal) async {
     final db = await LocalDatabase.instance.database;
-    try {
-      final rows = await db.query('tb_siembras', where: 'id_local = ?', whereArgs: [idLocal], limit: 1);
-      if (rows.isNotEmpty) {
-        final s = rows.first;
+    final rows = await db.query('tb_siembras', where: 'id_local = ?', whereArgs: [idLocal], limit: 1);
+    if (rows.isNotEmpty) {
+      final s = rows.first;
+      final fechaStr = s['fecha']?.toString();
+      if (!CalendarioUtil.puedeModificarSiembraPorFecha(fechaStr)) {
+        final dias = CalendarioUtil.diasDesdeFecha(fechaStr);
+        throw AgronomicValidationException(
+          'Registro protegido: Este registro tiene $dias días de antigüedad (límite: 2 días). No se puede eliminar desde la app móvil; solo puede modificarse desde la base de datos empresarial.',
+        );
+      }
+
+      try {
         final uuid = s['uuid']?.toString();
         final sync = s['sincronizado'] as int? ?? 0;
         if (sync == 1 && uuid != null && uuid.isNotEmpty) {
@@ -1205,8 +1214,8 @@ class DbRepository {
             'fecha_eliminacion': DateTime.now().toIso8601String(),
           });
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     await db.delete(
       'tb_siembras',
@@ -1221,6 +1230,24 @@ class DbRepository {
   Future<void> actualizarSiembra(Siembra siembra) async {
     if (siembra.idLocal == null) return;
     final db = await LocalDatabase.instance.database;
+
+    // 0. Validación de Antigüedad: solo modificable dentro de los primeros 2 días
+    final rowsOriginal = await db.query('tb_siembras', where: 'id_local = ?', whereArgs: [siembra.idLocal], limit: 1);
+    if (rowsOriginal.isNotEmpty) {
+      final fechaOriginal = rowsOriginal.first['fecha']?.toString();
+      if (!CalendarioUtil.puedeModificarSiembraPorFecha(fechaOriginal)) {
+        final dias = CalendarioUtil.diasDesdeFecha(fechaOriginal);
+        throw AgronomicValidationException(
+          'Registro protegido: Este registro tiene $dias días de antigüedad (límite: 2 días). No se puede modificar desde la app móvil; cualquier modificación debe realizarse directamente desde la base de datos empresarial.',
+        );
+      }
+    }
+    if (!CalendarioUtil.puedeModificarSiembraPorFecha(siembra.fecha)) {
+      final dias = CalendarioUtil.diasDesdeFecha(siembra.fecha);
+      throw AgronomicValidationException(
+        'Fecha restringida: La fecha especificada tiene $dias días de antigüedad (límite: 2 días). No es posible asignar fechas anteriores a 2 días desde la app móvil.',
+      );
+    }
 
     // 1. Validación de Ciclo Agronómico y Capacidad de Cama al actualizar
     final validacionCiclo = await validarCicloYCamaParaSiembra(

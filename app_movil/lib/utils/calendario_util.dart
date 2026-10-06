@@ -105,4 +105,27 @@ class CalendarioUtil {
       'etiquetaCosecha': 'Sem. $semCosecha (${fCosecha.year})',
     };
   }
+
+  /// Límite oficial de días permitidos para modificar o eliminar un registro desde la aplicación móvil.
+  /// Pasado este lapso (más de 2 días), los registros quedan blindados contra alteraciones locales
+  /// y solo pueden ser modificados desde la base de datos empresarial central.
+  static const int diasLimiteModificacionApp = 2;
+
+  /// Retorna la cantidad de días calendario transcurridos desde la fecha de siembra hasta el día de hoy.
+  /// Si la fecha es de hoy o futura, retorna 0 o negativo.
+  static int diasDesdeFecha(String? fechaStr) {
+    final f = parsearFecha(fechaStr);
+    if (f == null) return 0;
+    final hoy = DateTime.now();
+    final soloHoy = DateTime(hoy.year, hoy.month, hoy.day);
+    final soloFecha = DateTime(f.year, f.month, f.day);
+    return soloHoy.difference(soloFecha).inDays;
+  }
+
+  /// Indica si el registro se encuentra dentro del plazo permitido (<= 2 días)
+  /// para ser modificado o eliminado desde la aplicación móvil.
+  static bool puedeModificarSiembraPorFecha(String? fechaStr) {
+    final diffDias = diasDesdeFecha(fechaStr);
+    return diffDias <= diasLimiteModificacionApp;
+  }
 }

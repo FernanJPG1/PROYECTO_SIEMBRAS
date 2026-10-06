@@ -48,6 +48,53 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
   final TextEditingController _contController = TextEditingController();
   final TextEditingController _observacionesController = TextEditingController();
 
+  // Controladores y estado para división de cama en dos lados
+  String _ladoSeleccionado = 'LADO_A'; // 'LADO_A', 'LADO_B', 'AMBOS', 'MIXTO'
+  final TextEditingController _lineasLadoAController = TextEditingController();
+  final TextEditingController _lineasLadoBController = TextEditingController();
+
+  /// Identifica si el cultivo o área actual corresponde a plantas madre, núcleos o bancos
+  bool get _esPlantaMadreOBancoONucleo {
+    final c = widget.cultivo.toUpperCase();
+    return c.contains('MADRE') || c.contains('BANCO') || c.contains('NÚCLEO') || c.contains('NUCLEO');
+  }
+
+  /// Indica si este cultivo tiene división de cama en dos lados (Pompón y Cremón por ahora)
+  bool get _tieneDivisionDosLados {
+    final c = widget.cultivo.toUpperCase();
+    if (c.contains('POMPON') || c.contains('POMPÓN')) return true;
+    if (c.contains('CREMON') || c.contains('CREMÓN')) return true;
+    final f = (_variedadSeleccionada?.familiaNombre ?? '').toUpperCase();
+    if (f.contains('POMPON') || f.contains('POMPÓN')) return true;
+    if (f.contains('CREMON') || f.contains('CREMÓN')) return true;
+    return false;
+  }
+
+  /// Densidad por línea para el Lado A según el cultivo (Pompón: 13, Cremón: 11)
+  int get _densidadLadoA {
+    final c = widget.cultivo.toUpperCase();
+    if (c.contains('POMPON') || c.contains('POMPÓN')) return 13;
+    if (c.contains('CREMON') || c.contains('CREMÓN')) return 11;
+    final f = (_variedadSeleccionada?.familiaNombre ?? '').toUpperCase();
+    if (f.contains('POMPON') || f.contains('POMPÓN')) return 13;
+    if (f.contains('CREMON') || f.contains('CREMÓN')) return 11;
+    return 13;
+  }
+
+  /// Densidad por línea para el Lado B según el cultivo (Pompón: 12, Cremón: 11)
+  int get _densidadLadoB {
+    final c = widget.cultivo.toUpperCase();
+    if (c.contains('POMPON') || c.contains('POMPÓN')) return 12;
+    if (c.contains('CREMON') || c.contains('CREMÓN')) return 11;
+    final f = (_variedadSeleccionada?.familiaNombre ?? '').toUpperCase();
+    if (f.contains('POMPON') || f.contains('POMPÓN')) return 12;
+    if (f.contains('CREMON') || f.contains('CREMÓN')) return 11;
+    return 12;
+  }
+
+  /// Densidad por línea de la cama completa (ambos lados sumados: Pompón 25, Cremón 22)
+  int get _densidadCamaCompleta => _densidadLadoA + _densidadLadoB;
+
   /// Pompon y Cremon requieren obligatoriamente el Clon (ej: 4-25, 3-25).
   /// En los demás cultivos es opcional.
   bool get _requiereClon {
@@ -58,6 +105,19 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
     final n = (_variedadSeleccionada?.nombre ?? '').toUpperCase();
     if (n.contains('POMPON') || n.contains('CREMON')) return true;
     return false;
+  }
+
+  @override
+  void dispose() {
+    _lineasController.dispose();
+    _tallosController.dispose();
+    _loteController.dispose();
+    _proveedorController.dispose();
+    _contController.dispose();
+    _observacionesController.dispose();
+    _lineasLadoAController.dispose();
+    _lineasLadoBController.dispose();
+    super.dispose();
   }
 
   @override
@@ -469,6 +529,33 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
   }
 
   void _recalcularTallosPorLineas() {
+    if (_tieneDivisionDosLados) {
+      if (_ladoSeleccionado == 'MIXTO') {
+        final int lA = int.tryParse(_lineasLadoAController.text.trim()) ?? 0;
+        final int lB = int.tryParse(_lineasLadoBController.text.trim()) ?? 0;
+        final int totalTallos = (lA * _densidadLadoA) + (lB * _densidadLadoB);
+        final int totalLineas = (lA > lB) ? lA : lB;
+        setState(() {
+          _tallosController.text = totalTallos > 0 ? totalTallos.toString() : '';
+          _lineasController.text = totalLineas > 0 ? totalLineas.toString() : '';
+        });
+        return;
+      }
+
+      final int? l = int.tryParse(_lineasController.text.trim());
+      if (l != null && l > 0) {
+        int factor = _densidadCamaCompleta;
+        if (_ladoSeleccionado == 'LADO_A') factor = _densidadLadoA;
+        if (_ladoSeleccionado == 'LADO_B') factor = _densidadLadoB;
+
+        setState(() {
+          _tallosController.text = (l * factor).toString();
+        });
+      }
+      return;
+    }
+
+    // Cultivos estándar
     final int? l = int.tryParse(_lineasController.text.trim());
     if (l != null && l > 0) {
       final int factor = _variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 20;
@@ -504,7 +591,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
       return;
     }
 
-    if (_operarioSeleccionado == null) {
+    if (!_esPlantaMadreOBancoONucleo && _operarioSeleccionado == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor seleccione un operario')),
       );
@@ -525,7 +612,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
       _fechaSeleccionada ?? '',
       nuevaCantidad: tallos,
       nuevaVariedadId: _variedadSeleccionada!.id,
-      nuevoOperarioId: _operarioSeleccionado!.id,
+      nuevoOperarioId: _operarioSeleccionado?.id ?? 0,
     );
     if (!validacionCiclo.esValido) {
       if (!mounted) return;
@@ -747,7 +834,34 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
       return;
     }
 
-    final int lineas = int.tryParse(_lineasController.text.trim()) ?? 14;
+    int totalLineas = int.tryParse(_lineasController.text.trim()) ?? 14;
+    String? detalleLado;
+    if (_tieneDivisionDosLados) {
+      if (_ladoSeleccionado == 'LADO_A') {
+        detalleLado = 'LADO A ($_densidadLadoA esq/lín)';
+      } else if (_ladoSeleccionado == 'LADO_B') {
+        detalleLado = 'LADO B ($_densidadLadoB esq/lín)';
+      } else if (_ladoSeleccionado == 'AMBOS') {
+        detalleLado = 'CAMA COMPLETA ($_densidadCamaCompleta esq/lín)';
+      } else if (_ladoSeleccionado == 'MIXTO') {
+        final int lA = int.tryParse(_lineasLadoAController.text.trim()) ?? 0;
+        final int lB = int.tryParse(_lineasLadoBController.text.trim()) ?? 0;
+        detalleLado = 'MIXTO: Lado A ($lA lín) + Lado B ($lB lín)';
+        if (lA > totalLineas || lB > totalLineas) {
+          totalLineas = (lA > lB) ? lA : lB;
+        }
+      }
+    }
+
+    String? obsFinal;
+    final userObs = _observacionesController.text.trim().toUpperCase();
+    if (detalleLado != null && userObs.isNotEmpty) {
+      obsFinal = '$userObs | $detalleLado';
+    } else if (detalleLado != null) {
+      obsFinal = detalleLado;
+    } else if (userObs.isNotEmpty) {
+      obsFinal = userObs;
+    }
 
     setState(() => _guardando = true);
 
@@ -756,18 +870,16 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
         fecha: _fechaSeleccionada ?? '',
         bloqueCodigo: _bloqueSeleccionado!.codigo,
         camaId: _camaSeleccionada!.id,
-        operarioId: _operarioSeleccionado!.id,
+        operarioId: _operarioSeleccionado?.id ?? 0,
         variedadId: _variedadSeleccionada!.id,
         cantidad: tallos,
         estado: 'ACTIVA',
-        lineas: lineas,
+        lineas: totalLineas,
         corte: CalendarioUtil.obtenerEtiquetaCorta(CalendarioUtil.parsearFecha(_fechaSeleccionada) ?? DateTime.now()),
         lote: _loteController.text.trim().isNotEmpty ? _loteController.text.trim() : null,
         proveedor: _proveedorController.text.trim().isNotEmpty ? _proveedorController.text.trim() : null,
         cont: _contController.text.trim().isNotEmpty ? _contController.text.trim() : null,
-        observaciones: _observacionesController.text.trim().isNotEmpty
-            ? _observacionesController.text.trim().toUpperCase()
-            : null,
+        observaciones: obsFinal,
         sincronizado: 0,
       );
 
@@ -1143,13 +1255,16 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
   }
 
   Widget _buildCampoOperario() {
+    if (_esPlantaMadreOBancoONucleo) {
+      return const SizedBox.shrink();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildLabel('Operario'),
+            _buildLabel('Operario / Sembrador'),
             Row(
               children: [
                 Text(
@@ -1247,7 +1362,231 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
     );
   }
 
+  Widget _buildSelectorLadoCama() {
+    if (!_tieneDivisionDosLados) {
+      return const SizedBox.shrink();
+    }
+
+    final esPompon = widget.cultivo.toUpperCase().contains('POMPON') ||
+        widget.cultivo.toUpperCase().contains('POMPÓN') ||
+        (_variedadSeleccionada?.familiaNombre ?? '').toUpperCase().contains('POMPON');
+    final nombreCultivo = esPompon ? 'Pompón' : 'Cremón';
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F8E9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFAED581)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.splitscreen_rounded, color: Color(0xFF33691E), size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'División de Cama ($nombreCultivo: Total $_densidadCamaCompleta esq/lín)',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Seleccione qué lado sembró este sembrador o si terminó su lado y pasó al otro:',
+            style: TextStyle(fontSize: 11.5, color: Colors.grey.shade800),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildBotonLado(
+                id: 'LADO_A',
+                titulo: 'Lado A',
+                subtitulo: '$_densidadLadoA esq/lín',
+                icono: Icons.arrow_back,
+              ),
+              _buildBotonLado(
+                id: 'LADO_B',
+                titulo: 'Lado B',
+                subtitulo: '$_densidadLadoB esq/lín',
+                icono: Icons.arrow_forward,
+              ),
+              _buildBotonLado(
+                id: 'AMBOS',
+                titulo: 'Cama Completa',
+                subtitulo: '$_densidadCamaCompleta esq/lín',
+                icono: Icons.view_column_rounded,
+              ),
+              _buildBotonLado(
+                id: 'MIXTO',
+                titulo: 'Pasó al otro lado',
+                subtitulo: 'Lado A + Lado B',
+                icono: Icons.swap_horiz_rounded,
+              ),
+            ],
+          ),
+          if (_ladoSeleccionado == 'MIXTO') ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.shade300),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.amber.shade900),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Ingrese abajo cuántas líneas sembró en Lado A ($_densidadLadoA esq/l) y cuántas en Lado B ($_densidadLadoB esq/l).',
+                      style: TextStyle(fontSize: 11, color: Colors.amber.shade900, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBotonLado({
+    required String id,
+    required String titulo,
+    required String subtitulo,
+    required IconData icono,
+  }) {
+    final bool seleccionado = _ladoSeleccionado == id;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _ladoSeleccionado = id;
+        });
+        _recalcularTallosPorLineas();
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: seleccionado ? const Color(0xFF2E7D32) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: seleccionado ? const Color(0xFF1B5E20) : Colors.grey.shade400,
+            width: seleccionado ? 2 : 1,
+          ),
+          boxShadow: seleccionado
+              ? [BoxShadow(color: Colors.green.withValues(alpha: 0.25), blurRadius: 4, offset: const Offset(0, 2))]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icono,
+              size: 16,
+              color: seleccionado ? Colors.white : const Color(0xFF33691E),
+            ),
+            const SizedBox(width: 6),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  titulo,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: seleccionado ? Colors.white : Colors.black87,
+                  ),
+                ),
+                Text(
+                  subtitulo,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: seleccionado ? Colors.white70 : Colors.grey.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildCampoLineas() {
+    if (_tieneDivisionDosLados && _ladoSeleccionado == 'MIXTO') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLabel('Líneas Sembradas por Lado (Mixto)'),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _lineasLadoAController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Lado A ($_densidadLadoA esq/l)',
+                    hintText: 'Ej: 14',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onChanged: (val) => _recalcularTallosPorLineas(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  controller: _lineasLadoBController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Lado B ($_densidadLadoB esq/l)',
+                    hintText: 'Ej: 14',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onChanged: (val) => _recalcularTallosPorLineas(),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    String ayudaDensidad;
+    if (_tieneDivisionDosLados) {
+      if (_ladoSeleccionado == 'LADO_A') {
+        ayudaDensidad = 'Lado A: $_densidadLadoA esq/línea';
+      } else if (_ladoSeleccionado == 'LADO_B') {
+        ayudaDensidad = 'Lado B: $_densidadLadoB esq/línea';
+      } else {
+        ayudaDensidad = 'Cama Completa: $_densidadCamaCompleta esq/línea';
+      }
+    } else {
+      ayudaDensidad = 'Densidad: ${_variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 20} esq/l';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1256,8 +1595,8 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
           controller: _lineasController,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
-            hintText: 'Ej: 130',
-            helperText: 'Densidad: ${_variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 20} esq/l',
+            hintText: 'Ej: 14',
+            helperText: ayudaDensidad,
             helperStyle: const TextStyle(color: Color(0xFF558B2F), fontWeight: FontWeight.bold),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             filled: true,
@@ -1442,10 +1781,58 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
   }
 
   Widget _buildBannerFormula() {
+    if (_tieneDivisionDosLados && _ladoSeleccionado == 'MIXTO') {
+      final int lA = int.tryParse(_lineasLadoAController.text.trim()) ?? 0;
+      final int lB = int.tryParse(_lineasLadoBController.text.trim()) ?? 0;
+      final int total = (lA * _densidadLadoA) + (lB * _densidadLadoB);
+      if (total == 0) return const SizedBox.shrink();
+      final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 4050;
+      final bool excede = total > limitePermitido;
+
+      return Container(
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: excede ? Colors.red.shade50 : const Color(0xFFF1F8E9),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: excede ? Colors.red.shade300 : const Color(0xFFC5E1A5)),
+        ),
+        child: Row(
+          children: [
+            Icon(excede ? Icons.warning_amber_rounded : Icons.calculate, color: excede ? Colors.red.shade800 : const Color(0xFF33691E), size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '📐 Mixto: ($lA lín × $_densidadLadoA esq/l) + ($lB lín × $_densidadLadoB esq/l) = $total esquejes${excede ? " ⚠️ (Supera límite de $limitePermitido)" : ""}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: excede ? Colors.red.shade800 : const Color(0xFF33691E),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (_lineasController.text.trim().isEmpty) return const SizedBox.shrink();
     return Builder(builder: (context) {
       final int? l = int.tryParse(_lineasController.text.trim());
-      final int factor = _variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 20;
+      int factor = _variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 20;
+      String ladoTexto = '';
+      if (_tieneDivisionDosLados) {
+        if (_ladoSeleccionado == 'LADO_A') {
+          factor = _densidadLadoA;
+          ladoTexto = ' (Lado A)';
+        } else if (_ladoSeleccionado == 'LADO_B') {
+          factor = _densidadLadoB;
+          ladoTexto = ' (Lado B)';
+        } else if (_ladoSeleccionado == 'AMBOS') {
+          factor = _densidadCamaCompleta;
+          ladoTexto = ' (Cama Completa)';
+        }
+      }
       final int total = (l ?? 0) * factor;
       final String varNombre = _variedadSeleccionada?.nombre ?? widget.cultivo;
       final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 4050;
@@ -1465,7 +1852,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                '📐 Fórmula: ${l ?? 0} líneas × $factor esq/línea = $total esquejes ($varNombre)${excede ? " ⚠️ (Supera límite de $limitePermitido)" : ""}',
+                '📐 Fórmula$ladoTexto: ${l ?? 0} líneas × $factor esq/línea = $total esquejes ($varNombre)${excede ? " ⚠️ (Supera límite de $limitePermitido)" : ""}',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -1711,21 +2098,51 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
 
                   const SizedBox(height: 10),
 
-                  // Fila 2: OPERARIO | VARIEDAD
-                  if (esMovil) ...[
-                    _buildCampoOperario(),
-                    const SizedBox(height: 10),
+                  // Fila 2: OPERARIO | VARIEDAD (O solo Variedad si es Madres/Bancos/Núcleos)
+                  if (_esPlantaMadreOBancoONucleo) ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFA5D6A7)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.forest, color: Color(0xFF2E7D32), size: 22),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Área Especial: ${widget.cultivo}\nSin asignación de sembrador individual. Las siembras de esta área no se miden en el rendimiento.',
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF1B5E20), fontWeight: FontWeight.w600, height: 1.3),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     _buildCampoVariedad(),
                   ] else ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(flex: 5, child: _buildCampoOperario()),
-                        const SizedBox(width: 14),
-                        Expanded(flex: 5, child: _buildCampoVariedad()),
-                      ],
-                    ),
+                    if (esMovil) ...[
+                      _buildCampoOperario(),
+                      const SizedBox(height: 10),
+                      _buildCampoVariedad(),
+                    ] else ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 5, child: _buildCampoOperario()),
+                          const SizedBox(width: 14),
+                          Expanded(flex: 5, child: _buildCampoVariedad()),
+                        ],
+                      ),
+                    ],
                   ],
+
+                  const SizedBox(height: 10),
+
+                  // Distribución de lados de cama para Pompón y Cremón
+                  _buildSelectorLadoCama(),
 
                   const SizedBox(height: 10),
 
