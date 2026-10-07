@@ -166,12 +166,12 @@ FAMILIA_DENSIDAD_LINEA = {
     193: 24,  # CREMON
     148: 24,  # FUJI
     200: 24,  # BOMBONS
-    114: 22,  # MATSUMOTO
+    114: 15,  # MATSUMOTO
     199: 18,  # LILIUM
     204: 16,  # ORIENTAL
     309: 16,  # OT
     255: 16,  # DOUBLE
-    213: 14,  # SUNFLOWER / GIRASOL
+    213: 12,  # SUNFLOWER / GIRASOL
     257: 28,  # STOCK
     214: 12,  # RANUNCULUS
     262: 12,  # VERONICA
@@ -391,13 +391,13 @@ def get_configuraciones_agronomicas(conn: pyodbc.Connection) -> List[Configuraci
         ConfiguracionAgronomica(cultivo="POMPON", limite_esquejes=4050, dias_ciclo=98, densidad_linea=28, densidad_m2=99.23),
         ConfiguracionAgronomica(cultivo="CREMON", limite_esquejes=3645, dias_ciclo=70, densidad_linea=24, densidad_m2=90.0),
         ConfiguracionAgronomica(cultivo="FUJI", limite_esquejes=3240, dias_ciclo=70, densidad_linea=24, densidad_m2=80.15),
-        ConfiguracionAgronomica(cultivo="MATSUMOTO", limite_esquejes=3402, dias_ciclo=84, densidad_linea=22, densidad_m2=89.83),
+        ConfiguracionAgronomica(cultivo="MATSUMOTO", limite_esquejes=3402, dias_ciclo=84, densidad_linea=15, densidad_m2=89.83),
         ConfiguracionAgronomica(cultivo="LIRIOS", limite_esquejes=2916, dias_ciclo=105, densidad_linea=18, densidad_m2=69.5),
         ConfiguracionAgronomica(cultivo="LA", limite_esquejes=2916, dias_ciclo=105, densidad_linea=18, densidad_m2=69.5),
         ConfiguracionAgronomica(cultivo="LO", limite_esquejes=2430, dias_ciclo=56, densidad_linea=16, densidad_m2=57.15),
         ConfiguracionAgronomica(cultivo="OT", limite_esquejes=2430, dias_ciclo=56, densidad_linea=16, densidad_m2=60.0),
         ConfiguracionAgronomica(cultivo="ORIENTAL", limite_esquejes=2430, dias_ciclo=56, densidad_linea=16, densidad_m2=57.15),
-        ConfiguracionAgronomica(cultivo="GIRASOL", limite_esquejes=2430, dias_ciclo=70, densidad_linea=14, densidad_m2=46.67),
+        ConfiguracionAgronomica(cultivo="GIRASOL", limite_esquejes=2430, dias_ciclo=70, densidad_linea=12, densidad_m2=46.67),
         ConfiguracionAgronomica(cultivo="STOCK", limite_esquejes=4151, dias_ciclo=35, densidad_linea=28, densidad_m2=101.67),
         ConfiguracionAgronomica(cultivo="CARNATIONS", limite_esquejes=1274, dias_ciclo=98, densidad_linea=16, densidad_m2=35.38),
         ConfiguracionAgronomica(cultivo="SOLIDAGO", limite_esquejes=1760, dias_ciclo=84, densidad_linea=18, densidad_m2=48.90),

@@ -65,7 +65,7 @@ class LocalDatabase {
           ''');
           await db.execute('''
             UPDATE tb_variedades 
-            SET limite_esquejes = 3402, dias_ciclo = 84, densidad_linea = 22 
+            SET limite_esquejes = 3402, dias_ciclo = 84, densidad_linea = 15 
             WHERE familia_id = 114 OR UPPER(familia_nombre) LIKE '%MATSUMOTO%'
           ''');
           await db.execute('''
@@ -80,9 +80,11 @@ class LocalDatabase {
           ''');
           await db.execute('''
             UPDATE tb_variedades 
-            SET limite_esquejes = 2430, dias_ciclo = 70, densidad_linea = 14 
+            SET limite_esquejes = 2430, dias_ciclo = 70, densidad_linea = 12 
             WHERE familia_id = 213 OR UPPER(familia_nombre) LIKE '%SUNFLOWER%' OR UPPER(familia_nombre) LIKE '%GIRASOL%'
           ''');
+          await db.execute("UPDATE tb_config_agronomica SET densidad_linea = 15 WHERE UPPER(cultivo) = 'MATSUMOTO'");
+          await db.execute("UPDATE tb_config_agronomica SET densidad_linea = 12 WHERE UPPER(cultivo) = 'GIRASOL'");
           await db.execute('''
             UPDATE tb_variedades 
             SET limite_esquejes = 4151, dias_ciclo = 35, densidad_linea = 28 
@@ -328,13 +330,13 @@ class LocalDatabase {
       {'cultivo': 'POMPON', 'limite_esquejes': 4050, 'dias_ciclo': 98, 'densidad_linea': 28},
       {'cultivo': 'CREMON', 'limite_esquejes': 3645, 'dias_ciclo': 70, 'densidad_linea': 24},
       {'cultivo': 'FUJI', 'limite_esquejes': 3240, 'dias_ciclo': 70, 'densidad_linea': 24},
-      {'cultivo': 'MATSUMOTO', 'limite_esquejes': 3402, 'dias_ciclo': 84, 'densidad_linea': 22},
+      {'cultivo': 'MATSUMOTO', 'limite_esquejes': 3402, 'dias_ciclo': 84, 'densidad_linea': 15},
       {'cultivo': 'LIRIOS', 'limite_esquejes': 2916, 'dias_ciclo': 105, 'densidad_linea': 18},
       {'cultivo': 'LA', 'limite_esquejes': 2916, 'dias_ciclo': 105, 'densidad_linea': 18},
       {'cultivo': 'LO', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 16},
       {'cultivo': 'OT', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 16},
       {'cultivo': 'ORIENTAL', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 16},
-      {'cultivo': 'GIRASOL', 'limite_esquejes': 2430, 'dias_ciclo': 70, 'densidad_linea': 14},
+      {'cultivo': 'GIRASOL', 'limite_esquejes': 2430, 'dias_ciclo': 70, 'densidad_linea': 12},
       {'cultivo': 'STOCK', 'limite_esquejes': 4151, 'dias_ciclo': 35, 'densidad_linea': 28},
       {'cultivo': 'CARNATIONS', 'limite_esquejes': 1274, 'dias_ciclo': 98, 'densidad_linea': 16},
       {'cultivo': 'SOLIDAGO', 'limite_esquejes': 1760, 'dias_ciclo': 84, 'densidad_linea': 18},

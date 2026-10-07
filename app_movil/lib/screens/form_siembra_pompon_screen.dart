@@ -59,40 +59,59 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
     return c.contains('MADRE') || c.contains('BANCO') || c.contains('NÚCLEO') || c.contains('NUCLEO');
   }
 
-  /// Indica si este cultivo tiene división de cama en dos lados (Pompón y Cremón por ahora)
+  /// Indica si este cultivo tiene división de cama en dos lados
+  /// (Pompón: 13/12, Cremón: 11/11, Matsumoto: 8/7, Girasol: 6/6)
   bool get _tieneDivisionDosLados {
     final c = widget.cultivo.toUpperCase();
     if (c.contains('POMPON') || c.contains('POMPÓN')) return true;
     if (c.contains('CREMON') || c.contains('CREMÓN')) return true;
+    if (c.contains('MATSUMOTO') || c.contains('ASTER')) return true;
+    if (c.contains('GIRASOL') || c.contains('SUNFLOWER')) return true;
     final f = (_variedadSeleccionada?.familiaNombre ?? '').toUpperCase();
     if (f.contains('POMPON') || f.contains('POMPÓN')) return true;
     if (f.contains('CREMON') || f.contains('CREMÓN')) return true;
+    if (f.contains('MATSUMOTO') || f.contains('ASTER')) return true;
+    if (f.contains('GIRASOL') || f.contains('SUNFLOWER')) return true;
+    final famId = _variedadSeleccionada?.familiaId;
+    if (famId != null && [147, 193, 200, 148, 114, 118, 262, 213].contains(famId)) return true;
     return false;
   }
 
-  /// Densidad por línea para el Lado A según el cultivo (Pompón: 13, Cremón: 11)
+  /// Densidad por línea para el Lado A según el cultivo:
+  /// - Pompón: 13
+  /// - Cremón: 11
+  /// - Matsumoto: 8 (de un total de 15: 8 + 7)
+  /// - Girasol: 6 (de un total de 12: 6 + 6)
   int get _densidadLadoA {
     final c = widget.cultivo.toUpperCase();
-    if (c.contains('POMPON') || c.contains('POMPÓN')) return 13;
-    if (c.contains('CREMON') || c.contains('CREMÓN')) return 11;
     final f = (_variedadSeleccionada?.familiaNombre ?? '').toUpperCase();
-    if (f.contains('POMPON') || f.contains('POMPÓN')) return 13;
-    if (f.contains('CREMON') || f.contains('CREMÓN')) return 11;
+    final famId = _variedadSeleccionada?.familiaId;
+
+    if (c.contains('POMPON') || c.contains('POMPÓN') || f.contains('POMPON') || famId == 147) return 13;
+    if (c.contains('CREMON') || c.contains('CREMÓN') || f.contains('CREMON') || (famId != null && [193, 200, 148].contains(famId))) return 11;
+    if (c.contains('MATSUMOTO') || c.contains('ASTER') || f.contains('MATSUMOTO') || (famId != null && [114, 118, 262].contains(famId))) return 8;
+    if (c.contains('GIRASOL') || c.contains('SUNFLOWER') || f.contains('GIRASOL') || famId == 213) return 6;
     return 13;
   }
 
-  /// Densidad por línea para el Lado B según el cultivo (Pompón: 12, Cremón: 11)
+  /// Densidad por línea para el Lado B según el cultivo:
+  /// - Pompón: 12
+  /// - Cremón: 11
+  /// - Matsumoto: 7 (de un total de 15: 8 + 7)
+  /// - Girasol: 6 (de un total de 12: 6 + 6)
   int get _densidadLadoB {
     final c = widget.cultivo.toUpperCase();
-    if (c.contains('POMPON') || c.contains('POMPÓN')) return 12;
-    if (c.contains('CREMON') || c.contains('CREMÓN')) return 11;
     final f = (_variedadSeleccionada?.familiaNombre ?? '').toUpperCase();
-    if (f.contains('POMPON') || f.contains('POMPÓN')) return 12;
-    if (f.contains('CREMON') || f.contains('CREMÓN')) return 11;
+    final famId = _variedadSeleccionada?.familiaId;
+
+    if (c.contains('POMPON') || c.contains('POMPÓN') || f.contains('POMPON') || famId == 147) return 12;
+    if (c.contains('CREMON') || c.contains('CREMÓN') || f.contains('CREMON') || (famId != null && [193, 200, 148].contains(famId))) return 11;
+    if (c.contains('MATSUMOTO') || c.contains('ASTER') || f.contains('MATSUMOTO') || (famId != null && [114, 118, 262].contains(famId))) return 7;
+    if (c.contains('GIRASOL') || c.contains('SUNFLOWER') || f.contains('GIRASOL') || famId == 213) return 6;
     return 12;
   }
 
-  /// Densidad por línea de la cama completa (ambos lados sumados: Pompón 25, Cremón 22)
+  /// Densidad por línea de la cama completa (ambos lados sumados: Pompón 25, Cremón 22, Matsumoto 15, Girasol 12)
   int get _densidadCamaCompleta => _densidadLadoA + _densidadLadoB;
 
   /// Pompon y Cremon requieren obligatoriamente el Clon (ej: 4-25, 3-25).
@@ -1367,10 +1386,22 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
       return const SizedBox.shrink();
     }
 
-    final esPompon = widget.cultivo.toUpperCase().contains('POMPON') ||
-        widget.cultivo.toUpperCase().contains('POMPÓN') ||
-        (_variedadSeleccionada?.familiaNombre ?? '').toUpperCase().contains('POMPON');
-    final nombreCultivo = esPompon ? 'Pompón' : 'Cremón';
+    String nombreCultivo = 'Pompón';
+    final c = widget.cultivo.toUpperCase();
+    final f = (_variedadSeleccionada?.familiaNombre ?? '').toUpperCase();
+    final famId = _variedadSeleccionada?.familiaId;
+
+    if (c.contains('CREMON') || c.contains('CREMÓN') || f.contains('CREMON') || (famId != null && [193, 200, 148].contains(famId))) {
+      nombreCultivo = 'Cremón';
+    } else if (c.contains('MATSUMOTO') || c.contains('ASTER') || f.contains('MATSUMOTO') || (famId != null && [114, 118, 262].contains(famId))) {
+      nombreCultivo = 'Matsumoto';
+    } else if (c.contains('GIRASOL') || c.contains('SUNFLOWER') || f.contains('GIRASOL') || famId == 213) {
+      nombreCultivo = 'Girasol';
+    } else if (c.contains('POMPON') || c.contains('POMPÓN') || f.contains('POMPON') || famId == 147) {
+      nombreCultivo = 'Pompón';
+    } else {
+      nombreCultivo = widget.cultivo;
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
