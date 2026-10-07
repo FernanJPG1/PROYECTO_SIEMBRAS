@@ -1146,7 +1146,7 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
         InkWell(
           onTap: _seleccionarFecha,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
@@ -1162,13 +1162,13 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
                       final semTxt = CalendarioUtil.obtenerEtiquetaCorta(fActual);
                       return Text(
                         '${_fechaSeleccionada ?? 'dd/mm/aaaa'} ($semTxt)',
-                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
                         overflow: TextOverflow.ellipsis,
                       );
                     },
                   ),
                 ),
-                const Icon(Icons.calendar_today, color: Color(0xFF7CB342), size: 20),
+                const Icon(Icons.calendar_today, color: Color(0xFF7CB342), size: 18),
               ],
             ),
           ),
@@ -1485,16 +1485,16 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
           const SizedBox(width: 8),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7CB342),
+              backgroundColor: const Color(0xFF2E7D32),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              elevation: 1,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 2,
             ),
-            icon: const Icon(Icons.shopping_basket, size: 16),
+            icon: const Icon(Icons.shopping_basket, size: 18),
             label: const Text(
-              'Canastas',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              'Medir Canastas',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
             onPressed: () {
               Navigator.push(
@@ -2014,22 +2014,24 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF7CB342),
         elevation: 2,
+        titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white, size: 26),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.local_florist, color: Colors.white, size: 24),
-            const SizedBox(width: 8),
-            Expanded(
+            const Icon(Icons.local_florist, color: Colors.white, size: 22),
+            const SizedBox(width: 6),
+            Flexible(
               child: Text(
                 tituloTexto.toUpperCase(),
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 17.5,
-                  letterSpacing: 0.5,
+                  fontSize: 16,
+                  letterSpacing: 0.3,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -2039,30 +2041,54 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
         actions: [
           Container(
             margin: const EdgeInsets.symmetric(vertical: 8),
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF33691E),
-                foregroundColor: Colors.white,
-                elevation: 1,
-                padding: EdgeInsets.symmetric(horizontal: esMovil ? 8 : 12, vertical: 6),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              icon: const Icon(Icons.shopping_basket, size: 16, color: Colors.white),
-              label: Text(
-                esMovil ? 'CANASTAS' : 'CANASTAS',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RendimientoLiriosScreen(
-                      subgrupoInicial: widget.subtipo,
+            child: esMovil
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF33691E),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
                     ),
+                    child: IconButton(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      constraints: const BoxConstraints(minWidth: 40, minHeight: 38),
+                      icon: const Icon(Icons.shopping_basket, size: 20, color: Colors.white),
+                      tooltip: 'Rendimiento Canastas',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RendimientoLiriosScreen(
+                              subgrupoInicial: widget.subtipo,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                : ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF33691E),
+                      foregroundColor: Colors.white,
+                      elevation: 1,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: const Icon(Icons.shopping_basket, size: 16, color: Colors.white),
+                    label: const Text(
+                      'CANASTAS',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RendimientoLiriosScreen(
+                            subgrupoInicial: widget.subtipo,
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
           const SizedBox(width: 6),
           Container(
@@ -2266,7 +2292,7 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
 
                   // Botones de Acción
                   _buildBotonesAccion(esMovil),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),

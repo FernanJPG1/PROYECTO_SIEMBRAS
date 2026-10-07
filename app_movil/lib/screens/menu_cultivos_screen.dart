@@ -102,35 +102,40 @@ class MenuCultivosScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFF7CB342),
         elevation: 2,
+        titleSpacing: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 26),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.grass, color: Colors.white, size: 28),
-            SizedBox(width: 10),
-            Text(
-              'SELECCIÓN DE CULTIVO',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-                letterSpacing: 0.5,
+            Icon(Icons.grass, color: Colors.white, size: 24),
+            SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                'SELECCIÓN DE CULTIVO',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                  letterSpacing: 0.3,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
         actions: [
           Container(
-            margin: const EdgeInsets.only(right: 14),
+            margin: const EdgeInsets.only(right: 10),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
             ),
             child: IconButton(
-              icon: const Icon(Icons.home, color: Colors.white, size: 26),
+              icon: const Icon(Icons.home, color: Colors.white, size: 24),
               tooltip: 'Volver al Inicio',
               onPressed: () => Navigator.pop(context),
             ),
@@ -162,7 +167,7 @@ class MenuCultivosScreen extends StatelessWidget {
                         : (w > 650 ? 4 : (w > 450 ? 3 : 2));
                     final double childAspectRatio = w > 900
                         ? 1.75
-                        : (w > 650 ? 1.65 : (w > 450 ? 1.55 : 1.40));
+                        : (w > 650 ? 1.65 : (w > 450 ? 1.55 : 1.35));
 
                     return GridView.builder(
                       physics: const BouncingScrollPhysics(),
@@ -232,7 +237,7 @@ class MenuCultivosScreen extends StatelessWidget {
                                               child: Text(
                                                 c.nombre,
                                                 style: const TextStyle(
-                                                  fontSize: 17,
+                                                  fontSize: 14.5,
                                                   fontWeight: FontWeight.bold,
                                                   color: Color(0xFF263238),
                                                 ),

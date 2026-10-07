@@ -470,22 +470,24 @@ class _RendimientoLiriosScreenState extends State<RendimientoLiriosScreen>
       appBar: AppBar(
         backgroundColor: const Color(0xFF7CB342),
         elevation: 2,
+        titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white, size: 26),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.shopping_basket, color: Colors.white, size: 24),
+            Icon(Icons.shopping_basket, color: Colors.white, size: 22),
             SizedBox(width: 8),
-            Expanded(
+            Flexible(
               child: Text(
-                'RENDIMIENTOS POR CANASTAS',
+                'RENDIMIENTOS LIRIOS',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                  letterSpacing: 0.5,
+                  fontSize: 16.5,
+                  letterSpacing: 0.3,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -510,14 +512,14 @@ class _RendimientoLiriosScreenState extends State<RendimientoLiriosScreen>
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
-          indicatorWeight: 4,
+          indicatorWeight: 3.5,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: const [
-            Tab(text: 'LIRIO LA\n(143 b/p)', icon: Icon(Icons.spa, size: 20)),
-            Tab(text: 'LIRIO LO\n(63 b/p)', icon: Icon(Icons.local_florist, size: 20)),
-            Tab(text: 'LIRIO OT\n(63 b/p)', icon: Icon(Icons.filter_vintage, size: 20)),
+            Tab(text: 'LA (143 b/p)', icon: Icon(Icons.spa, size: 18)),
+            Tab(text: 'LO (63 b/p)', icon: Icon(Icons.local_florist, size: 18)),
+            Tab(text: 'OT (63 b/p)', icon: Icon(Icons.filter_vintage, size: 18)),
           ],
         ),
       ),
@@ -528,9 +530,10 @@ class _RendimientoLiriosScreenState extends State<RendimientoLiriosScreen>
                 maxWidth: 960,
                 padding: EdgeInsets.symmetric(
                   horizontal: esMovil ? 12 : 20,
-                  vertical: 10,
+                  vertical: 8,
                 ),
-                child: Column(
+                child: ListView(
+                  physics: const BouncingScrollPhysics(),
                   children: [
                     // Selector de Fecha
                     _buildSelectorFecha(esMovil),
@@ -548,42 +551,73 @@ class _RendimientoLiriosScreenState extends State<RendimientoLiriosScreen>
 
                     // Barra de búsqueda de operarios
                     _buildBarraBusqueda(),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
 
-                    // Lista de Operarios con canastas
-                    Expanded(
-                      child: operariosFiltrados.isEmpty
-                          ? Center(
-                              child: Text(
-                                _filtroTexto.isNotEmpty
-                                    ? 'No se encontraron operarios para "$_filtroTexto"'
-                                    : 'No hay operarios registrados en la base de datos',
-                                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                              ),
-                            )
-                          : ListView.separated(
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: operariosFiltrados.length,
-                              separatorBuilder: (ctx, i) => const SizedBox(height: 10),
-                              itemBuilder: (ctx, i) {
-                                final op = operariosFiltrados[i];
-                                final canastasOp = canastasPorOp[op.id] ?? [];
-                                final int totalBulbosOp = canastasOp.fold<int>(0, (s, c) => s + c.cantidadBulbos);
-                                final int totalCanastasOp = canastasOp.length;
-                                final bool tieneEntregas = totalCanastasOp > 0;
-
-                                return _buildOperarioCard(
-                                  op: op,
-                                  canastas: canastasOp,
-                                  totalCanastas: totalCanastasOp,
-                                  totalBulbos: totalBulbosOp,
-                                  tieneEntregas: tieneEntregas,
-                                  posicion: i + 1,
-                                  esMovil: esMovil,
-                                );
-                              },
+                    // Encabezado de la lista
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'EMPLEADOS (${operariosFiltrados.length})',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF33691E),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        if (_filtroTexto.isNotEmpty)
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(50, 24),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
+                            onPressed: () => setState(() => _filtroTexto = ''),
+                            child: const Text('Limpiar filtro', style: TextStyle(fontSize: 11, color: Color(0xFF558B2F))),
+                          ),
+                      ],
                     ),
+                    const SizedBox(height: 8),
+
+                    // Lista de Operarios
+                    if (operariosFiltrados.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 30),
+                        child: Center(
+                          child: Text(
+                            _filtroTexto.isNotEmpty
+                                ? 'No se encontraron operarios para "$_filtroTexto"'
+                                : 'No hay operarios registrados en la base de datos',
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                          ),
+                        ),
+                      )
+                    else
+                      ...operariosFiltrados.asMap().entries.map((entry) {
+                        final i = entry.key;
+                        final op = entry.value;
+                        final canastasOp = canastasPorOp[op.id] ?? [];
+                        final int totalBulbosOp = canastasOp.fold<int>(0, (s, c) => s + c.cantidadBulbos);
+                        final int totalCanastasOp = canastasOp.length;
+                        final bool tieneEntregas = totalCanastasOp > 0;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _buildOperarioCard(
+                            op: op,
+                            canastas: canastasOp,
+                            totalCanastas: totalCanastasOp,
+                            totalBulbos: totalBulbosOp,
+                            tieneEntregas: tieneEntregas,
+                            posicion: i + 1,
+                            esMovil: esMovil,
+                          ),
+                        );
+                      }),
+
+                    // Espaciado final para asegurar scroll completo
+                    const SizedBox(height: 36),
                   ],
                 ),
               ),
@@ -617,24 +651,30 @@ class _RendimientoLiriosScreenState extends State<RendimientoLiriosScreen>
             tooltip: 'Día anterior',
             onPressed: () => _cambiarFecha(_fechaSeleccionada.subtract(const Duration(days: 1))),
           ),
-          InkWell(
-            onTap: _seleccionarFechaDialog,
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today, color: Color(0xFF7CB342), size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$_fechaStr ($sem)${esHoy ? " • HOY" : ""}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: esMovil ? 14 : 15,
-                      color: const Color(0xFF1B5E20),
+          Flexible(
+            child: InkWell(
+              onTap: _seleccionarFechaDialog,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.calendar_today, color: Color(0xFF7CB342), size: 18),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        '$_fechaStr ($sem)${esHoy ? " • HOY" : ""}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: esMovil ? 13 : 15,
+                          color: const Color(0xFF1B5E20),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
