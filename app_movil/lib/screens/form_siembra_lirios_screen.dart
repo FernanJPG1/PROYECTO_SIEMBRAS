@@ -406,8 +406,9 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
                         child: lista.isEmpty
                             ? const Center(child: Text('No se encontraron lotes coincidentes'))
                             : ListView.separated(
+                                physics: const BouncingScrollPhysics(),
                                 itemCount: lista.length,
-                                separatorBuilder: (ctx, i) => const Divider(height: 1),
+                                separatorBuilder: (ctx, i) => const SizedBox(height: 8),
                                 itemBuilder: (ctx, i) {
                                   final item = lista[i];
                                   final isSelected = _loteSeleccionado == item;
@@ -418,25 +419,69 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
                                       ? detalles.first.variedad!
                                       : '';
 
-                                  return ListTile(
-                                    tileColor: isSelected
-                                        ? const Color(0xFF7CB342).withValues(alpha: 0.15)
-                                        : null,
-                                    title: Text(
-                                      'Lote: $item',
-                                      style: TextStyle(
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                        color: isSelected ? const Color(0xFF33691E) : Colors.black87,
+                                  return InkWell(
+                                    onTap: () => Navigator.pop(ctx, item),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? const Color(0xFFF1F8E9)
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isSelected ? const Color(0xFF7CB342) : Colors.grey.shade300,
+                                          width: isSelected ? 1.8 : 1.0,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.02),
+                                            blurRadius: 3,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                                decoration: BoxDecoration(
+                                                  color: isSelected ? const Color(0xFF2E7D32) : const Color(0xFF558B2F),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  'LOTE $item',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                              if (isSelected)
+                                                const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 20),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Wrap(
+                                            spacing: 6,
+                                            runSpacing: 4,
+                                            children: [
+                                              if (prov.isNotEmpty)
+                                                _buildMiniChip(Icons.business, 'Prov: $prov'),
+                                              if (cont.isNotEmpty)
+                                                _buildMiniChip(Icons.directions_boat, 'Cont: $cont'),
+                                              if (varNom.isNotEmpty)
+                                                _buildMiniChip(Icons.local_florist, varNom),
+                                            ],
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    subtitle: Text(
-                                      'Prov: $prov | Cont: $cont${varNom.isNotEmpty ? " | Var: $varNom" : ""}',
-                                      style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                                    ),
-                                    trailing: isSelected
-                                        ? const Icon(Icons.check_circle, color: Color(0xFF7CB342))
-                                        : null,
-                                    onTap: () => Navigator.pop(ctx, item),
                                   );
                                 },
                               ),
@@ -1885,6 +1930,57 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
     });
   }
 
+  Widget _buildMiniChip(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFA5D6A7)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: const Color(0xFF2E7D32)),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1B5E20)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChipDetalle(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFA5D6A7)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF2E7D32)),
+          const SizedBox(width: 5),
+          Text(
+            '$label: ',
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20)),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF2E7D32)),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBannerLoteInfo() {
     if (_loteSeleccionado == null) return const SizedBox.shrink();
     return Builder(builder: (context) {
@@ -1894,22 +1990,54 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
       final v = matches.isNotEmpty ? matches.first.variedad : null;
 
       return Container(
-        margin: const EdgeInsets.only(top: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        margin: const EdgeInsets.only(top: 8, bottom: 4),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFE8F5E9),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFA5D6A7)),
+          color: const Color(0xFFF1F8E9),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF81C784), width: 1.5),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.inventory_2_outlined, color: Color(0xFF2E7D32), size: 16),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Lote $_loteSeleccionado (Tabla 187) ➔ Proveedor: $p | Contenedor: $c${v != null ? " | Variedad: $v" : ""}',
-                style: const TextStyle(fontSize: 11.5, color: Color(0xFF1B5E20), fontWeight: FontWeight.bold),
-              ),
+            Row(
+              children: [
+                const Icon(Icons.inventory_2_outlined, color: Color(0xFF2E7D32), size: 18),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'DETALLES DE COMPRA (TABLA 187)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1B5E20),
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E7D32),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'Lote $_loteSeleccionado',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                _buildChipDetalle(Icons.business, 'Proveedor', p.isNotEmpty ? p : 'Sin definir'),
+                _buildChipDetalle(Icons.directions_boat, 'Contenedor', c.isNotEmpty ? c : 'Sin definir'),
+                if (v != null && v.isNotEmpty)
+                  _buildChipDetalle(Icons.local_florist, 'Variedad origen', v),
+              ],
             ),
           ],
         ),

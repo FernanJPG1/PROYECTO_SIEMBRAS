@@ -225,15 +225,19 @@ class _RendimientoLiriosScreenState extends State<RendimientoLiriosScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 16,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 600,
+            maxHeight: MediaQuery.of(ctx).size.height * 0.90,
           ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -533,7 +537,7 @@ class _RendimientoLiriosScreenState extends State<RendimientoLiriosScreen>
                   vertical: 8,
                 ),
                 child: ListView(
-                  physics: const BouncingScrollPhysics(),
+                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                   children: [
                     // Selector de Fecha
                     _buildSelectorFecha(esMovil),
@@ -617,7 +621,7 @@ class _RendimientoLiriosScreenState extends State<RendimientoLiriosScreen>
                       }),
 
                     // Espaciado final para asegurar scroll completo
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 70),
                   ],
                 ),
               ),

@@ -505,6 +505,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                         ),
                       )
                     : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                         itemCount: rendimientos.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 8),
                         itemBuilder: (ctx, index) {

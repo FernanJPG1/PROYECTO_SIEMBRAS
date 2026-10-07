@@ -1220,217 +1220,292 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      builder: (ctx) => ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
+          maxWidth: Responsive.dialogMaxWidth(context),
         ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade400,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.grass, color: Color(0xFF7CB342), size: 28),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Detalle de Siembra: ${va.nombre}',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF33691E)),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: s.estado == 'ACTIVA' ? Colors.green.shade100 : Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    s.estado,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      color: s.estado == 'ACTIVA' ? Colors.green.shade900 : Colors.grey.shade800,
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-              ],
-            ),
-            const Divider(height: 24),
-            _buildStatRow('Fecha de Siembra:', s.fecha),
-            _buildStatRow('Empleado / Operario:', op.nombreCompleto),
-            _buildStatRow('Variedad:', '${va.nombre} (${va.codigo})'),
-            _buildStatRow('Bloque:', s.bloqueCodigo ?? ca.bloque),
-            _buildStatRow('Cama:', ca.cama),
-            _buildStatRow('Cantidad Esquejes (Esq):', '${s.cantidad} unidades'),
-            _buildStatRow('Líneas (Line):', s.lineas != null ? '${s.lineas}' : '-'),
-            _buildStatRow('Lote:', (_obtenerCultivoDeSiembra(s) == 'LIRIOS' && s.lote != null && s.lote!.isNotEmpty) ? s.lote! : '-'),
-            _buildStatRow('Proveedor (Provee):', (_obtenerCultivoDeSiembra(s) == 'LIRIOS' && s.proveedor != null && s.proveedor!.isNotEmpty) ? s.proveedor! : '-'),
-            _buildStatRow('Contenedor / Conteo (Cont):', (_obtenerCultivoDeSiembra(s) == 'LIRIOS' && s.cont != null && s.cont!.isNotEmpty) ? s.cont! : '-'),
-            () {
-              final nomVaUpper = va.nombre.toUpperCase();
-              final codVaUpper = va.codigo.toUpperCase();
-              final bool esClonVa = nomVaUpper.contains('POMPON') ||
-                  nomVaUpper.contains('POMPÓN') ||
-                  nomVaUpper.contains('CREMON') ||
-                  nomVaUpper.contains('CREMÓN') ||
-                  codVaUpper.startsWith('POM') ||
-                  codVaUpper.startsWith('CRM') ||
-                  codVaUpper.startsWith('CRE');
-              return _buildStatRow(esClonVa ? 'Clon:' : 'Observaciones:', (s.observaciones != null && s.observaciones!.isNotEmpty) ? s.observaciones! : '-');
-            }(),
-            _buildStatRow('Días de Ciclo:', '$diasCiclo días ${s.estado == 'ACTIVA' ? '(en curso)' : '(finalizado)'}'),
-            if (s.fechaFin != null && s.fechaFin!.isNotEmpty)
-              _buildStatRow('Fecha Fin:', s.fechaFin!),
-            FutureBuilder<List<Siembra>>(
-              future: _db.obtenerSiembrasActivasPorCama(s.camaId),
-              builder: (ctx, snapshot) {
-                if (snapshot.hasData && (snapshot.data?.length ?? 0) > 1) {
-                  final activas = snapshot.data!;
-                  final int totalCama = activas.fold(0, (sum, item) => sum + item.cantidad);
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    padding: const EdgeInsets.all(10),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Icon(Icons.grass, color: Color(0xFF7CB342), size: 28),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Detalle de Siembra: ${va.nombre}',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF33691E)),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: s.estado == 'ACTIVA' ? Colors.green.shade100 : Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        s.estado,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: s.estado == 'ACTIVA' ? Colors.green.shade900 : Colors.grey.shade800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 24),
+                _buildStatRow('Fecha de Siembra:', s.fecha),
+                _buildStatRow('Empleado / Operario:', op.nombreCompleto),
+                _buildStatRow('Variedad:', '${va.nombre} (${va.codigo})'),
+                _buildStatRow('Bloque:', s.bloqueCodigo ?? ca.bloque),
+                _buildStatRow('Cama:', ca.cama),
+                _buildStatRow('Cantidad Esquejes (Esq):', '${s.cantidad} unidades'),
+                _buildStatRow('Líneas (Line):', s.lineas != null ? '${s.lineas}' : '-'),
+
+                // Tarjeta destacada de Detalles de Compra / Importación (Lirios Tabla 187 o Lote/Proveedor)
+                if ((s.lote != null && s.lote!.isNotEmpty) ||
+                    (s.proveedor != null && s.proveedor!.isNotEmpty) ||
+                    (s.cont != null && s.cont!.isNotEmpty)) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF8E1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFFFB300)),
+                      color: const Color(0xFFF1F8E9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF81C784), width: 1.5),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.group_work, color: Color(0xFFE65100), size: 16),
-                            const SizedBox(width: 6),
+                            const Icon(Icons.inventory_2_outlined, color: Color(0xFF2E7D32), size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _obtenerCultivoDeSiembra(s) == 'LIRIOS'
+                                    ? 'DETALLES DE COMPRA (TABLA 187)'
+                                    : 'DETALLES DE COMPRA / LOTE',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1B5E20),
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ),
+                            if (s.lote != null && s.lote!.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2E7D32),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'Lote ${s.lote}',
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: [
+                            if (s.proveedor != null && s.proveedor!.isNotEmpty)
+                              _buildChipDetalle(Icons.business, 'Proveedor', s.proveedor!),
+                            if (s.cont != null && s.cont!.isNotEmpty)
+                              _buildChipDetalle(Icons.directions_boat, 'Contenedor / Conteo', s.cont!),
+                            if (s.lote != null && s.lote!.isNotEmpty)
+                              _buildChipDetalle(Icons.tag, 'Lote', s.lote!),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
+
+                () {
+                  final nomVaUpper = va.nombre.toUpperCase();
+                  final codVaUpper = va.codigo.toUpperCase();
+                  final bool esClonVa = nomVaUpper.contains('POMPON') ||
+                      nomVaUpper.contains('POMPÓN') ||
+                      nomVaUpper.contains('CREMON') ||
+                      nomVaUpper.contains('CREMÓN') ||
+                      codVaUpper.startsWith('POM') ||
+                      codVaUpper.startsWith('CRM') ||
+                      codVaUpper.startsWith('CRE');
+                  return _buildStatRow(esClonVa ? 'Clon:' : 'Observaciones:', (s.observaciones != null && s.observaciones!.isNotEmpty) ? s.observaciones! : '-');
+                }(),
+                _buildStatRow('Días de Ciclo:', '$diasCiclo días ${s.estado == 'ACTIVA' ? '(en curso)' : '(finalizado)'}'),
+                if (s.fechaFin != null && s.fechaFin!.isNotEmpty)
+                  _buildStatRow('Fecha Fin:', s.fechaFin!),
+                FutureBuilder<List<Siembra>>(
+                  future: _db.obtenerSiembrasActivasPorCama(s.camaId),
+                  builder: (ctx, snapshot) {
+                    if (snapshot.hasData && (snapshot.data?.length ?? 0) > 1) {
+                      final activas = snapshot.data!;
+                      final int totalCama = activas.fold(0, (sum, item) => sum + item.cantidad);
+                      return Container(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFFB300)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.group_work, color: Color(0xFFE65100), size: 16),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Cama Compartida (${activas.length} registros activos)',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFE65100)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
                             Text(
-                              'Cama Compartida (${activas.length} registros activos)',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFE65100)),
+                              'Total sembrado en esta cama: $totalCama esquejes/plantas',
+                              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Total sembrado en esta cama: $totalCama esquejes/plantas',
-                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+                Builder(
+                  builder: (_) {
+                    final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
+                    final diasAntiguedad = CalendarioUtil.diasDesdeFecha(s.fecha);
+                    if (!puedeModificar) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFFD54F)),
                         ),
-                      ],
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-            Builder(
-              builder: (_) {
-                final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
-                final diasAntiguedad = CalendarioUtil.diasDesdeFecha(s.fecha);
-                if (!puedeModificar) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF8E1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFFFD54F)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.lock_rounded, color: Color(0xFFE65100), size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Registro con $diasAntiguedad días de antigüedad (bloqueado > 2 días). Las modificaciones solo se permiten desde la Base de Datos Empresarial.',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFE65100)),
-                          ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.lock_rounded, color: Color(0xFFE65100), size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Registro con $diasAntiguedad días de antigüedad (bloqueado > 2 días). Las modificaciones solo se permiten desde la Base de Datos Empresarial.',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFE65100)),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Builder(
+                        builder: (_) {
+                          final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
+                          return OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: puedeModificar ? const Color(0xFF7CB342) : Colors.grey,
+                              side: BorderSide(color: puedeModificar ? const Color(0xFF7CB342) : Colors.grey.shade400),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            icon: Icon(puedeModificar ? Icons.edit : Icons.lock_outline, size: 18),
+                            label: Text(puedeModificar ? 'Editar' : 'Bloqueado', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              if (!puedeModificar) {
+                                _mostrarAvisoBloqueoModificacion(CalendarioUtil.diasDesdeFecha(s.fecha));
+                              } else {
+                                _dialogEditarSiembra(s);
+                              }
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: Builder(
-                    builder: (_) {
-                      final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
-                      return OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: puedeModificar ? const Color(0xFF7CB342) : Colors.grey,
-                          side: BorderSide(color: puedeModificar ? const Color(0xFF7CB342) : Colors.grey.shade400),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Builder(
+                        builder: (_) {
+                          final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
+                          return OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: puedeModificar ? Colors.red : Colors.grey,
+                              side: BorderSide(color: puedeModificar ? Colors.red : Colors.grey.shade400),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            icon: Icon(puedeModificar ? Icons.delete_outline : Icons.lock_outline, size: 18),
+                            label: Text(puedeModificar ? 'Eliminar' : 'Bloqueado', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              if (!puedeModificar) {
+                                _mostrarAvisoBloqueoModificacion(CalendarioUtil.diasDesdeFecha(s.fecha));
+                              } else {
+                                _confirmarYEliminarSiembra(s);
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7CB342),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        icon: Icon(puedeModificar ? Icons.edit : Icons.lock_outline, size: 18),
-                        label: Text(puedeModificar ? 'Editar' : 'Bloqueado', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          if (!puedeModificar) {
-                            _mostrarAvisoBloqueoModificacion(CalendarioUtil.diasDesdeFecha(s.fecha));
-                          } else {
-                            _dialogEditarSiembra(s);
-                          }
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Builder(
-                    builder: (_) {
-                      final puedeModificar = CalendarioUtil.puedeModificarSiembraPorFecha(s.fecha);
-                      return OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: puedeModificar ? Colors.red : Colors.grey,
-                          side: BorderSide(color: puedeModificar ? Colors.red : Colors.grey.shade400),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        icon: Icon(puedeModificar ? Icons.delete_outline : Icons.lock_outline, size: 18),
-                        label: Text(puedeModificar ? 'Eliminar' : 'Bloqueado', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          if (!puedeModificar) {
-                            _mostrarAvisoBloqueoModificacion(CalendarioUtil.diasDesdeFecha(s.fecha));
-                          } else {
-                            _confirmarYEliminarSiembra(s);
-                          }
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF7CB342),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cerrar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
                     ),
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Cerrar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
+                  ],
                 ),
+                const SizedBox(height: 10),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1970,12 +2045,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13.5)),
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13.5),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 6,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: color ?? const Color(0xFF33691E),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChipDetalle(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFA5D6A7)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF2E7D32)),
+          const SizedBox(width: 5),
           Text(
-            value,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: color ?? const Color(0xFF33691E)),
+            '$label: ',
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20)),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF2E7D32)),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
