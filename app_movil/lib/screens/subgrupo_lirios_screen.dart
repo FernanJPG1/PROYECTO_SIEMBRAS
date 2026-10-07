@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:app_movil/screens/form_siembra_lirios_screen.dart';
-import 'package:app_movil/screens/rendimiento_lirios_screen.dart';
 import 'package:app_movil/utils/responsive.dart';
 
 class LirioSubgrupoOption {
@@ -74,32 +73,6 @@ class SubgrupoLiriosScreen extends StatelessWidget {
         ),
         actions: [
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF33691E),
-                foregroundColor: Colors.white,
-                elevation: 1,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              icon: const Icon(Icons.shopping_basket, size: 16, color: Colors.white),
-              label: const Text(
-                'CANASTAS',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const RendimientoLiriosScreen(subgrupoInicial: 'LA'),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
             margin: const EdgeInsets.only(right: 14),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
@@ -123,9 +96,6 @@ class SubgrupoLiriosScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Banner destacado para Medir Rendimiento por Canastas
-              _buildBotonRendimiento(context),
-              const SizedBox(height: 6),
               const Text(
                 'Seleccione el grupo específico de Lirio a sembrar:',
                 style: TextStyle(
@@ -134,7 +104,7 @@ class SubgrupoLiriosScreen extends StatelessWidget {
                   color: Color(0xFF33691E),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -169,87 +139,6 @@ class SubgrupoLiriosScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBotonRendimiento(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFF558B2F)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2E7D32).withValues(alpha: 0.25),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const RendimientoLiriosScreen(subgrupoInicial: 'LA'),
-              ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.shopping_basket, color: Colors.white, size: 28),
-                ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Medir Rendimientos por Canastas',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Control diario de canastas entregadas por operario (LA, LO, OT)',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
-                ),
-              ],
-            ),
           ),
         ),
       ),
