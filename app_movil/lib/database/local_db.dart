@@ -70,12 +70,12 @@ class LocalDatabase {
           ''');
           await db.execute('''
             UPDATE tb_variedades 
-            SET limite_esquejes = 2916, dias_ciclo = 105, densidad_linea = 18 
-            WHERE familia_id = 199 OR UPPER(familia_nombre) = 'LILIUM (LIRIOS)'
+            SET limite_esquejes = 2916, dias_ciclo = 105, densidad_linea = 143 
+            WHERE familia_id IN (199, 255) OR UPPER(familia_nombre) LIKE '%ASIAT%' OR UPPER(familia_nombre) = 'LILIUM (LIRIOS)'
           ''');
           await db.execute('''
             UPDATE tb_variedades 
-            SET limite_esquejes = 2430, dias_ciclo = 56, densidad_linea = 16 
+            SET limite_esquejes = 2430, dias_ciclo = 56, densidad_linea = 63 
             WHERE familia_id IN (204, 309) OR UPPER(familia_nombre) LIKE '%ORIENTAL%' OR UPPER(familia_nombre) LIKE '% OT%'
           ''');
           await db.execute('''
@@ -85,6 +85,8 @@ class LocalDatabase {
           ''');
           await db.execute("UPDATE tb_config_agronomica SET densidad_linea = 15 WHERE UPPER(cultivo) = 'MATSUMOTO'");
           await db.execute("UPDATE tb_config_agronomica SET densidad_linea = 12 WHERE UPPER(cultivo) = 'GIRASOL'");
+          await db.execute("UPDATE tb_config_agronomica SET densidad_linea = 143 WHERE UPPER(cultivo) IN ('LA', 'LIRIOS')");
+          await db.execute("UPDATE tb_config_agronomica SET densidad_linea = 63 WHERE UPPER(cultivo) IN ('LO', 'OT', 'ORIENTAL')");
           await db.execute('''
             UPDATE tb_variedades 
             SET limite_esquejes = 4151, dias_ciclo = 35, densidad_linea = 28 
@@ -165,6 +167,25 @@ class LocalDatabase {
             }
             await batch187.commit(noResult: true);
           }
+
+          // Asegurar existencia de tb_lirios_canastas (Rendimiento por Canastas en Lirios)
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS tb_lirios_canastas (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              uuid TEXT UNIQUE,
+              fecha TEXT NOT NULL,
+              subgrupo TEXT NOT NULL,
+              operario_id INTEGER NOT NULL,
+              operario_nombre TEXT NOT NULL,
+              cantidad_bulbos INTEGER NOT NULL,
+              hora TEXT NOT NULL,
+              sincronizado INTEGER NOT NULL DEFAULT 0,
+              observaciones TEXT
+            )
+          ''');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_canastas_fecha ON tb_lirios_canastas (fecha)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_canastas_subgrupo ON tb_lirios_canastas (subgrupo)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_canastas_operario ON tb_lirios_canastas (operario_id)');
 
           // Sincronizar y verificar automáticamente el respaldo persistente antidescarga/apagado
           try {
@@ -331,11 +352,11 @@ class LocalDatabase {
       {'cultivo': 'CREMON', 'limite_esquejes': 3645, 'dias_ciclo': 70, 'densidad_linea': 24},
       {'cultivo': 'FUJI', 'limite_esquejes': 3240, 'dias_ciclo': 70, 'densidad_linea': 24},
       {'cultivo': 'MATSUMOTO', 'limite_esquejes': 3402, 'dias_ciclo': 84, 'densidad_linea': 15},
-      {'cultivo': 'LIRIOS', 'limite_esquejes': 2916, 'dias_ciclo': 105, 'densidad_linea': 18},
-      {'cultivo': 'LA', 'limite_esquejes': 2916, 'dias_ciclo': 105, 'densidad_linea': 18},
-      {'cultivo': 'LO', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 16},
-      {'cultivo': 'OT', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 16},
-      {'cultivo': 'ORIENTAL', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 16},
+      {'cultivo': 'LIRIOS', 'limite_esquejes': 2916, 'dias_ciclo': 105, 'densidad_linea': 143},
+      {'cultivo': 'LA', 'limite_esquejes': 2916, 'dias_ciclo': 105, 'densidad_linea': 143},
+      {'cultivo': 'LO', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 63},
+      {'cultivo': 'OT', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 63},
+      {'cultivo': 'ORIENTAL', 'limite_esquejes': 2430, 'dias_ciclo': 56, 'densidad_linea': 63},
       {'cultivo': 'GIRASOL', 'limite_esquejes': 2430, 'dias_ciclo': 70, 'densidad_linea': 12},
       {'cultivo': 'STOCK', 'limite_esquejes': 4151, 'dias_ciclo': 35, 'densidad_linea': 28},
       {'cultivo': 'CARNATIONS', 'limite_esquejes': 1274, 'dias_ciclo': 98, 'densidad_linea': 16},
@@ -461,6 +482,25 @@ class LocalDatabase {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_proveedor ON tb_lirios_187 (proveedor)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_contenedor ON tb_lirios_187 (contenedor)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_lote ON tb_lirios_187 (lote)');
+
+    // 9. Tabla Canastas de Lirios (Rendimientos Operarios)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS tb_lirios_canastas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        uuid TEXT UNIQUE,
+        fecha TEXT NOT NULL,
+        subgrupo TEXT NOT NULL,
+        operario_id INTEGER NOT NULL,
+        operario_nombre TEXT NOT NULL,
+        cantidad_bulbos INTEGER NOT NULL,
+        hora TEXT NOT NULL,
+        sincronizado INTEGER NOT NULL DEFAULT 0,
+        observaciones TEXT
+      )
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_canastas_fecha ON tb_lirios_canastas (fecha)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_canastas_subgrupo ON tb_lirios_canastas (subgrupo)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_canastas_operario ON tb_lirios_canastas (operario_id)');
 
     // --- Poblar con Seed Data Real Empresarial ---
     final batch = db.batch();

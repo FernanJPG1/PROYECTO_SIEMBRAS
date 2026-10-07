@@ -545,3 +545,60 @@ class RendimientoOperario {
     });
   }
 }
+
+/// Representa la entrega individual de una canasta de bulbos a un operario para medir rendimiento en Lirios
+class CanastaLirio {
+  final int? id;
+  final String uuid;
+  final String fecha;
+  final String subgrupo; // 'LA', 'LO', 'OT'
+  final int operarioId;
+  final String operarioNombre;
+  final int cantidadBulbos; // 400, 425, 450 (LA) | 200, 225, 250 (LO, OT)
+  final String hora;
+  final int sincronizado;
+  final String? observaciones;
+
+  CanastaLirio({
+    this.id,
+    required this.uuid,
+    required this.fecha,
+    required this.subgrupo,
+    required this.operarioId,
+    required this.operarioNombre,
+    required this.cantidadBulbos,
+    required this.hora,
+    this.sincronizado = 0,
+    this.observaciones,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      if (id != null) 'id': id,
+      'uuid': uuid,
+      'fecha': fecha,
+      'subgrupo': subgrupo,
+      'operario_id': operarioId,
+      'operario_nombre': operarioNombre,
+      'cantidad_bulbos': cantidadBulbos,
+      'hora': hora,
+      'sincronizado': sincronizado,
+      if (observaciones != null) 'observaciones': observaciones,
+    };
+  }
+
+  factory CanastaLirio.fromMap(Map<String, dynamic> map) {
+    return CanastaLirio(
+      id: map['id'],
+      uuid: map['uuid']?.toString() ?? '',
+      fecha: map['fecha']?.toString() ?? '',
+      subgrupo: map['subgrupo']?.toString() ?? 'LA',
+      operarioId: map['operario_id'] is int ? map['operario_id'] : int.tryParse(map['operario_id']?.toString() ?? '0') ?? 0,
+      operarioNombre: map['operario_nombre']?.toString() ?? '',
+      cantidadBulbos: map['cantidad_bulbos'] is int ? map['cantidad_bulbos'] : int.tryParse(map['cantidad_bulbos']?.toString() ?? '0') ?? 0,
+      hora: map['hora']?.toString() ?? '',
+      sincronizado: map['sincronizado'] is int ? map['sincronizado'] : int.tryParse(map['sincronizado']?.toString() ?? '0') ?? 0,
+      observaciones: map['observaciones']?.toString(),
+    );
+  }
+}

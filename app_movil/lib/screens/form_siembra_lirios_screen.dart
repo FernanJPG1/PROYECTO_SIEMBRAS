@@ -3,6 +3,7 @@ import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
 import 'package:app_movil/utils/calendario_util.dart';
 import 'package:app_movil/utils/responsive.dart';
+import 'package:app_movil/screens/rendimiento_lirios_screen.dart';
 import 'package:app_movil/widgets/crear_variedad_dialog.dart';
 
 class FormSiembraLiriosScreen extends StatefulWidget {
@@ -24,7 +25,6 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
   // Catálogos
   List<Bloque> _bloques = [];
   List<Cama> _camasDelBloque = [];
-  List<Operario> _operarios = [];
   List<Variedad> _variedades = [];
   List<Variedad> _todasLasVariedades = [];
   Map<int, ValidacionCicloResultado> _estadoCicloCamas = {};
@@ -34,9 +34,7 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
   String? _fechaSeleccionada;
   Bloque? _bloqueSeleccionado;
   Cama? _camaSeleccionada;
-  Operario? _operarioSeleccionado;
   Variedad? _variedadSeleccionada;
-  bool _recordarOperario = false;
   bool _cargandoCamas = false;
   bool _guardando = false;
 
@@ -76,6 +74,7 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
     final now = DateTime.now();
     _fechaSeleccionada =
         "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+    _recalcularTallosPorLineas();
     _cargarCatalogos();
   }
 
@@ -92,7 +91,6 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
     }
     final allV = await _db.obtenerVariedades(soloActivas: true);
     final v = await _db.obtenerVariedadesPorFamilia(famIds, soloActivas: true);
-    final o = await _db.obtenerOperarios();
     final cfg = await _db.obtenerConfigAgronomica(cultivo: widget.subtipo);
 
     // Cargar Catálogo Tabla 187 (Proveedor, Contenedor, Lote, Variedad)
@@ -106,7 +104,6 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
       _bloques = b;
       _variedades = v.isNotEmpty ? v : allV;
       _todasLasVariedades = allV;
-      _operarios = o;
       _configAgronomica = cfg;
       _todosLirios187 = lirios187;
       _proveedores187 = provs;
@@ -753,12 +750,20 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
     }
   }
 
+  int get _densidadParrilla {
+    final sub = widget.subtipo.toUpperCase();
+    if (sub.contains('LA') || sub.contains('ASIAT')) {
+      return 143;
+    }
+    return 63; // LO, OT y Oriental
+  }
+
   void _recalcularTallosPorLineas() {
-    final int? l = int.tryParse(_lineasController.text.trim());
-    if (l != null && l > 0) {
-      final int factor = _variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 15;
+    final int? p = int.tryParse(_lineasController.text.trim());
+    if (p != null && p > 0) {
+      final int factor = _densidadParrilla;
       setState(() {
-        _tallosController.text = (l * factor).toString();
+        _tallosController.text = (p * factor).toString();
       });
     }
   }
@@ -785,13 +790,6 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
     if (_variedadSeleccionada == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor seleccione una variedad')),
-      );
-      return;
-    }
-
-    if (_operarioSeleccionado == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor seleccione un operario')),
       );
       return;
     }
@@ -837,18 +835,18 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
     final int? tallos = int.tryParse(_tallosController.text.trim());
     if (tallos == null || tallos <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingrese una cantidad válida de tallos')),
+        const SnackBar(content: Text('Ingrese una cantidad válida de bulbos')),
       );
       return;
     }
 
-    // Validación 1: Verificar restricciones de capacidad de cama y ciclo (soporta multisembrador y multi-variedad)
+    // Validación 1: Verificar restricciones de capacidad de cama y ciclo (sin operario individual)
     final validacionCiclo = await _db.validarCicloYCamaParaSiembra(
       _camaSeleccionada!.id,
       _fechaSeleccionada ?? '',
       nuevaCantidad: tallos,
       nuevaVariedadId: _variedadSeleccionada!.id,
-      nuevoOperarioId: _operarioSeleccionado!.id,
+      nuevoOperarioId: 0,
     );
 
     if (!validacionCiclo.esValido) {
@@ -1050,7 +1048,7 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
         fecha: _fechaSeleccionada ?? '',
         bloqueCodigo: _bloqueSeleccionado!.codigo,
         camaId: _camaSeleccionada!.id,
-        operarioId: _operarioSeleccionado!.id,
+        operarioId: 0,
         variedadId: _variedadSeleccionada!.id,
         cantidad: tallos,
         estado: 'ACTIVA',
@@ -1087,9 +1085,6 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
         _proveedorSeleccionado = null;
         _contenedorSeleccionado = null;
         _loteSeleccionado = null;
-        if (!_recordarOperario) {
-          _operarioSeleccionado = null;
-        }
         // Si la cama ya se llenó al 100%, deseleccionarla para que elijan otra cama disponible
         if (infoCama != null && infoCama.esCamaLlena) {
           _camaSeleccionada = null;
@@ -1447,58 +1442,73 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
   }
 
   Widget _buildCampoOperario() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildLabel('Operario'),
-            Row(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F8E9),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFC5E1A5)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF7CB342).withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.all_inbox, color: Color(0xFF33691E), size: 22),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Fijar',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.bold),
+                const Text(
+                  'SIEMBRA COLECTIVA (SIN OPERARIO EN CAMA)',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2E7D32),
+                  ),
                 ),
-                Transform.scale(
-                  scale: 0.7,
-                  child: Switch(
-                    value: _recordarOperario,
-                    activeThumbColor: const Color(0xFF7CB342),
-                    onChanged: (val) => setState(() => _recordarOperario = val),
+                Text(
+                  'El rendimiento en Lirios se mide por entrega de canastas a los operarios.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade700,
                   ),
                 ),
               ],
             ),
-          ],
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade400),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<Operario>(
-              isExpanded: true,
-              hint: const Text('Seleccionar operario...'),
-              value: _operarioSeleccionado,
-              items: _operarios.map((o) {
-                return DropdownMenuItem(
-                  value: o,
-                  child: Text(
-                    o.nombreCompleto,
-                    style: const TextStyle(fontSize: 14),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                );
-              }).toList(),
-              onChanged: (val) => setState(() => _operarioSeleccionado = val),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7CB342),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 1,
             ),
+            icon: const Icon(Icons.shopping_basket, size: 16),
+            label: const Text(
+              'Canastas',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RendimientoLiriosScreen(
+                    subgrupoInicial: widget.subtipo,
+                  ),
+                ),
+              );
+            },
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1555,13 +1565,13 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel('# Líneas'),
+        _buildLabel('# Parrillas'),
         TextFormField(
           controller: _lineasController,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
-            hintText: 'Ej: 100',
-            helperText: 'Dens: ${_variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 15} pl/l',
+            hintText: 'Ej: 14',
+            helperText: 'Dens: $_densidadParrilla bulbos/parrilla',
             helperStyle: const TextStyle(color: Color(0xFF558B2F), fontWeight: FontWeight.bold),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             filled: true,
@@ -1580,7 +1590,7 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel('Tallos x sembrar'),
+        _buildLabel('Bulbos x sembrar'),
         Builder(
           builder: (context) {
             final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 2916;
@@ -1593,8 +1603,8 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
               decoration: InputDecoration(
                 hintText: 'Máx: $limitePermitido',
                 helperText: excede
-                    ? '⚠️ Excede límite de $limitePermitido plantas'
-                    : 'Máximo: $limitePermitido plantas/cama',
+                    ? '⚠️ Excede límite de $limitePermitido bulbos'
+                    : 'Máximo: $limitePermitido bulbos/cama',
                 helperStyle: TextStyle(
                   color: excede ? Colors.red.shade800 : const Color(0xFF558B2F),
                   fontWeight: FontWeight.bold,
@@ -1840,10 +1850,10 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
   Widget _buildBannerFormula() {
     if (_lineasController.text.trim().isEmpty) return const SizedBox.shrink();
     return Builder(builder: (context) {
-      final int? l = int.tryParse(_lineasController.text.trim());
-      final int factor = _variedadSeleccionada?.densidadLinea ?? _configAgronomica?.densidadLinea ?? 18;
-      final int total = (l ?? 0) * factor;
-      final String varNombre = _variedadSeleccionada?.nombre ?? 'LIRIOS';
+      final int? p = int.tryParse(_lineasController.text.trim());
+      final int factor = _densidadParrilla;
+      final int total = (p ?? 0) * factor;
+      final String varNombre = _variedadSeleccionada?.nombre ?? widget.subtipo;
       final int limitePermitido = _variedadSeleccionada?.limiteEsquejes ?? _configAgronomica?.limiteEsquejes ?? 2916;
       final bool excede = total > limitePermitido;
 
@@ -1861,7 +1871,7 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                '📐 Fórmula: ${l ?? 0} líneas × $factor pl/línea = $total plantas ($varNombre)${excede ? " ⚠️ (Supera límite de $limitePermitido)" : ""}',
+                '📐 Cálculo: ${p ?? 0} parrillas × $factor bulbos/parrilla = $total bulbos ($varNombre)${excede ? " ⚠️ (Supera límite de $limitePermitido)" : ""}',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -2031,6 +2041,34 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
             margin: const EdgeInsets.symmetric(vertical: 8),
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF33691E),
+                foregroundColor: Colors.white,
+                elevation: 1,
+                padding: EdgeInsets.symmetric(horizontal: esMovil ? 8 : 12, vertical: 6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.shopping_basket, size: 16, color: Colors.white),
+              label: Text(
+                esMovil ? 'CANASTAS' : 'CANASTAS',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RendimientoLiriosScreen(
+                      subgrupoInicial: widget.subtipo,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF33691E),
                 elevation: 1,
@@ -2161,14 +2199,14 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
                       ],
                     ),
                   ] else ...[
+                    _buildCampoOperario(),
+                    const SizedBox(height: 10),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(flex: 4, child: _buildCampoOperario()),
+                        Expanded(flex: 7, child: _buildCampoVariedad()),
                         const SizedBox(width: 14),
-                        Expanded(flex: 4, child: _buildCampoVariedad()),
-                        const SizedBox(width: 14),
-                        Expanded(flex: 2, child: _buildCampoLineas()),
+                        Expanded(flex: 3, child: _buildCampoLineas()),
                       ],
                     ),
                   ],

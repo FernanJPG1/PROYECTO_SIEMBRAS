@@ -1482,6 +1482,66 @@ class DbRepository {
     final db = await LocalDatabase.instance.database;
     return await PersistentBackupService.instance.verificarYRecuperar(db);
   }
+
+  // === MÉTODOS PARA RENDIMIENTO DE LIRIOS POR CANASTAS ===
+
+  /// Registra una nueva entrega de canasta a un operario en Lirios
+  Future<int> registrarCanastaLirios(CanastaLirio canasta) async {
+    final db = await LocalDatabase.instance.database;
+    final id = await db.insert(
+      'tb_lirios_canastas',
+      canasta.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    await LocalDatabase.instance.checkpoint();
+    return id;
+  }
+
+  /// Obtiene entregas de canastas con filtros opcionales de fecha, subgrupo y operario
+  Future<List<CanastaLirio>> obtenerCanastasLirios({
+    String? fecha,
+    String? subgrupo,
+    int? operarioId,
+  }) async {
+    final db = await LocalDatabase.instance.database;
+    try {
+      String where = '1=1';
+      List<dynamic> args = [];
+      if (fecha != null && fecha.isNotEmpty) {
+        where += ' AND fecha = ?';
+        args.add(fecha);
+      }
+      if (subgrupo != null && subgrupo.isNotEmpty) {
+        where += ' AND subgrupo = ?';
+        args.add(subgrupo);
+      }
+      if (operarioId != null && operarioId > 0) {
+        where += ' AND operario_id = ?';
+        args.add(operarioId);
+      }
+      final res = await db.query(
+        'tb_lirios_canastas',
+        where: where,
+        whereArgs: args,
+        orderBy: 'id DESC',
+      );
+      return res.map((r) => CanastaLirio.fromMap(r)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Elimina un registro de canasta entregada (en caso de error de digitación)
+  Future<int> eliminarCanastaLirios(int id) async {
+    final db = await LocalDatabase.instance.database;
+    final rows = await db.delete(
+      'tb_lirios_canastas',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    await LocalDatabase.instance.checkpoint();
+    return rows;
+  }
 }
 
 

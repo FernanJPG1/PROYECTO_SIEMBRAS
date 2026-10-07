@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/services/reporte_service.dart';
 import 'package:app_movil/screens/pdf_viewer_screen.dart';
+import 'package:app_movil/screens/rendimiento_lirios_screen.dart';
 import 'package:app_movil/utils/calendario_util.dart';
 import 'package:app_movil/utils/responsive.dart';
 
@@ -244,6 +245,52 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                           value: _separarPorCultivo,
                           activeThumbColor: const Color(0xFF2E7D32),
                           onChanged: (val) => setState(() => _separarPorCultivo = val),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (_cultivoSeleccionado == 'LIRIOS') ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F8E9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF81C784)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.shopping_basket, color: Color(0xFF2E7D32), size: 20),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'En Lirios (LA, LO, OT), los rendimientos se registran por entrega de canastas a cada empleado.',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11.5,
+                              color: Color(0xFF1B5E20),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2E7D32),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (ctx) => const RendimientoLiriosScreen(subgrupoInicial: 'LA'),
+                              ),
+                            );
+                          },
+                          child: const Text('Abrir Canastas', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
