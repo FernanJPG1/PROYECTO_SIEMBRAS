@@ -138,15 +138,15 @@ def add_step(doc, number, title, text):
     r_desc.font.color.rgb = RGBColor(69, 90, 100)
     return p
 
-def add_screenshot(doc, img_name, caption, width_in=3.3):
+def add_screenshot(doc, img_name, caption, width_in=6.0):
     img_path = os.path.join(IMG_DIR, img_name)
     if not os.path.exists(img_path):
         print(f"ALERTA: No existe la imagen {img_path}")
         return
     
     p = doc.add_paragraph()
-    p.paragraph_format.space_before = Pt(6)
-    p.paragraph_format.space_after = Pt(2)
+    p.paragraph_format.space_before = Pt(8)
+    p.paragraph_format.space_after = Pt(3)
     p.paragraph_format.keep_with_next = True
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run()
