@@ -324,72 +324,127 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final pinController = TextEditingController(); // EN BLANCO: sin nada predeterminado para que el usuario digite
     final auth = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.shield, color: Color(0xFF7CB342), size: 28),
-            SizedBox(width: 8),
-            Text(
-              'Acceso Administrador',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF33691E), fontSize: 18),
+      builder: (ctx) {
+        final esLandscape = Responsive.isLandscape(ctx);
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: esLandscape ? 6 : 24,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 480,
+              maxHeight: MediaQuery.sizeOf(ctx).height * (esLandscape ? 0.94 : 0.85),
             ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Ingresa la contraseña de Administrador para acceder a reportes, exportación PDF y rendimiento del personal:',
-                style: TextStyle(fontSize: 14, color: Colors.black87),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: esLandscape ? 10 : 18,
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: pinController,
-                keyboardType: TextInputType.text,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Contraseña de Administrador',
-                  hintText: 'Ingresa la contraseña',
-                  prefixIcon: const Icon(Icons.key, color: Color(0xFF7CB342)),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF7CB342), width: 2),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F8E9),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.shield, color: Color(0xFF7CB342), size: 22),
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Acceso Administrador',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF33691E), fontSize: 16),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+                        onPressed: () => Navigator.pop(ctx, false),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  if (!esLandscape)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        'Ingresa la contraseña de Administrador para acceder a reportes, exportación PDF y rendimiento del personal:',
+                        style: TextStyle(fontSize: 13, color: Colors.black87),
+                      ),
+                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: pinController,
+                          keyboardType: TextInputType.text,
+                          obscureText: true,
+                          autofocus: true,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (val) {
+                            if (val.trim() == 'SiembrasFrn123') {
+                              Navigator.pop(ctx, true);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Contraseña incorrecta. Por favor verifica e intenta nuevamente.'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Contraseña',
+                            hintText: 'Ingresa la contraseña',
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            prefixIcon: const Icon(Icons.key, color: Color(0xFF7CB342), size: 18),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            focusedBorder: const OutlineInputBorder(
+                              borderSide: BorderSide(color: Color(0xFF7CB342), width: 2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7CB342),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                        onPressed: () {
+                          if (pinController.text.trim() == 'SiembrasFrn123') {
+                            Navigator.pop(ctx, true);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Contraseña incorrecta. Por favor verifica e intenta nuevamente.'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
+                        },
+                        child: const Text('Ingresar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7CB342),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            onPressed: () {
-              if (pinController.text.trim() == 'SiembrasFrn123') {
-                Navigator.pop(ctx, true);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Contraseña incorrecta. Por favor verifica e intenta nuevamente.'),
-                    backgroundColor: Colors.redAccent,
-                  ),
-                );
-              }
-            },
-            child: const Text('Ingresar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
-        ],
-      ),
+        );
+      },
     );
 
     if (auth == true && mounted) {
@@ -414,66 +469,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _mostrarAvisoBloqueoModificacion(int dias) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.lock_rounded, color: Color(0xFFE65100), size: 28),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Registro Bloqueado (> 2 días)',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE65100), fontSize: 17),
-              ),
+      builder: (ctx) {
+        final esLandscape = Responsive.isLandscape(ctx);
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: esLandscape ? 8 : 24,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 460,
+              maxHeight: MediaQuery.sizeOf(ctx).height * (esLandscape ? 0.94 : 0.85),
             ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Este registro tiene $dias días de antigüedad desde su fecha de siembra.',
-                style: const TextStyle(fontSize: 14, color: Colors.black87),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: esLandscape ? 12 : 18,
               ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF8E1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFFFD54F)),
-                ),
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.info_outline, color: Color(0xFFF57F17), size: 20),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Por políticas de seguridad y auditoría agronómica, los registros no se pueden modificar ni eliminar desde la aplicación móvil después de 2 días transcurridos.\n\nCualquier corrección o modificación debe realizarse directamente desde la base de datos empresarial.',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF5D4037), height: 1.35),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.lock_rounded, color: Color(0xFFE65100), size: 26),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Registro Bloqueado (> 2 días)',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE65100), fontSize: 17),
+                        ),
                       ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+                        onPressed: () => Navigator.pop(ctx),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Este registro tiene $dias días de antigüedad desde su fecha de siembra.',
+                    style: const TextStyle(fontSize: 13.5, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF8E1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFFFD54F)),
                     ),
-                  ],
-                ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.info_outline, color: Color(0xFFF57F17), size: 20),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Por políticas de seguridad y auditoría agronómica, los registros no se pueden modificar ni eliminar desde la aplicación móvil después de 2 días transcurridos.\n\nCualquier corrección o modificación debe realizarse directamente desde la base de datos empresarial.',
+                            style: TextStyle(fontSize: 12.5, color: Color(0xFF5D4037), height: 1.35),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7CB342),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Entendido', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7CB342),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Entendido', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -488,59 +569,90 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
-            SizedBox(width: 8),
-            Text(
-              'Eliminar Siembra',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 18),
+      builder: (ctx) {
+        final esLandscape = Responsive.isLandscape(ctx);
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: esLandscape ? 8 : 24,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 460,
+              maxHeight: MediaQuery.sizeOf(ctx).height * (esLandscape ? 0.94 : 0.85),
             ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '¿Está seguro de que desea eliminar este registro de siembra de la base de datos?',
-                style: TextStyle(fontSize: 14, color: Colors.black87),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: esLandscape ? 12 : 18,
               ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• Fecha: ${s.fecha}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    Text('• Cantidad: ${s.cantidad} esquejes'),
-                  ],
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 26),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Eliminar Siembra',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 17),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+                        onPressed: () => Navigator.pop(ctx, false),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '¿Está seguro de que desea eliminar este registro de siembra de la base de datos?',
+                    style: TextStyle(fontSize: 13.5, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('• Fecha: ${s.fecha}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text('• Cantidad: ${s.cantidad} esquejes'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Eliminar Registro', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar Registro', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+        );
+      },
     );
 
     if (confirmar == true && mounted) {
@@ -871,40 +983,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.bar_chart, color: Color(0xFF7CB342), size: 28),
-            SizedBox(width: 8),
-            Text('Resumen de Siembra', style: TextStyle(color: Color(0xFF33691E), fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStatRow('Total Registros:', '${_siembrasFiltradas.length} siembras'),
-              const Divider(),
-              _buildStatRow('Siembras Activas:', '$activas camas', color: Colors.green.shade700),
-              const Divider(),
-              _buildStatRow('Ciclos Finalizados:', '$finalizadas camas', color: Colors.grey.shade700),
-              const Divider(),
-              _buildStatRow('Tallos/Esquejes Totales:', '$totalTallos unidades', color: const Color(0xFF33691E)),
-              const Divider(),
-              _buildStatRow('Variedades en Catálogo:', '${_variedades.length} activas'),
-            ],
+      builder: (ctx) {
+        final esLandscape = Responsive.isLandscape(ctx);
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: esLandscape ? 8 : 24,
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cerrar', style: TextStyle(color: Color(0xFF7CB342), fontWeight: FontWeight.bold)),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 480,
+              maxHeight: MediaQuery.sizeOf(ctx).height * (esLandscape ? 0.94 : 0.85),
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: esLandscape ? 12 : 18,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.bar_chart, color: Color(0xFF7CB342), size: 26),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text('Resumen de Siembra', style: TextStyle(color: Color(0xFF33691E), fontWeight: FontWeight.bold, fontSize: 17)),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+                        onPressed: () => Navigator.pop(ctx),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStatRow('Total Registros:', '${_siembrasFiltradas.length} siembras'),
+                  const Divider(),
+                  _buildStatRow('Siembras Activas:', '$activas camas', color: Colors.green.shade700),
+                  const Divider(),
+                  _buildStatRow('Ciclos Finalizados:', '$finalizadas camas', color: Colors.grey.shade700),
+                  const Divider(),
+                  _buildStatRow('Tallos/Esquejes Totales:', '$totalTallos unidades', color: const Color(0xFF33691E)),
+                  const Divider(),
+                  _buildStatRow('Variedades en Catálogo:', '${_variedades.length} activas'),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Cerrar', style: TextStyle(color: Color(0xFF7CB342), fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -924,117 +1064,148 @@ class _DashboardScreenState extends State<DashboardScreen> {
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.sync_alt, color: Color(0xFF7CB342), size: 28),
-              SizedBox(width: 8),
-              Text('Sincronización y Servidor', style: TextStyle(color: Color(0xFF33691E), fontWeight: FontWeight.bold, fontSize: 18)),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStatRow('Sincronizadas con Servidor:', '$sincronizadas', color: Colors.green.shade700),
-                const Divider(),
-                _buildStatRow('Pendientes por subir:', '$pendientes', color: pendientes > 0 ? Colors.orange.shade800 : Colors.grey),
-                const Divider(),
-                _buildStatRow('Resguardo Antiapagado:', 'Activo y Seguro ✓', color: const Color(0xFF2E7D32)),
-                const SizedBox(height: 16),
-                const Text('Dirección IP / URL del Servidor Backend:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E))),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: urlController,
-                  decoration: InputDecoration(
-                    hintText: 'http://192.168.1.X:8000/api',
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.network_check, color: Color(0xFF7CB342)),
-                      tooltip: 'Probar Conexión',
-                      onPressed: probando ? null : () async {
-                        setDialogState(() {
-                          probando = true;
-                          estadoConexion = 'Probando conexión...';
-                        });
-                        final res = await syncSvc.probarConexion(urlController.text.trim());
-                        setDialogState(() {
-                          probando = false;
-                          if (res['exito'] == true) {
-                            estadoConexion = '✓ ${res['mensaje']}';
-                          } else {
-                            estadoConexion = '✗ ${res['mensaje']}';
-                          }
-                        });
-                      },
-                    ),
-                  ),
+        builder: (ctx, setDialogState) {
+          final esLandscape = Responsive.isLandscape(ctx);
+          return Dialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            insetPadding: EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: esLandscape ? 6 : 24,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 520,
+                maxHeight: MediaQuery.sizeOf(ctx).height * (esLandscape ? 0.94 : 0.85),
+              ),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: esLandscape ? 12 : 18,
                 ),
-                if (estadoConexion.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    estadoConexion,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: estadoConexion.startsWith('✓') ? Colors.green.shade700 : Colors.red.shade700,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 10),
-                const Text('Atajos rápidos para Dispositivos Android / Emulador:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 6,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ActionChip(
-                      avatar: const Icon(Icons.wifi, size: 14, color: Color(0xFF33691E)),
-                      label: const Text('Wi-Fi PC (192.168.1.39)', style: TextStyle(fontSize: 11)),
-                      backgroundColor: const Color(0xFFE8F5E9),
-                      onPressed: () {
-                        setDialogState(() {
-                          urlController.text = 'http://192.168.1.39:8000/api';
-                          estadoConexion = '';
-                        });
-                      },
+                    Row(
+                      children: [
+                        const Icon(Icons.sync_alt, color: Color(0xFF7CB342), size: 26),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text('Sincronización y Servidor', style: TextStyle(color: Color(0xFF33691E), fontWeight: FontWeight.bold, fontSize: 17)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+                          onPressed: () => Navigator.pop(ctx),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
                     ),
-                    ActionChip(
-                      avatar: const Icon(Icons.developer_mode, size: 14, color: Colors.grey),
-                      label: const Text('Emulador (10.0.2.2)', style: TextStyle(fontSize: 11)),
-                      onPressed: () {
-                        setDialogState(() {
-                          urlController.text = 'http://10.0.2.2:8000/api';
-                          estadoConexion = '';
-                        });
-                      },
+                    const SizedBox(height: 12),
+                    _buildStatRow('Sincronizadas con Servidor:', '$sincronizadas', color: Colors.green.shade700),
+                    const Divider(),
+                    _buildStatRow('Pendientes por subir:', '$pendientes', color: pendientes > 0 ? Colors.orange.shade800 : Colors.grey),
+                    const Divider(),
+                    _buildStatRow('Resguardo Antiapagado:', 'Activo y Seguro ✓', color: const Color(0xFF2E7D32)),
+                    const SizedBox(height: 14),
+                    const Text('Dirección IP / URL del Servidor Backend:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E))),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: urlController,
+                      decoration: InputDecoration(
+                        hintText: 'http://192.168.1.X:8000/api',
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.network_check, color: Color(0xFF7CB342)),
+                          tooltip: 'Probar Conexión',
+                          onPressed: probando ? null : () async {
+                            setDialogState(() {
+                              probando = true;
+                              estadoConexion = 'Probando conexión...';
+                            });
+                            final res = await syncSvc.probarConexion(urlController.text.trim());
+                            setDialogState(() {
+                              probando = false;
+                              if (res['exito'] == true) {
+                                estadoConexion = '✓ ${res['mensaje']}';
+                              } else {
+                                estadoConexion = '✗ ${res['mensaje']}';
+                              }
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    if (estadoConexion.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        estadoConexion,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: estadoConexion.startsWith('✓') ? Colors.green.shade700 : Colors.red.shade700,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    const Text('Atajos rápidos para Dispositivos Android / Emulador:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 6,
+                      children: [
+                        ActionChip(
+                          avatar: const Icon(Icons.wifi, size: 14, color: Color(0xFF33691E)),
+                          label: const Text('Wi-Fi PC (192.168.1.39)', style: TextStyle(fontSize: 11)),
+                          backgroundColor: const Color(0xFFE8F5E9),
+                          onPressed: () {
+                            setDialogState(() {
+                              urlController.text = 'http://192.168.1.39:8000/api';
+                              estadoConexion = '';
+                            });
+                          },
+                        ),
+                        ActionChip(
+                          avatar: const Icon(Icons.developer_mode, size: 14, color: Colors.grey),
+                          label: const Text('Emulador (10.0.2.2)', style: TextStyle(fontSize: 11)),
+                          onPressed: () {
+                            setDialogState(() {
+                              urlController.text = 'http://10.0.2.2:8000/api';
+                              estadoConexion = '';
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Cerrar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7CB342)),
+                          icon: const Icon(Icons.sync, color: Colors.white, size: 18),
+                          label: const Text('Guardar y Sincronizar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          onPressed: () async {
+                            await syncSvc.setBaseUrl(urlController.text.trim());
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            _autoSincronizar();
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cerrar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-            ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7CB342)),
-              icon: const Icon(Icons.sync, color: Colors.white, size: 18),
-              label: const Text('Guardar y Sincronizar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              onPressed: () async {
-                await syncSvc.setBaseUrl(urlController.text.trim());
-                if (ctx.mounted) Navigator.pop(ctx);
-                _autoSincronizar();
-              },
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -1046,81 +1217,110 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!mounted) return;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.security, color: Color(0xFF558B2F), size: 28),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Almacenamiento Permanente',
-                style: TextStyle(color: Color(0xFF33691E), fontWeight: FontWeight.bold, fontSize: 18),
+      builder: (ctx) {
+        final esLandscape = Responsive.isLandscape(ctx);
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: esLandscape ? 8 : 24,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 500,
+              maxHeight: MediaQuery.sizeOf(ctx).height * (esLandscape ? 0.94 : 0.85),
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: esLandscape ? 12 : 18,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.security, color: Color(0xFF558B2F), size: 26),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Almacenamiento Permanente',
+                          style: TextStyle(color: Color(0xFF33691E), fontWeight: FontWeight.bold, fontSize: 17),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+                        onPressed: () => Navigator.pop(ctx),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFC8E6C9)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 24),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Protección Activa contra Apagado y Reinicio del Dispositivo Android',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade900, fontSize: 12.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStatRow('Total Registros en Dispositivo Android:', '${_siembras.length}'),
+                  const Divider(),
+                  _buildStatRow('Pendientes de Sincronizar:', '$pendientes', color: pendientes > 0 ? Colors.orange.shade900 : Colors.green),
+                  const Divider(),
+                  _buildStatRow('Copia Espejo de Emergencia:', diag['activo'] == true ? 'Actualizada y Activa ✓' : 'En proceso...', color: const Color(0xFF33691E)),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '¿Cómo funciona esta protección?',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
+                  ),
+                  const SizedBox(height: 5),
+                  const Text(
+                    'Cada siembra se escribe directamente con sincronización física obligatoria (fsync) en la memoria interna permanente y en archivos espejo fuera de la memoria caché. Si el dispositivo Android se apaga, se reinicia o se descarga al 0%, los registros pendientes NO se pierden y se recuperan automáticamente.',
+                    style: TextStyle(fontSize: 11.5, color: Colors.black87, height: 1.35),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cerrar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF558B2F)),
+                        icon: const Icon(Icons.verified, color: Colors.white, size: 18),
+                        label: const Text('Verificar Respaldo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await _cargarDatos(mostrarNotificacionRespaldo: true);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFC8E6C9)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 26),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Protección Activa contra Apagado y Reinicio del Dispositivo Android',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade900, fontSize: 13),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildStatRow('Total Registros en Dispositivo Android:', '${_siembras.length}'),
-              const Divider(),
-              _buildStatRow('Pendientes de Sincronizar:', '$pendientes', color: pendientes > 0 ? Colors.orange.shade900 : Colors.green),
-              const Divider(),
-              _buildStatRow('Copia Espejo de Emergencia:', diag['activo'] == true ? 'Actualizada y Activa ✓' : 'En proceso...', color: const Color(0xFF33691E)),
-              const SizedBox(height: 12),
-              const Text(
-                '¿Cómo funciona esta protección?',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
-              ),
-              const SizedBox(height: 5),
-              const Text(
-                'Cada siembra se escribe directamente con sincronización física obligatoria (fsync) en la memoria interna permanente y en archivos espejo fuera de la memoria caché. Si el dispositivo Android se apaga, se reinicia o se descarga al 0%, los registros pendientes NO se pierden y se recuperan automáticamente.',
-                style: TextStyle(fontSize: 12, color: Colors.black87, height: 1.35),
-              ),
-            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cerrar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF558B2F)),
-            icon: const Icon(Icons.verified, color: Colors.white, size: 18),
-            label: const Text('Verificar Respaldo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await _cargarDatos(mostrarNotificacionRespaldo: true);
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1139,122 +1339,154 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.event_available, color: Color(0xFF7CB342), size: 28),
-            SizedBox(width: 8),
-            Text('Finalizar Ciclo de Siembra', style: TextStyle(color: Color(0xFF33691E), fontWeight: FontWeight.bold, fontSize: 17)),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '¿Desea cerrar el ciclo de cultivo para esta cama?',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      builder: (ctx) {
+        final esLandscape = Responsive.isLandscape(ctx);
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: esLandscape ? 6 : 24,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: MediaQuery.sizeOf(ctx).height * (esLandscape ? 0.94 : 0.85),
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: esLandscape ? 12 : 18,
               ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F8E9),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFC5E1A5)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• Cama: ${ca.cama} (Bloque ${s.bloqueCodigo ?? ca.bloque})', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text('• Variedad: ${va.nombre}'),
-                    Text('• Fecha Inicio: ${s.fecha}'),
-                    Text('• Cantidad: ${s.cantidad} esquejes'),
-                    Text('• Ciclo Variedad: $diasRequeridos días (Lleva: $diasTranscurridos días)'),
-                  ],
-                ),
-              ),
-              if (cicloIncompleto)
-                Container(
-                  margin: const EdgeInsets.only(top: 10),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.amber.shade700),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900, size: 20),
-                          const SizedBox(width: 6),
-                          Text(
-                            '¡Ciclo Agronómico Incompleto!',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber.shade900, fontSize: 13),
-                          ),
-                        ],
+                      const Icon(Icons.event_available, color: Color(0xFF7CB342), size: 26),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text('Finalizar Ciclo de Siembra', style: TextStyle(color: Color(0xFF33691E), fontWeight: FontWeight.bold, fontSize: 17)),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '• Requiere: $diasRequeridos días | Transcurridos: $diasTranscurridos días (Faltan ${diasRequeridos - diasTranscurridos} días)',
-                        style: TextStyle(fontSize: 12, color: Colors.brown.shade900, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'Cerrar anticipadamente indica cosecha adelantada, descarte o daño del cultivo.',
-                        style: TextStyle(fontSize: 11, color: Colors.brown.shade800),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+                        onPressed: () => Navigator.pop(ctx, false),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
                   ),
-                ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: fechaFinController,
-                decoration: const InputDecoration(
-                  labelText: 'Fecha de Finalización (DD/MM/AAAA)',
-                  prefixIcon: Icon(Icons.calendar_today, color: Color(0xFF7CB342)),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const Icon(Icons.info_outline, color: Color(0xFF558B2F), size: 16),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      cicloIncompleto
-                          ? 'Nota: Aunque se registre la finalización, la cama requiere $diasRequeridos días de ciclo agronómico (faltan ${diasRequeridos - diasTranscurridos} días para nueva siembra).'
-                          : 'Al finalizar este ciclo, la Cama ${ca.cama} quedará DISPONIBLE para una nueva siembra.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: cicloIncompleto ? Colors.brown.shade800 : Colors.green.shade900,
-                        fontWeight: FontWeight.w600,
+                  const SizedBox(height: 12),
+                  const Text(
+                    '¿Desea cerrar el ciclo de cultivo para esta cama?',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F8E9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFC5E1A5)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('• Cama: ${ca.cama} (Bloque ${s.bloqueCodigo ?? ca.bloque})', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text('• Variedad: ${va.nombre}'),
+                        Text('• Fecha Inicio: ${s.fecha}'),
+                        Text('• Cantidad: ${s.cantidad} esquejes'),
+                        Text('• Ciclo Variedad: $diasRequeridos días (Lleva: $diasTranscurridos días)'),
+                      ],
+                    ),
+                  ),
+                  if (cicloIncompleto) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber.shade700),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900, size: 20),
+                              const SizedBox(width: 6),
+                              Text(
+                                '¡Ciclo Agronómico Incompleto!',
+                                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber.shade900, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '• Requiere: $diasRequeridos días | Transcurridos: $diasTranscurridos días (Faltan ${diasRequeridos - diasTranscurridos} días)',
+                            style: TextStyle(fontSize: 12, color: Colors.brown.shade900, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Cerrar anticipadamente indica cosecha adelantada, descarte o daño del cultivo.',
+                            style: TextStyle(fontSize: 11, color: Colors.brown.shade800),
+                          ),
+                        ],
                       ),
                     ),
+                  ],
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: fechaFinController,
+                    decoration: const InputDecoration(
+                      labelText: 'Fecha de Finalización (DD/MM/AAAA)',
+                      prefixIcon: Icon(Icons.calendar_today, color: Color(0xFF7CB342)),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.info_outline, color: Color(0xFF558B2F), size: 16),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          cicloIncompleto
+                              ? 'Nota: Aunque se registre la finalización, la cama requiere $diasRequeridos días de ciclo agronómico (faltan ${diasRequeridos - diasTranscurridos} días para nueva siembra).'
+                              : 'Al finalizar este ciclo, la Cama ${ca.cama} quedará DISPONIBLE para una nueva siembra.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cicloIncompleto ? Colors.brown.shade800 : Colors.green.shade900,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7CB342)),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Finalizar Ciclo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7CB342)),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Finalizar Ciclo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+        );
+      },
     );
 
     if (confirmar == true && s.idLocal != null) {
@@ -2590,6 +2822,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final esModoTarjetas = _forzarModoTarjetas ?? esMovil;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFFF1F8E9),
       appBar: AppBar(
         backgroundColor: const Color(0xFF7CB342),
