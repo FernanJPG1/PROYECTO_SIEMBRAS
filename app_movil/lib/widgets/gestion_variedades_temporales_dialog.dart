@@ -191,7 +191,7 @@ class _GestionVariedadesTemporalesDialogState extends State<GestionVariedadesTem
   }
 
   Future<void> _crearEnAccessRemoto(Variedad temp) async {
-    final pinController = TextEditingController(text: 'admin');
+    final pinController = TextEditingController(); // EN BLANCO: sin nada predeterminado
     final bool? confirmar = await showDialog<bool>(
       context: context,
       builder: (dCtx) => AlertDialog(
@@ -211,9 +211,11 @@ class _GestionVariedadesTemporalesDialogState extends State<GestionVariedadesTem
             const SizedBox(height: 12),
             TextField(
               controller: pinController,
+              keyboardType: TextInputType.text,
               obscureText: true,
               decoration: const InputDecoration(
-                labelText: 'PIN de Administrador',
+                labelText: 'Contraseña de Administrador',
+                hintText: 'Ingresa la contraseña',
                 border: OutlineInputBorder(),
               ),
             ),

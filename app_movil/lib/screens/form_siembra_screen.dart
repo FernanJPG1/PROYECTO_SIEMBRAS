@@ -34,7 +34,7 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
   bool _cargandoCamas = false;
 
   final TextEditingController _tallosController = TextEditingController();
-  final TextEditingController _lineasController = TextEditingController(text: '14');
+  final TextEditingController _lineasController = TextEditingController();
   final TextEditingController _observacionesController = TextEditingController();
 
   bool get _requiereClon {
@@ -634,7 +634,7 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
       camaId: _camaSeleccionada!.id,
       operarioId: _operarioSeleccionado!.id,
       cantidad: cantidadIngresada,
-      lineas: int.tryParse(_lineasController.text) ?? 14,
+      lineas: int.tryParse(_lineasController.text) ?? 0,
       corte: CalendarioUtil.obtenerEtiquetaCorta(CalendarioUtil.parsearFecha(_fechaSeleccionada) ?? DateTime.now()),
       observaciones: _observacionesController.text.trim().isNotEmpty
           ? _observacionesController.text.trim().toUpperCase()

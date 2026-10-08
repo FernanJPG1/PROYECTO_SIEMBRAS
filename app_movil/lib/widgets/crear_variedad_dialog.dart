@@ -135,10 +135,9 @@ class _CrearVariedadDialogState extends State<CrearVariedadDialog> {
       _cultivoSeleccionado = 'OTRO';
     }
 
-    final datos = _datosCultivos[_cultivoSeleccionado]!;
-    _limiteEsquejesController = TextEditingController(text: datos['limite'].toString());
-    _diasCicloController = TextEditingController(text: datos['ciclo'].toString());
-    _densidadLineaController = TextEditingController(text: datos['densidad'].toString());
+    _limiteEsquejesController = TextEditingController();
+    _diasCicloController = TextEditingController();
+    _densidadLineaController = TextEditingController();
   }
 
   @override
@@ -156,10 +155,6 @@ class _CrearVariedadDialogState extends State<CrearVariedadDialog> {
     if (nuevo == null || !_datosCultivos.containsKey(nuevo)) return;
     setState(() {
       _cultivoSeleccionado = nuevo;
-      final datos = _datosCultivos[nuevo]!;
-      _limiteEsquejesController.text = datos['limite'].toString();
-      _diasCicloController.text = datos['ciclo'].toString();
-      _densidadLineaController.text = datos['densidad'].toString();
     });
   }
 
@@ -172,9 +167,9 @@ class _CrearVariedadDialogState extends State<CrearVariedadDialog> {
       final int famId = infoCultivo['familiaId'] as int;
       final String famNombre = infoCultivo['familiaNombre'] as String;
 
-      final int? limite = int.tryParse(_limiteEsquejesController.text.trim());
-      final int? ciclo = int.tryParse(_diasCicloController.text.trim());
-      final int? densidad = int.tryParse(_densidadLineaController.text.trim());
+      final int? limite = int.tryParse(_limiteEsquejesController.text.trim()) ?? (infoCultivo['limite'] as int?);
+      final int? ciclo = int.tryParse(_diasCicloController.text.trim()) ?? (infoCultivo['ciclo'] as int?);
+      final int? densidad = int.tryParse(_densidadLineaController.text.trim()) ?? (infoCultivo['densidad'] as int?);
 
       final nueva = await _db.crearVariedadTemporal(
         nombre: _nombreController.text.trim().toUpperCase(),
@@ -406,6 +401,7 @@ class _CrearVariedadDialogState extends State<CrearVariedadDialog> {
                                   controller: _limiteEsquejesController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
+                                    hintText: _datosCultivos[_cultivoSeleccionado]!['limite'].toString(),
                                     filled: true,
                                     fillColor: Colors.white,
                                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -426,6 +422,7 @@ class _CrearVariedadDialogState extends State<CrearVariedadDialog> {
                                   controller: _diasCicloController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
+                                    hintText: _datosCultivos[_cultivoSeleccionado]!['ciclo'].toString(),
                                     filled: true,
                                     fillColor: Colors.white,
                                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -446,6 +443,7 @@ class _CrearVariedadDialogState extends State<CrearVariedadDialog> {
                                   controller: _densidadLineaController,
                                   keyboardType: TextInputType.number,
                                   decoration: InputDecoration(
+                                    hintText: _datosCultivos[_cultivoSeleccionado]!['densidad'].toString(),
                                     filled: true,
                                     fillColor: Colors.white,
                                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),

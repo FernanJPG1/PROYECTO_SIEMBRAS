@@ -29,9 +29,9 @@ async def get_api_key(key: str = Security(api_key_header)):
     )
 
 async def get_admin_token(token: str = Security(admin_token_header)):
-    if token == settings.ADMIN_TOKEN or token == "1234" or token == "admin1234":
+    if token == settings.ADMIN_TOKEN or token == "SiembrasFrn123":
         return token
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Permiso denegado: Token de Administrador inválido"
+        detail="Permiso denegado: Contraseña de Administrador inválida"
     )

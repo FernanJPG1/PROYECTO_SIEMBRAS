@@ -526,7 +526,7 @@ add_screenshot(doc, "11_panel_administracion.png", "Figura 13: Panel de Administ
 
 add_heading_2(doc, "¿Cómo ver el Podio de Medallas?")
 add_step(doc, 1, "TOCA LOS 3 PUNTITOS (⋮)", "En la barra verde superior, toca los tres puntitos a la derecha.")
-add_step(doc, 2, "ELIGE PANEL DE ADMINISTRADOR", "Toca 'Panel de Administrador', escribe el PIN (1234) y toca 'Ingresar'.")
+add_step(doc, 2, "ELIGE PANEL DE ADMINISTRADOR", "Toca 'Panel de Administrador', escribe la contraseña (SiembrasFrn123) y toca 'Ingresar'.")
 add_step(doc, 3, "TOCA VER RENDIMIENTO", "Toca el botón naranja grande que dice '📊 Ver Rendimiento y Productividad'.")
 
 add_screenshot(doc, "12_ranking_rendimiento_podio.png", "Figura 14: Podio de Rendimiento con medallas de Oro, Plata y Bronce por sembrador")

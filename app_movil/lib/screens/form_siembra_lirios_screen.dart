@@ -70,7 +70,7 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
   String? _loteSeleccionado;
 
   // Controladores de texto según el wireframe
-  final TextEditingController _lineasController = TextEditingController(text: '14');
+  final TextEditingController _lineasController = TextEditingController();
   final TextEditingController _tallosController = TextEditingController();
   final TextEditingController _conteoController = TextEditingController();
   final TextEditingController _proveedorController = TextEditingController();
@@ -1104,7 +1104,7 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
       return; // ESTRICTAMENTE BLOQUEADO
     }
 
-    final int lineas = int.tryParse(_lineasController.text.trim()) ?? 14;
+    final int lineas = int.tryParse(_lineasController.text.trim()) ?? 0;
 
     setState(() => _guardando = true);
 

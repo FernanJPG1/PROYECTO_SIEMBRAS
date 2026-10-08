@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     
     # Security (API Key for simple device authentication & Admin Token for management)
     API_KEY: str = os.getenv("API_KEY", "sk-siembras-2026-devkey")
-    ADMIN_TOKEN: str = os.getenv("ADMIN_TOKEN", "1234")
+    ADMIN_TOKEN: str = os.getenv("ADMIN_TOKEN", "SiembrasFrn123")
     
     # SharePoint / Gateway Settings (Optional future bridge)
     SP_SITE_URL: str = os.getenv("SP_SITE_URL", "")

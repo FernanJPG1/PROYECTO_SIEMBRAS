@@ -321,7 +321,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _abrirAdminVariedades() async {
-    final pinController = TextEditingController(text: '1234');
+    final pinController = TextEditingController(); // EN BLANCO: sin nada predeterminado para que el usuario digite
     final auth = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -342,17 +342,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Ingresa el PIN de Administrador para acceder a reportes, exportación PDF y rendimiento del personal:',
+              'Ingresa la contraseña de Administrador para acceder a reportes, exportación PDF y rendimiento del personal:',
               style: TextStyle(fontSize: 14, color: Colors.black87),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: pinController,
-              keyboardType: TextInputType.number,
+              keyboardType: TextInputType.text,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: 'PIN de Administrador',
-                hintText: '1234',
+                labelText: 'Contraseña de Administrador',
+                hintText: 'Ingresa la contraseña',
                 prefixIcon: const Icon(Icons.key, color: Color(0xFF7CB342)),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 focusedBorder: const OutlineInputBorder(
@@ -373,11 +373,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () {
-              if (pinController.text.trim() == '1234' || pinController.text.trim() == 'admin1234') {
+              if (pinController.text.trim() == 'SiembrasFrn123') {
                 Navigator.pop(ctx, true);
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('PIN incorrecto. (PIN por defecto: 1234)')),
+                  const SnackBar(
+                    content: Text('Contraseña incorrecta. Por favor verifica e intenta nuevamente.'),
+                    backgroundColor: Colors.redAccent,
+                  ),
                 );
               }
             },
