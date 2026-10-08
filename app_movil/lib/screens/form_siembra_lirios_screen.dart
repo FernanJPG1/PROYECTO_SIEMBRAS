@@ -949,61 +949,63 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                validacionCiclo.mensaje,
-                style: const TextStyle(fontSize: 13.5, color: Colors.black87),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: esExcesoCupo ? Colors.orange.shade50 : Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: esExcesoCupo ? Colors.orange.shade300 : Colors.red.shade300),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  validacionCiclo.mensaje,
+                  style: const TextStyle(fontSize: 13.5, color: Colors.black87),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• Cama: ${_camaSeleccionada!.cama} (Bloque ${_bloqueSeleccionado!.codigo})', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    if (validacionCiclo.variedadesPresentes.isNotEmpty)
-                      Text('• Variedades en cama: ${validacionCiclo.variedadesPresentes.join(", ")}'),
-                    if (validacionCiclo.operariosPresentes.isNotEmpty)
-                      Text('• Sembradores: ${validacionCiclo.operariosPresentes.join(", ")}'),
-                    Text('• Ocupación actual: ${validacionCiclo.cantidadOcupada} de ${validacionCiclo.limiteMaximo} plantas'),
-                    Text('• Cupo disponible restante: ${validacionCiclo.cupoDisponible} plantas', style: TextStyle(color: esExcesoCupo ? Colors.orange.shade900 : Colors.red, fontWeight: FontWeight.bold)),
-                    if (validacionCiclo.diasFaltantes > 0)
-                      Text('• Días faltantes según ciclo teórico: ${validacionCiclo.diasFaltantes} días', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-              if (!esExcesoCupo) ...[
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
+                    color: esExcesoCupo ? Colors.orange.shade50 : Colors.red.shade50,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFF81C784)),
+                    border: Border.all(color: esExcesoCupo ? Colors.orange.shade300 : Colors.red.shade300),
                   ),
-                  child: const Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.bolt, color: Color(0xFF2E7D32), size: 22),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '¿La flor de esta cama ya fue cortada por adelanto de ciclo natural? Puede liberarla y registrar la nueva siembra de inmediato.',
-                          style: TextStyle(fontSize: 12, color: Color(0xFF1B5E20), fontWeight: FontWeight.w600),
-                        ),
-                      ),
+                      Text('• Cama: ${_camaSeleccionada!.cama} (Bloque ${_bloqueSeleccionado!.codigo})', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      if (validacionCiclo.variedadesPresentes.isNotEmpty)
+                        Text('• Variedades en cama: ${validacionCiclo.variedadesPresentes.join(", ")}'),
+                      if (validacionCiclo.operariosPresentes.isNotEmpty)
+                        Text('• Sembradores: ${validacionCiclo.operariosPresentes.join(", ")}'),
+                      Text('• Ocupación actual: ${validacionCiclo.cantidadOcupada} de ${validacionCiclo.limiteMaximo} plantas'),
+                      Text('• Cupo disponible restante: ${validacionCiclo.cupoDisponible} plantas', style: TextStyle(color: esExcesoCupo ? Colors.orange.shade900 : Colors.red, fontWeight: FontWeight.bold)),
+                      if (validacionCiclo.diasFaltantes > 0)
+                        Text('• Días faltantes según ciclo teórico: ${validacionCiclo.diasFaltantes} días', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
+                if (!esExcesoCupo) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF81C784)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.bolt, color: Color(0xFF2E7D32), size: 22),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '¿La flor de esta cama ya fue cortada por adelanto de ciclo natural? Puede liberarla y registrar la nueva siembra de inmediato.',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF1B5E20), fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
           actions: [
             TextButton(
@@ -1064,33 +1066,35 @@ class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'La cantidad ingresada ($tallos plantas) supera la restricción máxima de $limitePermitido plantas por cama configurada para ${_variedadSeleccionada?.nombre ?? widget.subtipo}.\n\n'
-                'No se permite guardar este registro por restricción agronómica de densidad.',
-                style: const TextStyle(fontSize: 14, color: Colors.black87),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade300),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'La cantidad ingresada ($tallos plantas) supera la restricción máxima de $limitePermitido plantas por cama configurada para ${_variedadSeleccionada?.nombre ?? widget.subtipo}.\n\n'
+                  'No se permite guardar este registro por restricción agronómica de densidad.',
+                  style: const TextStyle(fontSize: 14, color: Colors.black87),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• Cantidad ingresada: $tallos plantas', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                    Text('• Restricción máxima permitida: $limitePermitido plantas', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
-                    Text('• Exceso bloqueado: ${tallos - limitePermitido} plantas', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
-                  ],
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade300),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('• Cantidad ingresada: $tallos plantas', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                      Text('• Restricción máxima permitida: $limitePermitido plantas', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
+                      Text('• Exceso bloqueado: ${tallos - limitePermitido} plantas', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             ElevatedButton(

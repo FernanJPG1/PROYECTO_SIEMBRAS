@@ -209,9 +209,11 @@ class _RendimientoLiriosScreenState extends State<RendimientoLiriosScreen>
             Text('Eliminar Entrega', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
           ],
         ),
-        content: Text(
-          '¿Desea eliminar la entrega de ${canasta.cantidadBulbos} bulbos de las ${canasta.hora} para ${canasta.operarioNombre}?',
-          style: const TextStyle(fontSize: 14),
+        content: SingleChildScrollView(
+          child: Text(
+            '¿Desea eliminar la entrega de ${canasta.cantidadBulbos} bulbos de las ${canasta.hora} para ${canasta.operarioNombre}?',
+            style: const TextStyle(fontSize: 14),
+          ),
         ),
         actions: [
           TextButton(

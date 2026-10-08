@@ -229,55 +229,58 @@ class SubgrupoLiriosScreen extends StatelessWidget {
                           Icon(Icons.arrow_forward_ios, size: 18, color: sg.color),
                         ],
                       )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: sg.color.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                    : SingleChildScrollView(
+                        physics: const ClampingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: sg.color.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(sg.icono, color: sg.color, size: 28),
                             ),
-                            child: Icon(sg.icono, color: sg.color, size: 32),
-                          ),
-                          const Spacer(),
-                          Text(
-                            sg.nombre,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1B5E20),
+                            const SizedBox(height: 8),
+                            Text(
+                              sg.nombre,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1B5E20),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            sg.descripcion,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w500,
+                            const SizedBox(height: 4),
+                            Text(
+                              sg.descripcion,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                          const Spacer(),
-                          Row(
-                            children: [
-                              Text(
-                                'Ingresar Siembra',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Text(
+                                  'Ingresar Siembra',
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: sg.color,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 16,
                                   color: sg.color,
                                 ),
-                              ),
-                              const SizedBox(width: 6),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 18,
-                                color: sg.color,
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
               ),
             ],

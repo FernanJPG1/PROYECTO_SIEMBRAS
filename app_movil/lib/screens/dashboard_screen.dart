@@ -337,30 +337,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Ingresa la contraseña de Administrador para acceder a reportes, exportación PDF y rendimiento del personal:',
-              style: TextStyle(fontSize: 14, color: Colors.black87),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: pinController,
-              keyboardType: TextInputType.text,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Contraseña de Administrador',
-                hintText: 'Ingresa la contraseña',
-                prefixIcon: const Icon(Icons.key, color: Color(0xFF7CB342)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF7CB342), width: 2),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ingresa la contraseña de Administrador para acceder a reportes, exportación PDF y rendimiento del personal:',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: pinController,
+                keyboardType: TextInputType.text,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Contraseña de Administrador',
+                  hintText: 'Ingresa la contraseña',
+                  prefixIcon: const Icon(Icons.key, color: Color(0xFF7CB342)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF7CB342), width: 2),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -427,37 +429,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Este registro tiene $dias días de antigüedad desde su fecha de siembra.',
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF8E1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFFFD54F)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Este registro tiene $dias días de antigüedad desde su fecha de siembra.',
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.info_outline, color: Color(0xFFF57F17), size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Por políticas de seguridad y auditoría agronómica, los registros no se pueden modificar ni eliminar desde la aplicación móvil después de 2 días transcurridos.\n\nCualquier corrección o modificación debe realizarse directamente desde la base de datos empresarial.',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF5D4037), height: 1.35),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFFD54F)),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, color: Color(0xFFF57F17), size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Por políticas de seguridad y auditoría agronómica, los registros no se pueden modificar ni eliminar desde la aplicación móvil después de 2 días transcurridos.\n\nCualquier corrección o modificación debe realizarse directamente desde la base de datos empresarial.',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF5D4037), height: 1.35),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           ElevatedButton(
@@ -497,31 +501,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '¿Está seguro de que desea eliminar este registro de siembra de la base de datos?',
-              style: TextStyle(fontSize: 14, color: Colors.black87),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '¿Está seguro de que desea eliminar este registro de siembra de la base de datos?',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('• Fecha: ${s.fecha}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Text('• Cantidad: ${s.cantidad} esquejes'),
-                ],
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('• Fecha: ${s.fecha}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text('• Cantidad: ${s.cantidad} esquejes'),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -856,20 +862,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Text('Resumen de Siembra', style: TextStyle(color: Color(0xFF33691E), fontWeight: FontWeight.bold)),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStatRow('Total Registros:', '${_siembrasFiltradas.length} siembras'),
-            const Divider(),
-            _buildStatRow('Siembras Activas:', '$activas camas', color: Colors.green.shade700),
-            const Divider(),
-            _buildStatRow('Ciclos Finalizados:', '$finalizadas camas', color: Colors.grey.shade700),
-            const Divider(),
-            _buildStatRow('Tallos/Esquejes Totales:', '$totalTallos unidades', color: const Color(0xFF33691E)),
-            const Divider(),
-            _buildStatRow('Variedades en Catálogo:', '${_variedades.length} activas'),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStatRow('Total Registros:', '${_siembrasFiltradas.length} siembras'),
+              const Divider(),
+              _buildStatRow('Siembras Activas:', '$activas camas', color: Colors.green.shade700),
+              const Divider(),
+              _buildStatRow('Ciclos Finalizados:', '$finalizadas camas', color: Colors.grey.shade700),
+              const Divider(),
+              _buildStatRow('Tallos/Esquejes Totales:', '$totalTallos unidades', color: const Color(0xFF33691E)),
+              const Divider(),
+              _buildStatRow('Variedades en Catálogo:', '${_variedades.length} activas'),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -1955,7 +1963,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 12,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 12,
+              ),
               child: Column(
                 children: [
                   Container(

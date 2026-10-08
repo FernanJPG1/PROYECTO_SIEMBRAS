@@ -109,7 +109,12 @@ class _GestionVariedadesTemporalesDialogState extends State<GestionVariedadesTem
                 constraints: BoxConstraints(maxWidth: Responsive.dialogMaxWidth(context)),
                 child: Container(
                   height: MediaQuery.of(context).size.height * 0.85,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 16,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                  ),
                   child: Column(
                     children: [
                       Container(
@@ -203,23 +208,25 @@ class _GestionVariedadesTemporalesDialogState extends State<GestionVariedadesTem
             const Expanded(child: Text('Crear Variedad en Access')),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Se enviará "${temp.nombre}" al servidor para darla de alta inmediatamente en Access (t11_mcolorsseries).'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: pinController,
-              keyboardType: TextInputType.text,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Contraseña de Administrador',
-                hintText: 'Ingresa la contraseña',
-                border: OutlineInputBorder(),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Se enviará "${temp.nombre}" al servidor para darla de alta inmediatamente en Access (t11_mcolorsseries).'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: pinController,
+                keyboardType: TextInputType.text,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Contraseña de Administrador',
+                  hintText: 'Ingresa la contraseña',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
@@ -304,61 +311,63 @@ class _GestionVariedadesTemporalesDialogState extends State<GestionVariedadesTem
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '¿Estás seguro de que deseas eliminar la variedad "${v.nombre}" (Código: ${v.codigo}) de SQLite?',
-                style: const TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-              if (totalSiembras > 0) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.amber.shade300),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Atención: Tiene $totalSiembras siembra(s) registrada(s)',
-                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber.shade900, fontSize: 13),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        value: eliminarSiembras,
-                        activeColor: Colors.red.shade700,
-                        title: const Text(
-                          'Eliminar también las siembras asociadas a esta variedad en este dispositivo.',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        onChanged: (val) {
-                          setDialogState(() => eliminarSiembras = val ?? false);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ] else ...[
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  'Esta variedad no tiene ninguna siembra registrada. Se eliminará inmediatamente de forma segura.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  '¿Estás seguro de que deseas eliminar la variedad "${v.nombre}" (Código: ${v.codigo}) de SQLite?',
+                  style: const TextStyle(fontSize: 14),
                 ),
+                const SizedBox(height: 12),
+                if (totalSiembras > 0) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.amber.shade300),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Atención: Tiene $totalSiembras siembra(s) registrada(s)',
+                                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber.shade900, fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          value: eliminarSiembras,
+                          activeColor: Colors.red.shade700,
+                          title: const Text(
+                            'Eliminar también las siembras asociadas a esta variedad en este dispositivo.',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          onChanged: (val) {
+                            setDialogState(() => eliminarSiembras = val ?? false);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else ...[
+                  Text(
+                    'Esta variedad no tiene ninguna siembra registrada. Se eliminará inmediatamente de forma segura.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
           actions: [
             TextButton(
@@ -421,11 +430,11 @@ class _GestionVariedadesTemporalesDialogState extends State<GestionVariedadesTem
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.white,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: Responsive.dialogMaxWidth(context).clamp(320.0, 720.0),
-          maxHeight: Responsive.dialogMaxHeight(context).clamp(340.0, 700.0),
+          maxHeight: (MediaQuery.sizeOf(context).height * 0.90).clamp(260.0, 700.0),
         ),
         child: Padding(
           padding: const EdgeInsets.all(22),

@@ -167,69 +167,78 @@ class _ReporteDialogState extends State<ReporteDialog> {
     final semanas = CalendarioUtil.obtenerListaSemanasDelAnio(_anioSemanas);
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
-        child: Column(
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.calendar_month, color: Color(0xFF558B2F)),
-                    SizedBox(width: 8),
-                    Text(
-                      'Semanas Calendario EE. UU.',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF33691E)),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    TextButton.icon(
-                      icon: const Icon(Icons.all_inclusive, size: 16, color: Color(0xFF558B2F)),
-                      label: const Text('Todo el Historial', style: TextStyle(color: Color(0xFF558B2F), fontWeight: FontWeight.bold, fontSize: 12)),
-                      onPressed: () {
-                        setState(() {
-                          _semanaController.text = 'Todas las Semanas';
-                          _rangoFechas = null;
-                        });
-                        Navigator.pop(ctx);
-                      },
-                    ),
-                    const SizedBox(width: 6),
-                    TextButton.icon(
-                      icon: const Icon(Icons.today, size: 16, color: Color(0xFF558B2F)),
-                      label: const Text('Semana Actual', style: TextStyle(color: Color(0xFF558B2F), fontWeight: FontWeight.bold, fontSize: 12)),
-                      onPressed: () {
-                        final now = DateTime.now();
-                        final sem = CalendarioUtil.obtenerSemanaUS(now);
-                        final r = CalendarioUtil.obtenerRangoFechasSemanaUS(now.year, sem);
-                        setState(() {
-                          _semanaController.text = 'Semana #$sem - ${now.year}';
-                          _rangoFechas = r;
-                        });
-                        Navigator.pop(ctx);
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const Divider(),
-            Expanded(
-              child: ListView.builder(
+      builder: (ctx) => Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * (Responsive.isLandscape(context) ? 0.90 : 0.75),
+            maxWidth: 600,
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.calendar_month, color: Color(0xFF558B2F)),
+                      SizedBox(width: 8),
+                      Text(
+                        'Semanas Calendario EE. UU.',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF33691E)),
+                      ),
+                    ],
+                  ),
+                  Wrap(
+                    spacing: 6,
+                    children: [
+                      TextButton.icon(
+                        icon: const Icon(Icons.all_inclusive, size: 16, color: Color(0xFF558B2F)),
+                        label: const Text('Todo el Historial', style: TextStyle(color: Color(0xFF558B2F), fontWeight: FontWeight.bold, fontSize: 12)),
+                        onPressed: () {
+                          setState(() {
+                            _semanaController.text = 'Todas las Semanas';
+                            _rangoFechas = null;
+                          });
+                          Navigator.pop(ctx);
+                        },
+                      ),
+                      TextButton.icon(
+                        icon: const Icon(Icons.today, size: 16, color: Color(0xFF558B2F)),
+                        label: const Text('Semana Actual', style: TextStyle(color: Color(0xFF558B2F), fontWeight: FontWeight.bold, fontSize: 12)),
+                        onPressed: () {
+                          final now = DateTime.now();
+                          final sem = CalendarioUtil.obtenerSemanaUS(now);
+                          final r = CalendarioUtil.obtenerRangoFechasSemanaUS(now.year, sem);
+                          setState(() {
+                            _semanaController.text = 'Semana #$sem - ${now.year}';
+                            _rangoFechas = r;
+                          });
+                          Navigator.pop(ctx);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const Divider(),
+              Expanded(
+                child: ListView.builder(
                 itemCount: semanas.length,
                 itemBuilder: (c, idx) {
                   final item = semanas[idx];
@@ -280,8 +289,9 @@ class _ReporteDialogState extends State<ReporteDialog> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _verPdf() {
     final filtradas = _filtrarSiembras();
@@ -373,12 +383,13 @@ class _ReporteDialogState extends State<ReporteDialog> {
         ),
         content: SizedBox(
           width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Seleccione el cultivo que desea previsualizar:', style: TextStyle(fontSize: 13, color: Colors.grey)),
-              const SizedBox(height: 12),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Seleccione el cultivo que desea previsualizar:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                const SizedBox(height: 12),
               ...agrupados.entries.map((entry) {
                 final cult = entry.key;
                 final list = entry.value;
@@ -423,6 +434,7 @@ class _ReporteDialogState extends State<ReporteDialog> {
             ],
           ),
         ),
+      ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -619,12 +631,13 @@ class _ReporteDialogState extends State<ReporteDialog> {
         ),
         content: SizedBox(
           width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Seleccione el cultivo que desea compartir:', style: TextStyle(fontSize: 13, color: Colors.grey)),
-              const SizedBox(height: 12),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Seleccione el cultivo que desea compartir:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                const SizedBox(height: 12),
               ...agrupados.entries.map((entry) {
                 final cult = entry.key;
                 final list = entry.value;
@@ -669,6 +682,7 @@ class _ReporteDialogState extends State<ReporteDialog> {
             ],
           ),
         ),
+      ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -770,12 +784,13 @@ class _ReporteDialogState extends State<ReporteDialog> {
         ),
         content: SizedBox(
           width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Seleccione el cultivo que desea enviar a impresión:', style: TextStyle(fontSize: 13, color: Colors.grey)),
-              const SizedBox(height: 12),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Seleccione el cultivo que desea enviar a impresión:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                const SizedBox(height: 12),
               ...agrupados.entries.map((entry) {
                 final cult = entry.key;
                 final list = entry.value;
@@ -820,6 +835,7 @@ class _ReporteDialogState extends State<ReporteDialog> {
             ],
           ),
         ),
+      ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -935,14 +951,14 @@ class _ReporteDialogState extends State<ReporteDialog> {
 
     final esMovil = Responsive.isMobile(context);
     final dialogMaxW = Responsive.dialogMaxWidth(context);
-    final dialogMaxH = Responsive.dialogMaxHeight(context);
+    final dialogMaxH = MediaQuery.sizeOf(context).height * (esMovil ? 0.94 : 0.90);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       backgroundColor: Colors.white,
       insetPadding: EdgeInsets.symmetric(
-        horizontal: esMovil ? 12 : 24,
-        vertical: esMovil ? 16 : 24,
+        horizontal: esMovil ? 10 : 24,
+        vertical: esMovil ? 12 : 24,
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
