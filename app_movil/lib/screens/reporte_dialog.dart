@@ -1121,29 +1121,54 @@ class _ReporteDialogState extends State<ReporteDialog> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFFC5E1A5)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.analytics_outlined, color: Color(0xFF558B2F), size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Camas en el reporte: ${filtradas.length}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    'Total: ${formatterNum.format(totalTallos)} tallos',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Color(0xFF2E7D32),
+              child: esMovil
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.analytics_outlined, color: Color(0xFF558B2F), size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Camas en el reporte: ${filtradas.length}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Total: ${formatterNum.format(totalTallos)} tallos',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13.5,
+                            color: Color(0xFF2E7D32),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.analytics_outlined, color: Color(0xFF558B2F), size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Camas en el reporte: ${filtradas.length}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF33691E)),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Total: ${formatterNum.format(totalTallos)} tallos',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Color(0xFF2E7D32),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
             ),
 
             const SizedBox(height: 12),
@@ -1170,62 +1195,66 @@ class _ReporteDialogState extends State<ReporteDialog> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFFFF59D)),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF9C4),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFFFD54F)),
-                        ),
-                        child: const Icon(Icons.leaderboard, color: Color(0xFFF57F17), size: 20),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Text(
-                                  'Rendimiento: ',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF795548)),
-                                ),
-                                Text(
-                                  '${rendimientos.length} sembradores evaluados',
-                                  style: const TextStyle(fontSize: 12.5, color: Colors.black87),
-                                ),
-                              ],
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF9C4),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFFFD54F)),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '🥇 Líder: ${top.operario.nombreCompleto} (${formatterNum.format(top.totalTallos)} tallos | ${top.porcentajeTotal.toStringAsFixed(1)}%)',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFE65100)),
+                            child: const Icon(Icons.leaderboard, color: Color(0xFFF57F17), size: 18),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Rendimiento: ${rendimientos.length} sembradores',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF795548)),
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ],
-                        ),
-                      ),
-                      TextButton.icon(
-                        icon: const Icon(Icons.arrow_forward, size: 16, color: Color(0xFFF57F17)),
-                        label: const Text('Ver Detalle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFF57F17))),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => RendimientoDialog(
-                              siembras: filtradas,
-                              operarios: widget.operarios,
-                              variedades: widget.variedades,
-                              camas: widget.camas,
-                              cultivo: _cultivoSeleccionado,
-                              semana: _semanaController.text.trim().isEmpty ? 'Semana General' : _semanaController.text.trim(),
-                              rangoFechas: _rangoFechas != null
-                                  ? '${DateFormat('dd/MM/yyyy').format(_rangoFechas!.start)} al ${DateFormat('dd/MM/yyyy').format(_rangoFechas!.end)}'
-                                  : null,
+                          ),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                          );
-                        },
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => RendimientoDialog(
+                                  siembras: filtradas,
+                                  operarios: widget.operarios,
+                                  variedades: widget.variedades,
+                                  camas: widget.camas,
+                                  cultivo: _cultivoSeleccionado,
+                                  semana: _semanaController.text.trim().isEmpty ? 'Semana General' : _semanaController.text.trim(),
+                                  rangoFechas: _rangoFechas != null
+                                      ? '${DateFormat('dd/MM/yyyy').format(_rangoFechas!.start)} al ${DateFormat('dd/MM/yyyy').format(_rangoFechas!.end)}'
+                                      : null,
+                                ),
+                              );
+                            },
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Ver', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFF57F17))),
+                                SizedBox(width: 2),
+                                Icon(Icons.arrow_forward, size: 14, color: Color(0xFFF57F17)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '🥇 Líder: ${top.operario.nombreCompleto} (${formatterNum.format(top.totalTallos)} tallos | ${top.porcentajeTotal.toStringAsFixed(1)}%)',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFE65100)),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),

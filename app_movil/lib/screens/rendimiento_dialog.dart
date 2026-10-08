@@ -140,7 +140,7 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
           maxHeight: dialogMaxH,
         ),
         child: Padding(
-          padding: EdgeInsets.all(esMovil ? 12 : 22),
+          padding: EdgeInsets.all(esMovil ? 8 : 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -664,47 +664,47 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
               Wrap(
                 alignment: WrapAlignment.spaceBetween,
                 crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 6,
+                runSpacing: 6,
                 children: [
                   Text(
-                    'Evaluación con ${widget.siembras.length} registros',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    '${widget.siembras.length} registros',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                   ),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: 6,
+                    runSpacing: 6,
                     alignment: WrapAlignment.end,
                     children: [
                       OutlinedButton.icon(
-                        icon: const Icon(Icons.download, size: 18),
-                        label: const Text('Guardar'),
+                        icon: const Icon(Icons.download, size: 16),
+                        label: Text('Guardar', style: TextStyle(fontSize: esMovil ? 11 : 13)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF558B2F),
                           side: const BorderSide(color: Color(0xFF7CB342)),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                          padding: EdgeInsets.symmetric(horizontal: esMovil ? 8 : 12, vertical: esMovil ? 6 : 11),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: _generando ? null : _guardarPdfRendimientoDescargas,
                       ),
                       OutlinedButton.icon(
-                        icon: const Icon(Icons.share, size: 18),
-                        label: const Text('Compartir'),
+                        icon: const Icon(Icons.share, size: 16),
+                        label: Text('Compartir', style: TextStyle(fontSize: esMovil ? 11 : 13)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF558B2F),
                           side: const BorderSide(color: Color(0xFF7CB342)),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                          padding: EdgeInsets.symmetric(horizontal: esMovil ? 8 : 12, vertical: esMovil ? 6 : 11),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: _generando ? null : _exportarRendimientoPdf,
                       ),
                       OutlinedButton.icon(
-                        icon: const Icon(Icons.print, size: 18),
-                        label: const Text('Imprimir'),
+                        icon: const Icon(Icons.print, size: 16),
+                        label: Text('Imprimir', style: TextStyle(fontSize: esMovil ? 11 : 13)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF558B2F),
                           side: const BorderSide(color: Color(0xFF7CB342)),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                          padding: EdgeInsets.symmetric(horizontal: esMovil ? 8 : 12, vertical: esMovil ? 6 : 11),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: _generando ? null : _imprimirRendimientoPdf,
@@ -712,18 +712,18 @@ class _RendimientoDialogState extends State<RendimientoDialog> {
                       ElevatedButton.icon(
                         icon: _generando
                             ? const SizedBox(
-                                width: 18,
-                                height: 18,
+                                width: 16,
+                                height: 16,
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                               )
-                            : const Icon(Icons.visibility, color: Colors.white, size: 18),
+                            : const Icon(Icons.visibility, color: Colors.white, size: 16),
                         label: Text(
-                          _generando ? 'Generando...' : 'Ver PDF',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          _generando ? '...' : 'Ver PDF',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: esMovil ? 11 : 13),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                          padding: EdgeInsets.symmetric(horizontal: esMovil ? 10 : 16, vertical: esMovil ? 6 : 11),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           elevation: 2,
                         ),
