@@ -1,3 +1,16 @@
+// ============================================================================
+// ARCHIVO: rendimiento_dialog.dart
+// ¿QUÉ ES ESTA VENTANA EXPLICADA DE FORMA SENCILLA?
+// Imagínate que esta ventana es EL CUADERNO DE NÓMINA Y PREMIACIÓN DE LOS TRABAJADORES.
+//
+// Al final de la semana, el administrador abre esta ventana para:
+// 1. 🥇 Ver el podio de sembradores: Ordena a los trabajadores de mayor a menor
+//    según la cantidad de tallos sembrados.
+// 2. 📊 Totalizar por persona: Cuántas camas hizo, cuántos tallos logró y su promedio diario.
+// 3. 📄 Imprimir el Informe de Nómina en PDF: Para entregarlo a contabilidad y que
+//    se pague a cada persona exactamente lo que trabajó, con transparencia total.
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:app_movil/models/entidades.dart';

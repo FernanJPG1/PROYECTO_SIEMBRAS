@@ -1,3 +1,16 @@
+// ============================================================================
+// ARCHIVO: admin_panel_hub_screen.dart
+// ¿QUÉ ES ESTA PANTALLA EXPLICADA DE FORMA SENCILLA?
+// Imagínate que esta pantalla es EL ESCRITORIO DEL JEFE O SUPERVISOR GENERAL.
+//
+// Desde aquí se manejan las herramientas avanzadas de la finca:
+// 1. 🖨️ Centro de Impresión de Planillas PDF (listas para WhatsApp).
+// 2. 🏆 Liquidación de Rendimientos de los Sembradores para nómina.
+// 3. 🏷️ Gestión de Flores Temporales: Para revisar qué flores de emergencia se crearon
+//       en campo y cruzarlas con la lista oficial de la oficina.
+// 4. ⚙️ Ajustes de conexión con la oficina (probar si la red Wi-Fi responde).
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';

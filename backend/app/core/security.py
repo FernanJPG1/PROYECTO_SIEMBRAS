@@ -1,3 +1,17 @@
+# ============================================================================
+# ARCHIVO: backend/app/core/security.py
+# ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+# Imagínate que este archivo es EL CELADOR O VIGILANTE EN LA PUERTA DE LA OFICINA.
+#
+# Para proteger la finca de intrusos o personas ajenas:
+# 1. EL CARNÉ DE CAMPO (get_api_key):
+#    Cada celular que llega debe mostrar su carné de la empresa (la clave secreta API Key).
+#    Si no la muestra, el celador no lo deja entrar y le dice: "Permiso denegado".
+#
+# 2. LA LLAVE MAESTRA DE ADMINISTRADOR (get_admin_token):
+#    Para cambiar reglas importantes o borrar catálogos, se pide una clave especial de jefe.
+# ============================================================================
+
 from fastapi import Security, HTTPException, status
 from fastapi.security import APIKeyHeader
 from app.core.config import settings

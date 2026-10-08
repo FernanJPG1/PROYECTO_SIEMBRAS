@@ -1,3 +1,24 @@
+# ============================================================================
+# ARCHIVO: backend/app/db/queries.py
+# ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+# Imagínate que este archivo son LAS MANOS Y EL LAPICERO DE LA SECRETARÍA EN LA OFICINA.
+#
+# Cuando el portero (`connection.py`) abre la caja fuerte de Microsoft Access,
+# este archivo sabe exactamente en qué página y en qué renglón escribir o leer:
+#
+# 1. LECTURA DE CATÁLOGOS:
+#    - Lee los bloques de la finca de la tabla oficial `t17_mbloques`.
+#    - Lee los surcos y camas de la tabla `t49_mcamas`.
+#    - Lee el catálogo de flores con sus familias de `t11_mcolorsseries` y `t09_mfamvar`.
+#    - Lee la lista de operarios y cédulas de `t159_moperarios`.
+#    - Lee el inventario de bulbos de lirios importados de `t187_salidaslirioscomp`.
+#
+# 2. ESCRITURA DE SIEMBRAS:
+#    - Toma el paquete de siembras que el mensajero del celular mandó por Wi-Fi
+#      y las estampa una por una en la tabla de siembras (`insertar_siembras_batch`).
+#    - Si una siembra fue borrada por equivocación en campo, la anula aquí también.
+# ============================================================================
+
 import pyodbc
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone

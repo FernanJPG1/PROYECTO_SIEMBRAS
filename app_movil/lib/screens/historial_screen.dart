@@ -1,3 +1,24 @@
+// ============================================================================
+// ARCHIVO: historial_screen.dart
+// ¿QUÉ ES ESTA PANTALLA EXPLICADA DE FORMA SENCILLA?
+// Imagínate que esta pantalla es EL BUZÓN DE CARTAS O LA BANDEJA DE SALIDA.
+//
+// Aquí se muestran las siembras que se anotaron en los bloques pero que todavía
+// NO han viajado al computador de la oficina porque el celular no ha entrado al Wi-Fi.
+//
+// 1. EL RELOJITO DE ESPERA:
+//    Cada siembra aquí tiene un relojito indicando que está segura y guardada en el celular,
+//    pero esperando al mensajero para viajar a la oficina.
+//
+// 2. REVISIÓN Y CORRECCIÓN:
+//    El supervisor puede mirar la lista antes de ir a la oficina. Si ve que alguien
+//    anotó una cama equivocada, puede corregirla o borrarla a tiempo.
+//
+// 3. BUZÓN LIMPIO:
+//    Cuando presionas 'Sincronizar' en la oficina, este buzón queda completamente vacío
+//    con un aviso verde que dice: '¡Todo al día! No hay cartas pendientes'.
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:app_movil/repositories/db_repository.dart';
 import 'package:app_movil/models/entidades.dart';

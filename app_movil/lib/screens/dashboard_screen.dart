@@ -1,3 +1,28 @@
+// ============================================================================
+// ARCHIVO: dashboard_screen.dart
+// ¿QUÉ ES ESTA PANTALLA EXPLICADA DE FORMA SENCILLA?
+// Imagínate que esta pantalla es LA RECEPCIÓN O EL TABLERO DE CONTROL DE LA FINCA.
+//
+// Es lo primero que ve el supervisor cuando abre la aplicación en el celular:
+// 1. EL TABLERO DE RESUMEN: Arriba muestra tarjetas gigantes con los números del día:
+//    - ¿Cuántos tallos se han sembrado hoy?
+//    - ¿Cuántas camas están ocupadas?
+//    - ¿Cuántas siembras tienen el relojito de espera (pendientes de mandar a la oficina)?
+//
+// 2. LOS BOTONES DE ACCIÓN:
+//    - Botón Verde Grande: Para registrar una siembra normal (Pompón, Girasol, etc.).
+//    - Botón Morado de Lirios: Para registrar siembras especiales de Lirios con bultos y bulbos.
+//    - Botón Azul de Reportes: Para imprimir las planillas en PDF y mandarlas por WhatsApp.
+//    - Botón Naranja de Sincronizar: Para enviar los datos a la oficina cuando hay Wi-Fi.
+//
+// 3. LOS FILTROS POR FLOR:
+//    Unos botones redondos arriba que permiten ver solo Pompón, solo Lirios, solo Girasoles,
+//    o ver todas las flores juntas.
+//
+// 4. EL HISTORIAL DE SIEMBRAS:
+//    La lista completa de lo que se ha sembrado recientemente en los bloques.
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
@@ -17,19 +42,22 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  // El mayordomo que se encarga de consultar los datos en la base de datos
   final DbRepository _db = DbRepository();
   bool? _forzarModoTarjetas;
-  List<Siembra> _siembras = [];
-  List<Variedad> _variedades = [];
-  List<Cama> _camas = [];
-  List<Operario> _operarios = [];
-  bool _cargando = true;
 
-  // Filtro interactivo por fecha, semana de EE. UU. y variedad madre
+  // Las 4 listas principales donde se guardan los datos en la memoria viva del celular:
+  List<Siembra> _siembras = [];    // La lista de todas las siembras hechas en campo
+  List<Variedad> _variedades = []; // Las flores disponibles en la finca
+  List<Cama> _camas = [];          // Los surcos de tierra disponibles
+  List<Operario> _operarios = [];  // Los trabajadores activos
+  bool _cargando = true;           // Ruedita de cargando mientras lee la memoria
+
+  // Filtros interactivos para buscar siembras por fecha, por semana del año o por flor:
   DateTime? _fechaFiltro;
-  int? _semanaFiltro; // Semana US (1 a 53)
+  int? _semanaFiltro; // Semana del año (Semana 1 a 53)
   int _anioFiltro = DateTime.now().year;
-  String _cultivoFiltro = 'TODOS'; // 'TODOS', 'POMPÓN', 'CREMÓN', 'MATSUMOTO', 'LIRIOS', 'GIRASOL'
+  String _cultivoFiltro = 'TODOS'; // Filtro actual: 'TODOS', 'POMPÓN', 'CREMÓN', 'LIRIOS', etc.
 
   static const List<Map<String, dynamic>> _cultivosConfig = [
     {

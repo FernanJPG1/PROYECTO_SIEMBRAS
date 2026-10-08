@@ -1,3 +1,23 @@
+# ============================================================================
+# ARCHIVO: backend/app/api/endpoints/catalogs.py
+# ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+# Imagínate que este archivo es EL MOSTRADOR DE DESPACHO DE CATÁLOGOS EN LA OFICINA.
+#
+# Cada mañana o cuando el supervisor se acerca a la oficina, el celular llega a este mostrador y dice:
+# "¡Buenos días! Entrégame la lista actualizada de la finca para salir a trabajar a los bloques".
+#
+# Este mostrador le empaca todo en una sola canasta digital:
+# - Los 29 Bloques de la finca.
+# - Las 2.865 Camas preparadas en el terreno.
+# - Las 762 Variedades de flor con sus densidades y días de cosecha.
+# - Los 272 Trabajadores y operarios activos.
+# - Las normas y límites del agrónomo jefe.
+# - El inventario de bulbos de lirios (Tabla 187).
+#
+# Con este paquete en la memoria, el celular puede irse a trabajar a los invernaderos
+# 100% desconectado del mundo sin fallar ni un solo segundo.
+# ============================================================================
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Optional
 from datetime import datetime
@@ -19,14 +39,7 @@ def get_todos_los_catalogos(
     api_key: str = Depends(get_api_key)
 ):
     """
-    Entrega todos los catálogos en una sola llamada para sincronización offline en la App Móvil:
-    - 29 Bloques (t17)
-    - 2.865 Camas activas (t49)
-    - Familias / Especies de Plantas con densidades y rotación (t09)
-    - 762 Variedades Comerciales Reales con densidades y ciclos reales (t11 con color y serie)
-    - 272 Operarios activos (t159)
-    - Configuraciones agronómicas por familia de cultivo
-    - Tabla 187 de Lirios (Proveedores, Contenedores y Lotes)
+    Mostrador que entrega todos los catálogos en un solo paquete para que el celular trabaje sin internet.
     """
     bloques = queries.get_bloques(conn)
     camas = queries.get_camas(conn)

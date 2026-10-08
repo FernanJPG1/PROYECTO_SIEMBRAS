@@ -1,10 +1,20 @@
+# ============================================================================
+# ARCHIVO: backend/app/core/config.py
+# ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+# Imagínate que este archivo es EL TABLERO DE AJUSTES O CONFIGURACIONES DE LA OFICINA.
+#
+# Aquí se guardan los datos clave que el computador central necesita para funcionar:
+# 1. ¿Dónde está el archivo de la empresa? (La ruta a `bmempresarial2021.accdb`).
+# 2. ¿Cuál es la contraseña que deben mostrar los celulares? (El API_KEY).
+# 3. ¿Debe sacar fotocopias de respaldo antes de guardar? (AUTO_BACKUP_ON_SYNC = True).
+# ============================================================================
+
 import os
 from pathlib import Path
 from pydantic_settings import BaseSettings
 
-# Define base paths
+# Rutas de base
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-# Look for the DB in the root of the project
 DEFAULT_DB_PATH = BASE_DIR / "bmempresarial2021.accdb"
 
 class Settings(BaseSettings):

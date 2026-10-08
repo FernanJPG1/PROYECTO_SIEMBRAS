@@ -1,12 +1,25 @@
+// ============================================================================
+// ARCHIVO: calendario_util.dart
+// ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+// Imagínate que este archivo es EL ALMANAQUE Y RELOJ FLORAL DE LA EMPRESA.
+//
+// En una finca que exporta flores a Estados Unidos, la gente no dice:
+// "Sembré en marzo" o "Voy a cortar en abril".
+// ¡En la floricultura todo el mundo habla por SEMANAS DEL AÑO (de la 1 a la 53)!
+// - Semana 06: La gran temporada de San Valentín (Amor y Amistad en EE. UU.).
+// - Semana 18: La gran temporada del Día de la Madre.
+//
+// ¿QUÉ TRABAJO HACE ESTE ARCHIVO?
+// 1. Mira la fecha del celular y calcula en qué semana exacta estamos (del 1 al 53).
+// 2. Se asegura de que la semana empiece en Domingo y termine en Sábado,
+//    tal como lo exige el mercado de flores de Estados Unidos y las fórmulas de Excel/Access.
+// 3. Escribe las fechas limpias como "DD/MM/AAAA" para que no salgan horas enredadas en las planillas.
+// ============================================================================
+
 import 'package:flutter/material.dart';
 
 /// Utilidad agronómica oficial para el cálculo y selección de semanas
 /// según el Calendario Floral y Comercial de Estados Unidos (US Calendar).
-///
-/// Características del Calendario de EE. UU. (idéntico a Microsoft Access / Excel WEEKNUM):
-/// 1. La semana inicia el Domingo (Sunday) y finaliza el Sábado (Saturday).
-/// 2. La Semana #1 es la semana que contiene el 1 de enero.
-/// 3. Se sincroniza 100% con los registros históricos de la base de datos empresarial (t164_semana).
 class CalendarioUtil {
   /// Calcula el número de semana de EE. UU. (1 a 53) para una fecha dada.
   static int obtenerSemanaUS(DateTime fecha) {

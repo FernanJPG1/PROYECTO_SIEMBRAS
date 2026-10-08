@@ -1,3 +1,23 @@
+// ============================================================================
+// ARCHIVO: form_siembra_lirios_screen.dart
+// ¿QUÉ ES ESTA PANTALLA EXPLICADA DE FORMA SENCILLA?
+// Imagínate que esta pantalla es LA PLANILLA ESPECIAL PARA LA SIEMBRA DE LIRIOS.
+//
+// Los Lirios son flores muy especiales y distintas a los pompones:
+// 1. NO SE SIEMBRAN POR RAMITAS (Esquejes), SINO POR BULBOS (como cebollitas).
+// 2. Esos bulbos vienen en barco desde Holanda o Chile en contenedores refrigerados.
+// 3. Por ley y por calidad, cada mata de lirio debe tener su historia completa:
+//    - ¿Quién vendió el bulbo? (Proveedor: Onings, Vletter, etc.).
+//    - ¿En qué barco o furgón llegó? (Contenedor).
+//    - ¿Qué número de viaje trae? (Lote).
+//
+// Esta pantalla se conecta con la TABLA 187 de la oficina para que el supervisor
+// solo tenga que tocar el contenedor y el lote con el dedo sin tener que escribirlo a mano.
+//
+// Además, tiene el botón de CANASTAS Y RENDIMIENTO DE LIRIOS para contar cuántos
+// bultos sembró cada trabajador en la cuadrilla.
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
@@ -20,7 +40,7 @@ class FormSiembraLiriosScreen extends StatefulWidget {
 
 class _FormSiembraLiriosScreenState extends State<FormSiembraLiriosScreen> {
   final _formKey = GlobalKey<FormState>();
-  final DbRepository _db = DbRepository();
+  final DbRepository _db = DbRepository(); // El mayordomo que vigila las reglas del cultivo
 
   // Catálogos
   List<Bloque> _bloques = [];

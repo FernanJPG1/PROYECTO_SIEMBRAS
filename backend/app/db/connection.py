@@ -1,3 +1,26 @@
+# ============================================================================
+# ARCHIVO: backend/app/db/connection.py
+# ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+# Imagínate que este archivo es EL GUARDIÁN Y PORTERO DE LA BASE DE DATOS EMPRESARIAL.
+#
+# En el computador de la oficina vive el archivo de Microsoft Access con todas
+# las cuentas de la finca. Si varias personas intentan modificarlo al mismo tiempo
+# de forma desordenada, el archivo se podría dañar.
+#
+# Este archivo realiza 3 labores de protección:
+# 1. EL MODO COMPARTIDO (Exclusive=0):
+#    Abre el archivo permitiendo que la secretaria lo tenga abierto en su pantalla
+#    mientras los celulares mandan datos, sin que nadie se estorbe.
+#
+# 2. EL TORNIQUETE DE SEGURIDAD (db_lock):
+#    Si 3 supervisores mandan siembras en el mismo segundo, el portero los organiza
+#    en una fila ordenada para atenderlos uno por uno sin atropellarse.
+#
+# 3. LA FOTOCOPIA DE SEGURIDAD (safe_backup_database):
+#    Guarda una copia de respaldo automática en la carpeta `backups_seguridad`
+#    por si se corta la luz en la oficina.
+# ============================================================================
+
 import pyodbc
 import threading
 from typing import Generator
@@ -10,17 +33,12 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Access DB is not designed for heavy concurrent usage. 
-# We use a global lock to serialize all database operations across requests.
+# Torniquete de seguridad: atiende una petición a la vez para no dañar Access
 db_lock = threading.Lock()
 
 def get_connection_string() -> str:
     """
-    Construye la cadena de conexión optimizada para Microsoft Access.
-    - Exclusive=0: Garantiza que la BD se abra en modo COMPARTIDO (multi-usuario y red).
-      Esto evita que la BD se dañe o se bloquee si está en un servidor local o si
-      otro usuario la tiene abierta en Microsoft Access.
-    - ExtendedAnsiSQL=1: Permite compatibilidad ANSI SQL estándar.
+    Construye la llave de conexión para abrir Microsoft Access de forma compartida y segura.
     """
     db_path = settings.ACCESS_DB_PATH.strip(' "\'')
     if db_path.startswith(r"\\") or db_path.startswith("//"):

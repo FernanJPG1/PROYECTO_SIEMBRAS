@@ -1,3 +1,25 @@
+// ============================================================================
+// ARCHIVO: rendimiento_lirios_screen.dart
+// ¿QUÉ ES ESTA PANTALLA EXPLICADA DE FORMA SENCILLA?
+// Imagínate que esta pantalla es LA ALCANCÍA O CUADERNO DE PAGO POR TAREA EN LIRIOS.
+//
+// En el cultivo de Lirios, los sembradores trabajan en cuadrillas y reciben canastas
+// plásticas llenas de bulbos contados (ejemplo: 143 bulbos para Lirio LA, o 63 bulbos para Lirio LO/OT).
+//
+// ¿QUÉ HACE ESTA PANTALLA?
+// 1. EL MARCADOR DE CANASTAS:
+//    El supervisor se para al lado de los surcos. Cada vez que Pedro termina una canasta,
+//    toca el botón (+1) y de inmediato el sistema le anota esa canasta a Pedro con la hora exacta.
+//
+// 2. EL PODIO Y LAS MEDALLAS (Oro, Plata y Bronce):
+//    Muestra en vivo quién es el sembrador más rápido del día, para motivar al equipo
+//    y reconocer su esfuerzo.
+//
+// 3. LA LIQUIDACIÓN EXACTA:
+//    Multiplica las canastas por la cantidad de bulbos y entrega el número total de plantas
+//    que sembró cada persona para pasar la cuenta de cobro a la oficina sin errores.
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';

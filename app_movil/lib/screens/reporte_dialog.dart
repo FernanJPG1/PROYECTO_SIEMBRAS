@@ -1,3 +1,18 @@
+// ============================================================================
+// ARCHIVO: reporte_dialog.dart
+// ¿QUÉ ES ESTA VENTANA EXPLICADA DE FORMA SENCILLA?
+// Imagínate que esta ventana es EL CENTRO DE IMPRESIÓN Y FOTOCOPIADO DE LA FINCA.
+//
+// Cuando el supervisor necesita sacar las hojas oficiales para mandar a la gerencia,
+// abre esta ventana para elegir cómo quiere su informe:
+// 1. ¿De qué flor? (Todas juntas, solo Pompón, solo Lirios, solo Girasoles, etc.).
+// 2. ¿De qué fecha o semana? (Semana #40, o de lunes a viernes).
+// 3. ¿En hojas separadas? (Opción de separar cada flor en su propia página).
+//
+// Al tocar 'Generar PDF', la máquina digital fabrica el documento membretado
+// y lo abre en pantalla grande para revisarlo y mandarlo por WhatsApp.
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:app_movil/models/entidades.dart';

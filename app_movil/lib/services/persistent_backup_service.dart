@@ -1,3 +1,24 @@
+// ============================================================================
+// ARCHIVO: persistent_backup_service.dart
+// ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+// Imagínate que este archivo es EL SALVAVIDAS O CINTURÓN DE SEGURIDAD de la aplicación.
+//
+// En una finca real pasan muchos accidentes:
+// 1. El trabajador se quedó sin batería (0%) y el celular se apagó en seco.
+// 2. El celular se reinició o se actualizó solo en la noche.
+// 3. El dueño le dio al botón de "Limpiar espacio o caché" de Android.
+//
+// ¿QUÉ HACE ESTE SALVAVIDAS?
+// Cada vez que guardas una siembra, este archivo saca una COPIA FOTOSTÁTICA GEMELA
+// y la guarda en una carpeta blindada de la memoria del teléfono (llamada Documentos).
+// - Guarda el archivo principal: `siembras_respaldo_persistente.json`.
+// - Guarda un archivo de repuesto: `siembras_respaldo_persistente.bak`.
+//
+// Si al día siguiente el celular prende y nota que la base de datos sufrió algún golpe,
+// este archivo abre la copia de repuesto y rescata todas las siembras en un segundo,
+// mostrando un letrero verde en la pantalla que dice: "🛡️ Se recuperaron X siembras".
+// ============================================================================
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -6,7 +27,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:app_movil/models/entidades.dart';
 
-/// Resultado del proceso de verificación y recuperación de siembras
+/// El recibo que entrega el salvavidas después de revisar si había datos perdidos por rescatar
 class ResultadoRecuperacion {
   final int totalLocal;
   final int totalRespaldo;
@@ -25,15 +46,7 @@ class ResultadoRecuperacion {
   });
 }
 
-/// Servicio de Almacenamiento Permanente y Respaldo Antidescarga/Reinicio
-///
-/// Protege las siembras offline contra:
-/// 1. Apagado repentino de dispositivos Android (corte abrupto de energía / 0% batería).
-/// 2. Reinicio de dispositivos Android (reboots forzados o actualizaciones).
-/// 3. Limpieza de memoria caché del sistema operativo Android o aplicaciones de limpieza.
-///
-/// Implementa escritura atómica con fsync en almacenamiento permanente (Files/Documents),
-/// copias espejo .bak y reconciliación automática bidireccional al iniciar la app.
+/// [PersistentBackupService]: El ángel de la guarda que protege las siembras contra apagones
 class PersistentBackupService {
   static final PersistentBackupService instance = PersistentBackupService._init();
   PersistentBackupService._init();

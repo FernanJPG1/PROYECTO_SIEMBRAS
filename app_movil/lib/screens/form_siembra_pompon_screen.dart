@@ -1,3 +1,35 @@
+// ============================================================================
+// ARCHIVO: form_siembra_pompon_screen.dart
+// ¿QUÉ ES ESTA PANTALLA EXPLICADA DE FORMA SENCILLA?
+// Imagínate que esta pantalla es LA PLANILLA O HOJA DE REGISTRO que antes el supervisor
+// llenaba en una tabla de madera con una hoja de papel y un lapicero en el bloque.
+//
+// Aquí se anota CADA SIEMBRA REALIZADA en 5 pasos sencillos:
+//
+// 1. ¿DÓNDE? (El Bloque y la Cama):
+//    El supervisor escoge el bloque (ej: Bloque 01). De inmediato la pantalla le muestra
+//    las camas de ese bloque como cajitas de colores:
+//    - Verde: Cama limpia y lista para sembrar.
+//    - Amarilla: Cama compartida con espacio libre (Lado A o B).
+//    - Roja: Cama ocupada donde la flor todavía está creciendo.
+//
+// 2. ¿QUÉ FLOR? (La Variedad):
+//    Escoge la flor (ej: Anastasia, Baltica). Si la flor es nueva de paquete y todavía
+//    no está en la lista de la oficina, hay un botón con un signo (+) para inventarla
+//    al instante como variedad temporal y no frenar el trabajo.
+//
+// 3. ¿QUIÉN LA SEMBRÓ? (El Operario):
+//    Escoge al sembrador con su nombre y cédula. Tiene una casilla "Recordar Sembrador"
+//    para no tener que volver a buscar el mismo nombre cama tras cama.
+//
+// 4. ¿CUÁNTAS MATAS? (Líneas y Tallos):
+//    Si digita el número de líneas (ej: 145 líneas), el sistema multiplica automáticamente
+//    por la densidad de plantas (ej: 28 matas por línea) y llena los tallos exactos sin calculadoras.
+//
+// 5. BOTÓN GUARDAR:
+//    Revisa que no se pase del cupo de la cama y guarda todo en la caja fuerte de SQLite.
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
@@ -19,7 +51,7 @@ class FormSiembraPomponScreen extends StatefulWidget {
 
 class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
   final _formKey = GlobalKey<FormState>();
-  final DbRepository _db = DbRepository();
+  final DbRepository _db = DbRepository(); // El mayordomo que vigila las reglas del cultivo
 
   // Catálogos
   List<Bloque> _bloques = [];

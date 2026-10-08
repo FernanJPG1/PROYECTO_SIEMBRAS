@@ -1,3 +1,20 @@
+// ============================================================================
+// ARCHIVO: gestion_variedades_temporales_dialog.dart
+// ¿QUÉ ES ESTA VENTANA EXPLICADA DE FORMA SENCILLA?
+// Imagínate que esta ventana es EL LIBRO DE LEGALIZACIÓN DE FLORES PROVISIONALES.
+//
+// Cuando en el campo se inventó una flor de emergencia para que la gente no parara
+// de trabajar, queda anotada aquí como "Variedad Temporal".
+//
+// ¿QUÉ HACE ESTA VENTANA?
+// 1. REVISIÓN: Muestra la lista de flores provisionales y cuántas siembras se hicieron con ellas.
+// 2. RECONCILIACIÓN AUTOMÁTICA: Si en la oficina ya crearon la flor en Access,
+//    al tocar un botón el sistema las une y las oficializa al instante.
+// 3. VINCULACIÓN MANUAL: Si en el campo le pusieron "Anastasia Amarilla" pero en la oficina
+//    la bautizaron como "Anastasia Gold", el supervisor las enlaza con un toque
+//    y el sistema actualiza todas las siembras para que los reportes salgan perfectos.
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';

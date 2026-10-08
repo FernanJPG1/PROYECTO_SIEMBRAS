@@ -1,3 +1,24 @@
+// ============================================================================
+// ARCHIVO: crear_variedad_dialog.dart
+// ¿QUÉ ES ESTA VENTANA EXPLICADA DE FORMA SENCILLA?
+// Imagínate que esta ventana es EL SALVADOR O COMODÍN DE CAMPO.
+//
+// Imagínate este caso de la vida real en la finca:
+// Son las 6:30 de la mañana. Llega un camión al bloque con esquejes de una flor nueva
+// que no está en la lista de la oficina porque la secretaria no ha llegado todavía.
+//
+// Si el sistema fuera terco, los 20 sembradores se quedarían sentados en el pasto
+// sin trabajar toda la mañana perdiendo tiempo y dinero.
+//
+// ¿QUÉ HACE ESTA VENTANA?
+// 1. Permite que el supervisor escriba el nombre de la flor en la pantalla.
+// 2. Elige si es Pompón, Cremón, Girasol o Lirio.
+// 3. El sistema le asigna un carné provisional de emergencia (ID temporal negativo).
+// 4. Los trabajadores empiezan a sembrar DE INMEDIATO sin frenar la labor.
+// 5. Por la tarde, cuando la oficina crea la flor oficial en Access, el sistema
+//    fusiona las dos flores automáticamente sin que nadie tenga que reescribir nada.
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:app_movil/repositories/db_repository.dart';
 import 'package:app_movil/utils/responsive.dart';
