@@ -676,83 +676,93 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _seleccionarFechaFiltro() async {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 14),
-            const Text('Filtrar Siembras por Fecha / Semana', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF33691E))),
-            const SizedBox(height: 12),
-            ListTile(
-              leading: const CircleAvatar(backgroundColor: Color(0xFFE8F5E9), child: Icon(Icons.today, color: Color(0xFF558B2F))),
-              title: const Text('Semana Actual (Calendario EE. UU.)', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('Semana ${CalendarioUtil.obtenerSemanaUS(DateTime.now())} (${DateTime.now().year})'),
-              trailing: const Icon(Icons.chevron_right, color: Color(0xFF558B2F)),
-              onTap: () {
-                Navigator.pop(ctx);
-                setState(() {
-                  _semanaFiltro = CalendarioUtil.obtenerSemanaUS(DateTime.now());
-                  _anioFiltro = DateTime.now().year;
-                  _fechaFiltro = null;
-                });
-              },
-            ),
-            ListTile(
-              leading: const CircleAvatar(backgroundColor: Color(0xFFE8F5E9), child: Icon(Icons.calendar_month, color: Color(0xFF558B2F))),
-              title: const Text('Seleccionar por Semana (EE. UU.)', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Elegir una semana específica del calendario agronómico'),
-              trailing: const Icon(Icons.chevron_right, color: Color(0xFF558B2F)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _abrirSelectorSemanaFiltro();
-              },
-            ),
-            ListTile(
-              leading: const CircleAvatar(backgroundColor: Color(0xFFE8F5E9), child: Icon(Icons.calendar_today, color: Color(0xFF558B2F))),
-              title: const Text('Seleccionar Día Específico', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Elegir una fecha puntual en el calendario'),
-              trailing: const Icon(Icons.chevron_right, color: Color(0xFF558B2F)),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final DateTime? seleccionada = await showDatePicker(
-                  context: context,
-                  initialDate: _fechaFiltro ?? DateTime.now(),
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2035),
-                  builder: (context, child) => Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: const ColorScheme.light(primary: Color(0xFF7CB342), onPrimary: Colors.white, onSurface: Color(0xFF263238)),
-                    ),
-                    child: child!,
+      builder: (ctx) => Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 600,
+            maxHeight: MediaQuery.of(context).size.height * (Responsive.isLandscape(context) ? 0.90 : 0.75),
+          ),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+                const SizedBox(height: 14),
+                const Text('Filtrar Siembras por Fecha / Semana', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF33691E))),
+                const SizedBox(height: 12),
+                ListTile(
+                  leading: const CircleAvatar(backgroundColor: Color(0xFFE8F5E9), child: Icon(Icons.today, color: Color(0xFF558B2F))),
+                  title: const Text('Semana Actual (Calendario EE. UU.)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text('Semana ${CalendarioUtil.obtenerSemanaUS(DateTime.now())} (${DateTime.now().year})'),
+                  trailing: const Icon(Icons.chevron_right, color: Color(0xFF558B2F)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    setState(() {
+                      _semanaFiltro = CalendarioUtil.obtenerSemanaUS(DateTime.now());
+                      _anioFiltro = DateTime.now().year;
+                      _fechaFiltro = null;
+                    });
+                  },
+                ),
+                ListTile(
+                  leading: const CircleAvatar(backgroundColor: Color(0xFFE8F5E9), child: Icon(Icons.calendar_month, color: Color(0xFF558B2F))),
+                  title: const Text('Seleccionar por Semana (EE. UU.)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Elegir una semana específica del calendario agronómico'),
+                  trailing: const Icon(Icons.chevron_right, color: Color(0xFF558B2F)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _abrirSelectorSemanaFiltro();
+                  },
+                ),
+                ListTile(
+                  leading: const CircleAvatar(backgroundColor: Color(0xFFE8F5E9), child: Icon(Icons.calendar_today, color: Color(0xFF558B2F))),
+                  title: const Text('Seleccionar Día Específico', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Elegir una fecha puntual en el calendario'),
+                  trailing: const Icon(Icons.chevron_right, color: Color(0xFF558B2F)),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final DateTime? seleccionada = await showDatePicker(
+                      context: context,
+                      initialDate: _fechaFiltro ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2035),
+                      builder: (context, child) => Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: const ColorScheme.light(primary: Color(0xFF7CB342), onPrimary: Colors.white, onSurface: Color(0xFF263238)),
+                        ),
+                        child: child!,
+                      ),
+                    );
+                    if (seleccionada != null) {
+                      setState(() {
+                        _fechaFiltro = seleccionada;
+                        _semanaFiltro = null;
+                      });
+                    }
+                  },
+                ),
+                if (_fechaFiltro != null || _semanaFiltro != null) ...[
+                  const Divider(),
+                  TextButton.icon(
+                    icon: const Icon(Icons.clear, color: Colors.red),
+                    label: const Text('Quitar Filtro de Fecha / Semana', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      setState(() {
+                        _fechaFiltro = null;
+                        _semanaFiltro = null;
+                      });
+                    },
                   ),
-                );
-                if (seleccionada != null) {
-                  setState(() {
-                    _fechaFiltro = seleccionada;
-                    _semanaFiltro = null;
-                  });
-                }
-              },
+                ],
+              ],
             ),
-            if (_fechaFiltro != null || _semanaFiltro != null) ...[
-              const Divider(),
-              TextButton.icon(
-                icon: const Icon(Icons.clear, color: Colors.red),
-                label: const Text('Quitar Filtro de Fecha / Semana', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  setState(() {
-                    _fechaFiltro = null;
-                    _semanaFiltro = null;
-                  });
-                },
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -762,80 +772,89 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final semanas = CalendarioUtil.obtenerListaSemanasDelAnio(_anioFiltro);
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
-        child: Column(
-          children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 12),
-            const Text(
-              'Seleccionar Semana (Calendario EE. UU.)',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF33691E)),
-            ),
-            const Divider(),
-            Expanded(
-              child: ListView.builder(
-                itemCount: semanas.length,
-                itemBuilder: (c, idx) {
-                  final item = semanas[idx];
-                  final semNum = item['semana'] as int;
-                  final now = DateTime.now();
-                  final esActual = (now.year == _anioFiltro && CalendarioUtil.obtenerSemanaUS(now) == semNum);
-                  final isSelected = (_semanaFiltro == semNum);
+      builder: (ctx) => Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 600,
+            maxHeight: MediaQuery.of(context).size.height * (Responsive.isLandscape(context) ? 0.90 : 0.75),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              children: [
+                Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+                const SizedBox(height: 12),
+                const Text(
+                  'Seleccionar Semana (Calendario EE. UU.)',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF33691E)),
+                ),
+                const Divider(),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: semanas.length,
+                    itemBuilder: (c, idx) {
+                      final item = semanas[idx];
+                      final semNum = item['semana'] as int;
+                      final now = DateTime.now();
+                      final esActual = (now.year == _anioFiltro && CalendarioUtil.obtenerSemanaUS(now) == semNum);
+                      final isSelected = (_semanaFiltro == semNum);
 
-                  return ListTile(
-                    dense: true,
-                    leading: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: isSelected
-                          ? const Color(0xFF33691E)
-                          : esActual
-                              ? const Color(0xFF7CB342)
-                              : const Color(0xFFF1F8E9),
-                      child: Text(
-                        '$semNum',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: (isSelected || esActual) ? Colors.white : const Color(0xFF33691E),
+                      return ListTile(
+                        dense: true,
+                        leading: CircleAvatar(
+                          radius: 16,
+                          backgroundColor: isSelected
+                              ? const Color(0xFF33691E)
+                              : esActual
+                                  ? const Color(0xFF7CB342)
+                                  : const Color(0xFFF1F8E9),
+                          child: Text(
+                            '$semNum',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: (isSelected || esActual) ? Colors.white : const Color(0xFF33691E),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    title: Text(
-                      item['etiquetaCompleta'] as String,
-                      style: TextStyle(
-                        fontWeight: (isSelected || esActual) ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? const Color(0xFF33691E) : Colors.black87,
-                      ),
-                    ),
-                    trailing: isSelected
-                        ? const Icon(Icons.check_circle, color: Color(0xFF33691E), size: 20)
-                        : esActual
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(color: const Color(0xFFDCEDC8), borderRadius: BorderRadius.circular(6)),
-                                child: const Text('ACTUAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF33691E))),
-                              )
-                            : null,
-                    onTap: () {
-                      setState(() {
-                        _semanaFiltro = semNum;
-                        _fechaFiltro = null;
-                      });
-                      Navigator.pop(ctx);
+                        title: Text(
+                          item['etiquetaCompleta'] as String,
+                          style: TextStyle(
+                            fontWeight: (isSelected || esActual) ? FontWeight.bold : FontWeight.w500,
+                            color: isSelected ? const Color(0xFF33691E) : Colors.black87,
+                          ),
+                        ),
+                        trailing: isSelected
+                            ? const Icon(Icons.check_circle, color: Color(0xFF33691E), size: 20)
+                            : esActual
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(color: const Color(0xFFDCEDC8), borderRadius: BorderRadius.circular(6)),
+                                    child: const Text('ACTUAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF33691E))),
+                                  )
+                                : null,
+                        onTap: () {
+                          setState(() {
+                            _semanaFiltro = semNum;
+                            _fechaFiltro = null;
+                          });
+                          Navigator.pop(ctx);
+                        },
+                      );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+
 
   void _mostrarMetricasDialog() {
     int totalTallos = 0;
@@ -1957,18 +1976,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   (s.bloqueCodigo ?? '').toLowerCase().contains(q);
             }).toList();
 
-            return Container(
-              height: MediaQuery.of(ctx).size.height * 0.75,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 12,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 12,
-              ),
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 650,
+                  maxHeight: MediaQuery.of(ctx).size.height * (Responsive.isLandscape(ctx) ? 0.92 : 0.75),
+                ),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 12,
+                    bottom: MediaQuery.of(ctx).viewInsets.bottom + 12,
+                  ),
               child: Column(
                 children: [
                   Container(
@@ -2076,8 +2100,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-            );
-          },
+            ),
+          ),
+        );
+      },
         );
       },
     );
