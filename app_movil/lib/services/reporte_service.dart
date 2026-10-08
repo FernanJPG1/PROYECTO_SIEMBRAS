@@ -1,3 +1,23 @@
+// ============================================================================
+// ARCHIVO: reporte_service.dart
+// ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+// Imagínate que este archivo es LA IMPRENTA O FOTOCOPIADORA DIGITAL DE LA FINCA.
+//
+// Al final de la jornada de siembra o al cierre de la semana, los jefes necesitan
+// ver las cuentas claras en un papel formal para pagar nómina y revisar el cultivo.
+// Este archivo toma todas las siembras guardadas en el teléfono y las organiza
+// en una hoja membretada oficial con los colores verde y blanco de Buenavista Flowers.
+//
+// ¿QUÉ INFORMES PUEDE IMPRIMIR?
+// 1. Planilla General de Siembras: Todas las camas sembradas en la semana.
+// 2. Planilla Especial de Lirios: Con proveedor extranjero, contenedor marítimo y lote.
+// 3. Planilla por Flor Específica: Filtra solo Pompón, solo Girasol, solo Cremón, etc.
+// 4. Informe de Rendimiento de Sembradores: Suma cuántos tallos hizo cada persona
+//    para saber exactamente a quién felicitar y cuánto pagarle.
+//
+// Todo sale en archivo PDF listo para compartir por WhatsApp o mandar a imprimir.
+// ============================================================================
+
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -8,6 +28,7 @@ import 'package:intl/intl.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/utils/calendario_util.dart';
 
+/// [ReporteService]: La máquina que arma las hojas PDF oficiales de la empresa.
 class ReporteService {
   static String _resolverSemana(String? sem) {
     if (sem == null || sem.trim().isEmpty || sem == 'Semana #38' || sem == 'Semana General') {

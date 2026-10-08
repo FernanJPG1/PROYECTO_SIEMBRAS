@@ -1,34 +1,67 @@
+// ============================================================================
+// ARCHIVO: local_db.dart
+// ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+// Imagínate que este archivo es LA CAJA FUERTE O EL CUADERNO PRINCIPAL de la finca.
+// En los invernaderos a veces se va el internet o no entra la señal del celular.
+// Si el sembrador anota una siembra y se va la señal o se apaga el teléfono,
+// ¡la información jamás se puede perder!
+//
+// Este archivo crea una base de datos adentro del teléfono (llamada SQLite),
+// que funciona igual que un libro de contabilidad empastado con tinta indeleble.
+// Todo lo que anotes aquí queda grabado en la memoria del teléfono de inmediato.
+//
+// ¿QUÉ GUARDA ESTA CAJA FUERTE?
+// 1. tb_bloques: Los sectores o invernaderos de la finca (Bloque 01, Bloque 02, etc.).
+// 2. tb_variedades: El catálogo de flores (Pompón, Crisantemo, Lirio, Girasol, etc.).
+// 3. tb_camas: Las camas o surcos de tierra preparados para sembrar.
+// 4. tb_operarios: Los sembradores y cortadores con su nombre y cédula.
+// 5. tb_config_agronomica: La cartilla de reglas (cuántas matas caben y cuántos días dura el ciclo).
+// 6. tb_siembras: El diario de campo con cada siembra real hecha por los trabajadores.
+// 7. tb_eliminaciones_pendientes: Si borraste una siembra por error, aquí se anota para borrarla también en la oficina.
+// 8. tb_lirios_187: Los viajes de bulbos de lirio (quién los vendió, en qué contenedor llegaron y qué lote traen).
+// 9. tb_lirios_canastas: La cuenta de cuántas canastas de lirios cosechó cada trabajador.
+// ============================================================================
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:app_movil/database/seed_data.dart';
 import 'package:app_movil/services/persistent_backup_service.dart';
 
+/// [LocalDatabase]: El Administrador de la Caja Fuerte Local.
+/// Se asegura de que haya una sola llave para abrir el cuaderno en todo el celular.
 class LocalDatabase {
+  // Patrón Singleton: Una sola caja fuerte abierta a la vez para no enredar las cuentas
   static final LocalDatabase instance = LocalDatabase._init();
   static Database? _database;
 
   LocalDatabase._init();
 
+  /// Abre la caja fuerte si está cerrada, o entrega la que ya está abierta
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDB('siembras_local.db');
     return _database!;
   }
 
+  /// Esta función busca la memoria del celular y crea el archivo 'siembras_local.db'
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
     return await openDatabase(
       path,
-      version: 14,
+      version: 14, // Versión 14 del cuaderno (cada mejora le sube un número a la versión)
       onConfigure: (db) async {
+        // REGLAS DE SEGURIDAD FÍSICA:
+        // 1. foreign_keys = ON: Nadie puede sembrar en una cama que no exista o con una variedad fantasma.
         try {
           await db.execute('PRAGMA foreign_keys = ON');
         } catch (_) {}
+        // 2. journal_mode = WAL: Modo libreta rápida. Escribe de inmediato sin frenar el celular.
         try {
           await db.rawQuery('PRAGMA journal_mode = WAL');
         } catch (_) {}
+        // 3. synchronous = FULL: Si el celular se apaga de golpe por batería baja, no se daña ningún dato.
         try {
           await db.execute('PRAGMA synchronous = FULL');
         } catch (_) {}
@@ -36,6 +69,7 @@ class LocalDatabase {
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
       onOpen: (db) async {
+        // Al abrir el cuaderno cada día, revisamos que todas las tablas y reglas estén al día
         try {
           await db.execute('''
             CREATE TABLE IF NOT EXISTS tb_eliminaciones_pendientes (
@@ -376,8 +410,14 @@ class LocalDatabase {
     }
   }
 
+  /// _createDB: Se ejecuta cuando se instala la app por primera vez.
+  /// Dibuja las 9 hojas del cuaderno con sus columnas y llena los datos iniciales de la finca.
   Future _createDB(Database db, int version) async {
-    // 1. Tabla Bloques (t17)
+    // ------------------------------------------------------------------------
+    // HOJA 1: BLOQUES DE LA FINCA (tb_bloques)
+    // Aquí se anota cada invernadero o nave (ej: Bloque 01, Bloque 02, etc.).
+    // Sirve para saber exactamente en qué parte del terreno estamos parados.
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE tb_bloques (
         codigo TEXT PRIMARY KEY,
@@ -386,7 +426,14 @@ class LocalDatabase {
       )
     ''');
 
-    // 2. Tabla Variedades (t11_mcolorsseries -> t10_mservar -> t09_mfamvar)
+    // ------------------------------------------------------------------------
+    // HOJA 2: CATÁLOGO DE FLORES Y VARIEDADES (tb_variedades)
+    // Cada tipo de flor tiene sus mañas y sus medidas:
+    // - nombre: Nombre comercial (ej: Anastasia, Baltica, Siberia).
+    // - limite_esquejes: Cuántas matas caben en una cama (para no apretarlas).
+    // - dias_ciclo: Cuántos días tarda en florecer y estar lista para el corte.
+    // - es_temporal: Si el supervisor creó una flor nueva en campo que aún no está en la oficina.
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE tb_variedades (
         id INTEGER PRIMARY KEY,
@@ -406,7 +453,11 @@ class LocalDatabase {
     ''');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_variedades_familia ON tb_variedades (familia_id)');
 
-    // 3. Tabla Camas (t49)
+    // ------------------------------------------------------------------------
+    // HOJA 3: CAMAS O SURCOS DE TIERRA (tb_camas)
+    // Cada cama es una franja de tierra preparada con mallas para sostener los tallos.
+    // Está numerada y pertenece a un bloque específico.
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE tb_camas (
         id INTEGER PRIMARY KEY,
@@ -418,7 +469,11 @@ class LocalDatabase {
     ''');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_camas_bloque ON tb_camas (bloque)');
 
-    // 4. Tabla Operarios (t159)
+    // ------------------------------------------------------------------------
+    // HOJA 4: OPERARIOS Y TRABAJADORES (tb_operarios)
+    // La lista del personal de la finca con nombre y número de cédula.
+    // Sirve para saber quién sembró cada cama y calcular cuánto se le debe pagar.
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE tb_operarios (
         id INTEGER PRIMARY KEY,
@@ -427,10 +482,22 @@ class LocalDatabase {
       )
     ''');
 
-    // 5. Tabla Configuración Agronómica Independiente
+    // ------------------------------------------------------------------------
+    // HOJA 5: CARTILLA DE REGLAS AGRONÓMICAS (tb_config_agronomica)
+    // Las normas del agrónomo jefe: cuántos esquejes por cama y cuántos días
+    // de espera para cada familia de flor (Pompón, Cremón, Girasol, Lirio, etc.).
+    // ------------------------------------------------------------------------
     await _crearTablaConfigAgronomica(db);
 
-    // 6. Tabla Siembras (Offline First con Ciclos y Estado)
+    // ------------------------------------------------------------------------
+    // HOJA 6: DIARIO DE SIEMBRAS EN CAMPO (tb_siembras)
+    // ¡EL CORAZÓN DEL SISTEMA! Aquí se anota cada siembra en tiempo real:
+    // - fecha: Cuándo se sembró.
+    // - variedad_id, cama_id, operario_id: Qué flor, en qué cama y quién la sembró.
+    // - cantidad: Cuántas matitas se clavaron en la tierra.
+    // - estado: 'ACTIVA' (está creciendo) o 'FINALIZADA' (ya se cortó y la cama quedó libre).
+    // - sincronizado: 0 si está pendiente de enviar a la oficina, 1 si ya llegó a la oficina.
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE tb_siembras (
         id_local INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -459,7 +526,12 @@ class LocalDatabase {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_siembras_cama_estado ON tb_siembras (cama_id, estado)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_siembras_fecha ON tb_siembras (fecha)');
 
-    // 7. Cola de eliminaciones offline
+    // ------------------------------------------------------------------------
+    // HOJA 7: COLA DE ELIMINACIONES PENDIENTES (tb_eliminaciones_pendientes)
+    // Si un supervisor borra una siembra en el celular porque se equivocó de cama,
+    // aquí se anota el número único (UUID) para borrarla también en la oficina
+    // en cuanto el celular vuelva a conectarse al Wi-Fi.
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE IF NOT EXISTS tb_eliminaciones_pendientes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -468,7 +540,12 @@ class LocalDatabase {
       )
     ''');
 
-    // 8. Tabla Catálogo Lirios 187 (t187_salidaslirioscomp + t185 + t23)
+    // ------------------------------------------------------------------------
+    // HOJA 8: CATÁLOGO DE BULBOS DE LIRIOS IMPORTADOS (tb_lirios_187)
+    // En lirios, los bulbos vienen en barco desde Holanda o Chile.
+    // Aquí se anota el Proveedor (Onings, Vletter), el Contenedor y el Lote.
+    // Al sembrar un lirio, el supervisor escoge estos datos para trazabilidad.
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE tb_lirios_187 (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -483,7 +560,11 @@ class LocalDatabase {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_contenedor ON tb_lirios_187 (contenedor)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_187_lote ON tb_lirios_187 (lote)');
 
-    // 9. Tabla Canastas de Lirios (Rendimientos Operarios)
+    // ------------------------------------------------------------------------
+    // HOJA 9: CANASTAS COSECHADAS DE LIRIOS (tb_lirios_canastas)
+    // Cuenta cuántas canastas o bultos de bulbos descargó y sembró cada trabajador.
+    // Sirve para pagar el rendimiento exacto del día.
+    // ------------------------------------------------------------------------
     await db.execute('''
       CREATE TABLE IF NOT EXISTS tb_lirios_canastas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -502,7 +583,7 @@ class LocalDatabase {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_canastas_subgrupo ON tb_lirios_canastas (subgrupo)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_lirios_canastas_operario ON tb_lirios_canastas (operario_id)');
 
-    // --- Poblar con Seed Data Real Empresarial ---
+    // --- LLENAR CON LOS DATOS OFICIALES DE LA EMPRESA (Semilla inicial) ---
     final batch = db.batch();
 
     for (var b in kSeedBloques) {
@@ -527,7 +608,11 @@ class LocalDatabase {
     await batch.commit(noResult: true);
   }
 
-  /// Fuerza la escritura física inmediata de todas las páginas de memoria a disco
+  /// CHECKPOINT (ASEGURADOR FÍSICO):
+  /// Imagínate que escribiste en un borrador con lápiz. Esta función pasa el borrador
+  /// a tinta en la hoja física del libro de contabilidad.
+  /// Si el celular se apaga, se queda sin pila o se reinicia de repente,
+  /// no se pierde ni una sola letra porque ya quedó sellado en el disco.
   Future<void> checkpoint() async {
     try {
       final db = await database;
@@ -535,6 +620,7 @@ class LocalDatabase {
     } catch (_) {}
   }
 
+  /// Cierra el cuaderno de forma ordenada si se apaga la app
   Future close() async {
     final db = await instance.database;
     db.close();

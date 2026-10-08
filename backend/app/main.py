@@ -1,3 +1,21 @@
+# ============================================================================
+# ARCHIVO: backend/app/main.py
+# ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+# Imagínate que este archivo es EL COMPUTADOR CENTRAL O LA OFICINA PRINCIPAL DE LA FINCA.
+#
+# Este programa se queda encendido todo el día en el computador de la oficina,
+# escuchando atentamente a través de la red Wi-Fi de la finca.
+#
+# ¿QUÉ HACE ESTE COMPUTADOR CENTRAL?
+# 1. Atiende a los celulares de campo: Cuando un supervisor llega con el celular,
+#    este programa lo saluda y le pide la contraseña de seguridad (API Key).
+# 2. Abre la base de datos oficial (Microsoft Access): Se conecta al archivo
+#    empresarial donde están guardadas todas las flores, camas y empleados de años.
+# 3. Hace copias de seguridad de respaldo (Backups): Cada vez que un celular
+#    va a mandar datos, saca una fotocopia de seguridad de la base de datos por si acaso.
+# 4. Entrega catálogos y recibe las siembras hechas en el día.
+# ============================================================================
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -5,7 +23,7 @@ from app.api.router import api_router
 import logging
 import os
 
-# Configuración de Logging
+# Libro de anotaciones del servidor (guarda la bitácora de todo lo que pasa)
 log_dir = "logs"
 os.makedirs(log_dir, exist_ok=True)
 logging.basicConfig(
@@ -16,6 +34,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Creación de la aplicación servidora (FastAPI)
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,

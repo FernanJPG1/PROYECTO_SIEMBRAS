@@ -1,10 +1,32 @@
+// ============================================================================
+// ARCHIVO: db_repository.dart
+// ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+// Imagínate que este archivo es EL MAYORDOMO O AUDITOR ESTRICTO DE LA FINCA.
+// Mientras que `local_db.dart` es solo el cuaderno donde se guarda todo,
+// `db_repository.dart` es la persona inteligente que REVISA Y HACE CUMPLIR LAS REGLAS.
+//
+// ¿QUÉ HACE EL MAYORDOMO?
+// 1. Revisa que una cama no se llene de más: Si caben 4.050 pompones, no deja meter 4.051.
+// 2. Controla las camas compartidas: Si Pedro sembró 2.000 matas en la mañana, el mayordomo
+//    calcula que todavía sobran 2.050 matas y deja que María siembre el resto por la tarde.
+// 3. Vigila los días de crecimiento: Si una flor tarda 70 días en crecer, no deja
+//    que nadie siembre encima hasta que pasen esos 70 días (o hasta que el supervisor
+//    le confirme que ya cortaron la flor y la cama quedó vacía).
+// 4. Salva la patria con flores temporales: Si llegó una flor nueva que no está en el
+//    sistema central de la oficina, permite crearla al instante con un código provisional
+//    para no frenar a los trabajadores en el invernadero.
+// 5. Maneja los bultos y canastas de lirios para liquidar el trabajo de la gente.
+// ============================================================================
+
 import 'package:app_movil/database/local_db.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/services/persistent_backup_service.dart';
 import 'package:app_movil/utils/calendario_util.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Excepción lanzada cuando una operación viola las restricciones agronómicas de densidad o ciclos
+/// ALERTA ROJA AGRONÓMICA:
+/// Si alguien intenta meter más plantas de las permitidas o sembrar encima de una
+/// flor que todavía está creciendo, esta alarma suena y detiene la operación.
 class AgronomicValidationException implements Exception {
   final String message;
   AgronomicValidationException(this.message);
@@ -13,7 +35,13 @@ class AgronomicValidationException implements Exception {
   String toString() => message;
 }
 
-/// Resultado de la validación estricta de ciclos agronómicos y disponibilidad de cama
+/// EL INFORME DEL MAYORDOMO (ValidacionCicloResultado):
+/// Cuando el sembrador elige una cama, el mayordomo le entrega este papelito que dice:
+/// - esValido: ¿Puede sembrar? (Sí o No).
+/// - esCamaLlena: ¿La cama ya está al 100% copada?
+/// - esCamaCompartida: ¿Hay espacio libre para meter otra flor u otro trabajador?
+/// - cupoDisponible: ¿Cuántas maticas más caben exactamente?
+/// - diasFaltantes: ¿Cuántos días le faltan a la flor vieja para estar lista de corte?
 class ValidacionCicloResultado {
   final bool esValido;
   final bool esCicloActivo; // La cama ya tiene una siembra ACTIVA
@@ -726,8 +754,15 @@ class DbRepository {
     return null;
   }
 
-  /// Valida de forma estricta las restricciones agronómicas de capacidad y ciclo de cama,
-  /// permitiendo explícitamente multisembradores y multi-variedad en la misma cama hasta agotar el cupo agronómico.
+  /// =========================================================================
+  /// ¿CÓMO REVISA EL MAYORDOMO SI SE PUEDE SEMBRAR EN UNA CAMA?
+  /// Imagínate que cada cama es como un cajón de madera con un tamaño fijo:
+  /// - Si caben 4.050 matas, tú puedes meter 2.000 de una variedad y 2.050 de otra.
+  /// - Dos trabajadores pueden sembrar la misma cama al tiempo (ej: Pedro y Juan).
+  /// - Pero una vez el cajón se llena (llega al 100%), ¡NADIE PUEDE METER NI UNA MÁS!
+  /// - Y si la flor todavía está creciendo (ej: van 20 días de 70), nadie puede
+  ///   arrancarla para sembrar encima, a menos que el jefe confirme que ya se cosechó.
+  /// =========================================================================
   Future<ValidacionCicloResultado> validarCicloYCamaParaSiembra(
     int camaId,
     String fechaNuevaStr, {
@@ -739,7 +774,7 @@ class DbRepository {
     final db = await LocalDatabase.instance.database;
     final fechaNueva = parsearFechaSiembra(fechaNuevaStr) ?? DateTime.now();
 
-    // 1. Consultar configuración de la nueva variedad (si fue especificada)
+    // PASO 1: Mirar la ficha técnica de la flor que quieren sembrar (cuántas caben y cuántos días dura)
     Variedad? nuevaVariedad;
     ConfigAgronomica? cfgNuevaVariedad;
     if (nuevaVariedadId != null) {

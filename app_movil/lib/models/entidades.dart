@@ -1,6 +1,35 @@
+// ============================================================================
+// 🌸 ARCHIVO: entidades.dart (EL DICCIONARIO DE LA FINCA EN EL CELULAR)
+// ============================================================================
+// 📖 ¿QUÉ ES ESTE ARCHIVO Y PARA QUÉ SIRVE? (Explicado para que cualquiera lo entienda)
+//
+// Imagínate que este archivo es como el DICCIONARIO o la LIBRETA DE MODELOS de la finca Buenavista.
+// Aquí le enseñamos al celular qué significa cada cosa que existe en el mundo real del campo:
+//
+// 1. 🌱 ¿Qué es un Bloque? -> Es el invernadero o pedazo grande de tierra (ej: Bloque 003).
+// 2. 🛏️ ¿Qué es una Cama? -> Es la franja o hilera larga de tierra donde se meten las plantas (ej: Cama 001A).
+// 3. 🌺 ¿Qué es una Variedad? -> Es el nombre y tipo de la flor (ej: Abriana, Alma, Anastacia).
+// 4. 👷 ¿Qué es un Operario? -> Es la persona de campo que trabaja sembrando (con su nombre y su cédula).
+// 5. 📋 ¿Qué es una Siembra? -> Es la hoja de trabajo oficial donde anotamos quién sembró, qué flor metió,
+//                             en qué cama, cuántas líneas hizo y cuántos tallos quedaron sembrados.
+// 6. 🧺 ¿Qué es una Canasta? -> En los Lirios, varias personas siembran juntas en la misma cama.
+//                              Por eso a cada trabajador se le cuentan las canastas de bulbos que recibe y siembra.
+// 7. 🏆 ¿Qué es un Rendimiento? -> Es la cuenta de quién trabajó más rápido para darle su medalla (Oro, Plata, Bronce).
+//
+// Sin este archivo, el teléfono no sabría qué es una flor, ni qué es una cama, ni quién está trabajando.
+// ============================================================================
+
+/// 🌱 CLASE BLOQUE
+/// Representa un lote grande o invernadero dentro de la finca.
+/// Ejemplo: El Bloque 003 del Sector 1.
 class Bloque {
+  /// El número o código oficial del bloque (ejemplo: "003")
   final String codigo;
+
+  /// El nombre con el que todos en la finca conocen el bloque (ejemplo: "Bloque 3")
   final String nombre;
+
+  /// El sector o parte de la finca donde queda el bloque (ejemplo: Sector 1)
   final int? sector;
 
   Bloque({required this.codigo, required this.nombre, this.sector});
@@ -13,6 +42,7 @@ class Bloque {
   @override
   int get hashCode => codigo.hashCode;
 
+  /// Convierte los datos del bloque en una lista de palabras para guardarlo en la memoria del teléfono
   Map<String, dynamic> toMap() {
     return {
       'codigo': codigo,
@@ -21,6 +51,7 @@ class Bloque {
     };
   }
 
+  /// Lee los datos guardados en la memoria del teléfono y vuelve a crear el Bloque
   factory Bloque.fromMap(Map<String, dynamic> map) {
     return Bloque(
       codigo: map['codigo']?.toString() ?? '',
@@ -30,20 +61,48 @@ class Bloque {
   }
 }
 
+/// 🌺 CLASE VARIEDAD
+/// Representa el tipo o especie de flor que se va a sembrar en la cama.
+/// Ejemplo: "ABRIANA CF", "ALMA CF", "ANASTACIA", "LIRIO BRINDISI".
 class Variedad {
+  /// Número único en la base de datos para identificar esta flor
   final int id;
+
+  /// Código interno de la empresa (ej: "051011103")
   final String codigo;
+
+  /// Nombre comercial de la flor (ej: "ABRIANA CF")
   final String nombre;
+
+  /// 1 si está activa para sembrar hoy, 0 si ya no se siembra en la finca
   final int estado;
+
+  /// Código de la familia a la que pertenece (ej: 147 para Pompón, 193 para Cremón)
   final int? familiaId;
+
+  /// Nombre de la familia (ej: "POMPÓN", "CREMÓN", "LIRIOS")
   final String? familiaNombre;
+
+  /// Código del color de los pétalos
   final String? color;
+
+  /// Nombre del color en español (ej: "BLANCO", "AMARILLO", "ROSADO")
   final String? colorNombre;
+
+  /// Subvariedad o tipo especial si aplica
   final String? subvarNombre;
+
+  /// Límite máximo de esquejes o tallos que caben en una cama de esta flor (ej: 3.645 o 4.050)
   final int? limiteEsquejes;
+
+  /// Cuántos días tarda la flor desde que se siembra hasta que está lista para cortar (ej: 70 o 98 días)
   final int? diasCiclo;
-  final int? densidadLinea; // Densidad: factor de esquejes/plantas por línea
-  final bool esTemporal; // true si es variedad local/prueba pendiente de sincronizar con Access
+
+  /// Cuántos tallos o esquejes se siembran en una sola línea de la cama (ej: 22 o 24 o 28)
+  final int? densidadLinea;
+
+  /// Si es una variedad nueva creada en el celular por la supervisora que aún no está en la oficina
+  final bool esTemporal;
 
   Variedad({
     required this.id,
@@ -142,11 +201,23 @@ class Variedad {
   }
 }
 
+/// 🛏️ CLASE CAMA
+/// Representa una cama de siembra individual dentro de un bloque.
+/// Ejemplo: Cama "001A" dentro del Bloque "003".
 class Cama {
+  /// Número de registro interno de la cama
   final int id;
+
+  /// Nombre o placa de la cama en el invernadero (ej: "001A")
   final String cama;
+
+  /// Código del bloque donde está ubicada esta cama (ej: "003")
   final String bloque;
+
+  /// Número de la nave o sección techada del invernadero
   final String nave;
+
+  /// Referencia técnica si la cama tiene una siembra previa registrada
   final int? referenciaActualId;
 
   Cama({
@@ -186,9 +257,17 @@ class Cama {
   }
 }
 
+/// 👷 CLASE OPERARIO
+/// Representa a la persona trabajadora de campo que realiza la labor de siembra.
+/// Cada operario tiene su nombre y cédula para saber exactamente quién sembró cada cama.
 class Operario {
+  /// Número de registro en el sistema
   final int id;
+
+  /// Número de cédula de ciudadanía del trabajador (ej: "12566001")
   final String cedula;
+
+  /// Nombre y apellidos completos del sembrador (ej: "ALBA LUCIA CASTAÑEDA GAVIRIA")
   final String nombreCompleto;
 
   Operario({required this.id, required this.cedula, required this.nombreCompleto});
@@ -294,29 +373,64 @@ class LirioItem187 {
   }
 }
 
+/// 📋 CLASE SIEMBRA (LA PLANILLA DE TRABAJO PRINCIPAL)
+/// Es la planilla oficial donde queda guardado cada trabajo hecho en la finca:
+/// Quién sembró, qué flor se puso, en qué cama, cuántos tallos y qué día.
 class Siembra {
-  final int? idLocal; // Autoincremental local
-  final String? uuid; // Identificador global de ciclo
-  final String fecha;
-  final String? bloqueCodigo;
-  final int variedadId;
-  final int camaId;
-  final int operarioId;
-  final int cantidad; // Tallos / esquejes sembrados
-  
-  // Control de Ciclo Agronómico y Disponibilidad de Cama
-  final String estado; // 'ACTIVA' o 'FINALIZADA'
-  final String? fechaFin; // Fecha de finalización / destronque
+  /// Número de orden en la memoria del celular
+  final int? idLocal;
 
-  // Campos operacionales
+  /// Código único universal para que nunca se confunda con otra siembra
+  final String? uuid;
+
+  /// Día en que se hizo la siembra (ej: "08/10/2026")
+  final String fecha;
+
+  /// Invernadero o lote donde se sembró (ej: "003")
+  final String? bloqueCodigo;
+
+  /// Identificador de la flor sembrada
+  final int variedadId;
+
+  /// Identificador de la cama de tierra
+  final int camaId;
+
+  /// Identificador del trabajador que hizo la labor
+  final int operarioId;
+
+  /// Total de esquejes, tallos o bulbos sembrados en la cama (ej: 1.353 unidades)
+  final int cantidad;
+  
+  /// Estado de la siembra:
+  /// - 'ACTIVA': La flor está sembrada y creciendo en la tierra.
+  /// - 'FINALIZADA': La flor ya se cosechó y la cama quedó limpia para volver a sembrar.
+  final String estado;
+
+  /// Fecha en que se cortó la flor o se destroncó la cama
+  final String? fechaFin;
+
+  /// Cuántas líneas de largo se sembraron en la cama (ej: 68 o 123 líneas)
   final int? lineas;
+
+  /// Anotaciones especiales:
+  /// Si sembró el Lado A, Lado B, Cama Completa, o si terminó su lado y pasó al otro lado
   final String? observaciones;
+
+  /// Número de corte agronómico
   final String? corte;
+
+  /// Número de lote de compra del bulbo o esqueje
   final String? lote;
+
+  /// Nombre de la empresa que vendió el bulbo (ej: Steenvoorden, Onings)
   final String? proveedor;
+
+  /// Número de contenedor de importación en el que llegaron los bulbos
   final String? cont;
 
-  final int sincronizado; // 0 = false, 1 = true
+  /// 0 = guardado solo en el celular (pendiente por enviar)
+  /// 1 = ya enviado con éxito a la oficina central
+  final int sincronizado;
 
   Siembra({
     this.idLocal,
@@ -426,16 +540,40 @@ class Siembra {
   }
 }
 
-/// Representa las métricas de rendimiento y productividad calculadas para un sembrador / operario
+/// 🏆 CLASE RENDIMIENTO OPERARIO (EL PODIO DE HONOR Y MEDALLAS)
+/// Es la calculadora del campeonato de siembra.
+/// Cuenta cuántos tallos sembró cada trabajador en el día o en la semana,
+/// calcula su promedio por cama y los ordena del #1 al último para entregar
+/// las medallas de honor:
+/// - 🥇 Medalla de Oro al sembrador más rápido
+/// - 🥈 Medalla de Plata al segundo puesto
+/// - 🥉 Medalla de Bronce al tercer puesto
 class RendimientoOperario {
+  /// Datos personales del trabajador (nombre y cédula)
   final Operario operario;
+
+  /// Gran total de tallos o esquejes que sembró
   final int totalTallos;
+
+  /// Cuántas camas completó o participó
   final int totalCamas;
+
+  /// Cuántas líneas de largo sembró en total
   final int totalLineas;
+
+  /// Cuántos días estuvo trabajando en el campo
   final int diasTrabajados;
+
+  /// Promedio de tallos que siembra en cada cama
   final double promedioTallosPorCama;
+
+  /// Promedio de tallos que siembra cada día
   final double promedioTallosPorDia;
+
+  /// Qué porcentaje de todo el trabajo de la finca hizo este trabajador (ej: 18.5%)
   final double porcentajeTotal;
+
+  /// Puesto en la tabla de clasificación (1 = Primer lugar, 2 = Segundo lugar...)
   final int posicion;
 
   RendimientoOperario({
@@ -450,8 +588,11 @@ class RendimientoOperario {
     this.posicion = 1,
   });
 
-  /// Calcula el rendimiento individual de cada sembrador a partir de las siembras y operarios dados.
-  /// Excluye explícitamente siembras de Plantas Madre, Bancos, Núcleos o sin sembrador asignado.
+  /// 🧮 FUNCIÓN MATEMÁTICA: CALCULAR EL PODIO
+  /// Toma todas las siembras de la semana y hace la suma exacta para cada persona.
+  /// REGLA DE ORO DE LA FINCA:
+  /// No se cuentan las siembras de Plantas Madre, Bancos o Núcleos porque son
+  /// trabajos comunitarios que no miden velocidad de operario individual.
   static List<RendimientoOperario> calcular({
     required List<Siembra> siembras,
     required List<Operario> operarios,
@@ -546,17 +687,41 @@ class RendimientoOperario {
   }
 }
 
-/// Representa la entrega individual de una canasta de bulbos a un operario para medir rendimiento en Lirios
+/// 🧺 CLASE CANASTA LIRIO
+/// En el cultivo de Lirios, varias personas siembran juntas en la misma cama.
+/// Para medir cuánto sembró cada persona, el supervisor le entrega CANASTAS con bulbos:
+/// - En Lirio LA: canastas de 400, 425 o 450 bulbos.
+/// - En Lirio LO/OT (Orientales): canastas de 200, 225 o 250 bulbos.
+/// Cada vez que un operario recibe una canasta, se anota en esta clase.
 class CanastaLirio {
+  /// Número de orden en el celular
   final int? id;
+
+  /// Código único universal de la canasta
   final String uuid;
+
+  /// Día en que se entregó la canasta
   final String fecha;
-  final String subgrupo; // 'LA', 'LO', 'OT'
+
+  /// Tipo de Lirio ('LA', 'LO' u 'OT')
+  final String subgrupo;
+
+  /// Identificador del operario que recibió la canasta
   final int operarioId;
+
+  /// Nombre del operario que recibió la canasta
   final String operarioNombre;
-  final int cantidadBulbos; // 400, 425, 450 (LA) | 200, 225, 250 (LO, OT)
+
+  /// Cuántos bulbos venían dentro de la canasta (ej: 400, 425, 450)
+  final int cantidadBulbos;
+
+  /// Hora exacta en que se entregó (ej: "10:15 AM")
   final String hora;
+
+  /// 0 = guardado solo en el celular, 1 = enviado a la oficina
   final int sincronizado;
+
+  /// Si sobraron bulbos o hubo alguna novedad
   final String? observaciones;
 
   CanastaLirio({

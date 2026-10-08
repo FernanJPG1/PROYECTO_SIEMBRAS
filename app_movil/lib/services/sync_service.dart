@@ -1,11 +1,38 @@
+// ============================================================================
+// ARCHIVO: sync_service.dart
+// ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+// Imagínate que este archivo es EL CAMIÓN REPARTIDOR O MENSAJERO INALÁMBRICO de la finca.
+//
+// En los invernaderos no hay cable de red y a veces ni señal celular.
+// Por eso, la app trabaja 100% desconectada (Offline).
+// Pero cuando el supervisor se acerca a la oficina o agarra la señal Wi-Fi de la finca:
+//
+// 1. VIAJE DE VENIDA (Descargar Catálogos):
+//    El mensajero va al computador grande de la oficina y se trae la lista fresca
+//    de variedades, bloques, camas y trabajadores nuevos para que el celular esté al día.
+//
+// 2. VIAJE DE IDA (Subir Siembras y Rendimientos):
+//    El mensajero busca en el teléfono todas las siembras que tienen el relojito de espera
+//    (sincronizado = 0) y se las entrega al computador de la oficina.
+//
+// 3. SELLO DE RECIBIDO:
+//    La oficina le da un recibo formal y el mensajero le pone el chulito verde
+//    (sincronizado = 1) a cada siembra en el celular para que nadie se confunda.
+//
+// 4. AVISO DE BORRADOS:
+//    Si en el campo anularon una siembra mal hecha, el mensajero le avisa a la oficina
+//    para que también la anule en el sistema contable Access.
+// ============================================================================
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
 
+/// [SyncService]: El Mensajero que comunica el celular con el computador de la oficina.
 class SyncService {
-  // URLs de conexión por defecto
+  // Las direcciones de la oficina (la IP de la red Wi-Fi o del emulador)
   static const String defaultUrl = 'http://10.0.2.2:8000/api';
   static const String fallbackLanUrl = 'http://192.168.1.39:8000/api';
   static String? _cachedBaseUrl;

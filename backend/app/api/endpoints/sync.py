@@ -1,3 +1,18 @@
+# ============================================================================
+# ARCHIVO: backend/app/api/endpoints/sync.py
+# ¿QUÉ ES ESTE ARCHIVO EXPLICADO DE FORMA SENCILLA?
+# Imagínate que este archivo es LA VENTANILLA DE RECEPCIÓN DE PLANILLAS EN LA OFICINA.
+#
+# Cuando el supervisor o el mensajero del celular se conecta a la red Wi-Fi
+# y presiona "Sincronizar":
+# 1. Llega a esta ventanilla con un fajo de hojas.
+# 2. Si trae anulaciones (siembras canceladas en campo), la secretaria las busca
+#    en la base de datos empresarial de Access y las tacha para no duplicar pagos.
+# 3. Si trae siembras nuevas, las estampa una por una en el libro de Access.
+# 4. Le devuelve al celular un sello de "RECIBIDO CONFORME" para que el celular
+#    ponga el chulito verde en la pantalla y no las vuelva a mandar.
+# ============================================================================
+
 from fastapi import APIRouter, Depends, HTTPException, status
 import time
 import pyodbc
@@ -16,8 +31,7 @@ def sync_siembras(
     api_key: str = Depends(get_api_key)
 ):
     """
-    Recibe las siembras registradas offline en la App Móvil y las inserta en lote
-    en la base de datos empresarial.
+    Ventanilla oficial que recibe el paquete de siembras del celular y lo asienta en Access.
     """
     # 1. Procesar eliminaciones pendientes de la app móvil (siembras con ciclo cumplido o dadas de baja)
     if request.deletes:
