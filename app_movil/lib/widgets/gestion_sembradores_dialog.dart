@@ -15,6 +15,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:app_movil/database/seed_data.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
 import 'package:app_movil/utils/responsive.dart';
@@ -111,6 +112,16 @@ class _GestionSembradoresDialogState extends State<GestionSembradoresDialog> {
         );
       }
     }
+  }
+
+  void _activarProduccion() {
+    setState(() {
+      _seleccionados.addAll(
+        _todosLosOperarios
+            .where((op) => kOperariosProduccionIds.contains(op.id))
+            .map((op) => op.id),
+      );
+    });
   }
 
   void _activarConHistorial() {
@@ -282,6 +293,15 @@ class _GestionSembradoresDialogState extends State<GestionSembradoresDialog> {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           visualDensity: VisualDensity.compact,
                         ),
+                        icon: const Icon(Icons.verified_user_outlined, size: 16, color: Color(0xFF1B5E20)),
+                        label: Text('Producción (${kOperariosProduccionIds.length})', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20))),
+                        onPressed: _activarProduccion,
+                      ),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          visualDensity: VisualDensity.compact,
+                        ),
                         icon: const Icon(Icons.history, size: 16, color: Color(0xFF33691E)),
                         label: const Text('Con Historial', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF33691E))),
                         onPressed: _activarConHistorial,
@@ -394,6 +414,25 @@ class _GestionSembradoresDialogState extends State<GestionSembradoresDialog> {
                                                   'Cédula: ${op.cedula.isNotEmpty ? op.cedula : 'N/A'}',
                                                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                                                 ),
+                                                if (kOperariosProduccionIds.contains(op.id)) ...[
+                                                  const SizedBox(width: 6),
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFFE8F5E9),
+                                                      borderRadius: BorderRadius.circular(4),
+                                                      border: Border.all(color: const Color(0xFF81C784), width: 0.8),
+                                                    ),
+                                                    child: const Text(
+                                                      'PRODUCCIÓN',
+                                                      style: TextStyle(
+                                                        fontSize: 9,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Color(0xFF2E7D32),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                                 if (conteo > 0) ...[
                                                   const SizedBox(width: 8),
                                                   Container(

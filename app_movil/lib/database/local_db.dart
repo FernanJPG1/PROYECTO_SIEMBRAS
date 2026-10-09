@@ -243,24 +243,30 @@ class LocalDatabase {
             )
           ''');
 
-          // Asegurar existencia y población de tb_sembradores_activos
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS tb_sembradores_activos (
-              operario_id INTEGER PRIMARY KEY,
-              fecha_asignacion TEXT NOT NULL
-            )
-          ''');
-
-          final cSembradores = await db.rawQuery('SELECT COUNT(*) as total FROM tb_sembradores_activos');
-          final totalSembradores = Sqflite.firstIntValue(cSembradores) ?? 0;
-          if (totalSembradores == 0) {
+          // Asegurar existencia y población de tb_sembradores_activos con los empleados activos de Producción
+          try {
             await db.execute('''
-              INSERT OR IGNORE INTO tb_sembradores_activos (operario_id, fecha_asignacion)
-              SELECT DISTINCT operario_id, datetime('now', 'localtime')
-              FROM tb_siembras
-              WHERE operario_id > 0
+              CREATE TABLE IF NOT EXISTS tb_sembradores_activos (
+                operario_id INTEGER PRIMARY KEY,
+                fecha_asignacion TEXT NOT NULL
+              )
             ''');
-          }
+
+            // Asegurar que contenga exactamente los 42 operarios activos del departamento de Producción
+            await db.delete(
+              'tb_sembradores_activos',
+              where: 'operario_id NOT IN (${kOperariosProduccionIds.join(",")})',
+            );
+            final batchSem = db.batch();
+            final nowStr = DateTime.now().toIso8601String();
+            for (final id in kOperariosProduccionIds) {
+              batchSem.insert('tb_sembradores_activos', {
+                'operario_id': id,
+                'fecha_asignacion': nowStr,
+              }, conflictAlgorithm: ConflictAlgorithm.ignore);
+            }
+            await batchSem.commit(noResult: true);
+          } catch (_) {}
         } catch (_) {}
       },
     );
@@ -632,12 +638,15 @@ class LocalDatabase {
         fecha_asignacion TEXT NOT NULL
       )
     ''');
-    await db.execute('''
-      INSERT OR IGNORE INTO tb_sembradores_activos (operario_id, fecha_asignacion)
-      SELECT DISTINCT operario_id, datetime('now', 'localtime')
-      FROM tb_siembras
-      WHERE operario_id > 0
-    ''');
+    final batchSem = db.batch();
+    final nowStr = DateTime.now().toIso8601String();
+    for (final id in kOperariosProduccionIds) {
+      batchSem.insert('tb_sembradores_activos', {
+        'operario_id': id,
+        'fecha_asignacion': nowStr,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+    await batchSem.commit(noResult: true);
   }
 
   /// CHECKPOINT (ASEGURADOR FÍSICO):

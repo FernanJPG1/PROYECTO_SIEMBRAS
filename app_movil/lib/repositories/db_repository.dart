@@ -19,6 +19,7 @@
 // ============================================================================
 
 import 'package:app_movil/database/local_db.dart';
+import 'package:app_movil/database/seed_data.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/services/persistent_backup_service.dart';
 import 'package:app_movil/utils/calendario_util.dart';
@@ -160,6 +161,13 @@ class DbRepository {
         batch.insert('tb_operarios', o.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
       }
       await batch.commit(noResult: true);
+
+      // Si los operarios sincronizados vienen del filtro oficial (Producción Activos),
+      // sincronizar la lista de sembradores activos automáticamente
+      if (operarios.isNotEmpty) {
+        final idsSincronizados = operarios.map((o) => o.id).toSet();
+        await guardarSembradoresBatch(idsSincronizados);
+      }
     } finally {
       await db.execute('PRAGMA foreign_keys = ON');
     }
@@ -978,16 +986,33 @@ class DbRepository {
     return result.map((json) => Operario.fromMap(json)).toList();
   }
 
-  /// Obtiene únicamente los operarios marcados como habilitados para Siembra.
+  /// Obtiene únicamente los operarios marcados como habilitados para Siembra (Filtro oficial: Activos de Producción).
   /// Si la lista está vacía, devuelve todos los operarios para no bloquear la operación.
   Future<List<Operario>> obtenerOperariosSiembra() async {
     final db = await LocalDatabase.instance.database;
-    final result = await db.rawQuery('''
+    var result = await db.rawQuery('''
       SELECT o.* 
       FROM tb_operarios o
       INNER JOIN tb_sembradores_activos s ON o.id = s.operario_id
       ORDER BY o.nombre_completo ASC
     ''');
+    if (result.isEmpty) {
+      await obtenerIdsSembradoresActivos();
+      result = await db.rawQuery('''
+        SELECT o.* 
+        FROM tb_operarios o
+        INNER JOIN tb_sembradores_activos s ON o.id = s.operario_id
+        ORDER BY o.nombre_completo ASC
+      ''');
+    }
+    if (result.isEmpty) {
+      final idsStr = kOperariosProduccionIds.join(',');
+      result = await db.rawQuery('''
+        SELECT * FROM tb_operarios 
+        WHERE id IN ($idsStr)
+        ORDER BY nombre_completo ASC
+      ''');
+    }
     if (result.isEmpty) {
       return obtenerOperarios();
     }
@@ -998,7 +1023,20 @@ class DbRepository {
   Future<Set<int>> obtenerIdsSembradoresActivos() async {
     final db = await LocalDatabase.instance.database;
     try {
-      final res = await db.rawQuery('SELECT operario_id FROM tb_sembradores_activos');
+      var res = await db.rawQuery('SELECT operario_id FROM tb_sembradores_activos');
+      if (res.isEmpty) {
+        // Auto-población automática con los empleados activos del departamento de Producción
+        final batch = db.batch();
+        final nowStr = DateTime.now().toIso8601String();
+        for (final id in kOperariosProduccionIds) {
+          batch.insert('tb_sembradores_activos', {
+            'operario_id': id,
+            'fecha_asignacion': nowStr,
+          }, conflictAlgorithm: ConflictAlgorithm.ignore);
+        }
+        await batch.commit(noResult: true);
+        res = await db.rawQuery('SELECT operario_id FROM tb_sembradores_activos');
+      }
       return res.map((r) => r['operario_id'] as int).toSet();
     } catch (_) {
       return {};

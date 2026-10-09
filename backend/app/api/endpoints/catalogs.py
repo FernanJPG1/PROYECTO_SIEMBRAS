@@ -45,7 +45,7 @@ def get_todos_los_catalogos(
     camas = queries.get_camas(conn)
     familias = queries.get_familias(conn, solo_activas=True)
     variedades = queries.get_variedades(conn, solo_activas=True)
-    operarios = queries.get_operarios(conn, solo_activos=True)
+    operarios = queries.get_operarios(conn, solo_activos=True, solo_produccion=True)
     configuraciones = queries.get_configuraciones_agronomicas(conn)
     lirios_187 = queries.get_lirios_tabla187(conn)
 
@@ -204,8 +204,9 @@ def actualizar_variedad(
 @router.get("/operarios", response_model=List[Operario])
 def get_operarios(
     solo_activos: bool = True,
+    solo_produccion: bool = True,
     conn: pyodbc.Connection = Depends(get_db),
     api_key: str = Depends(get_api_key)
 ):
-    """Obtiene los operarios/empleados registrados."""
-    return queries.get_operarios(conn, solo_activos=solo_activos)
+    """Obtiene los operarios/empleados registrados (por defecto activos y pertenecientes a Producción)."""
+    return queries.get_operarios(conn, solo_activos=solo_activos, solo_produccion=solo_produccion)

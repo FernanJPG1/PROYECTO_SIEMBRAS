@@ -513,10 +513,31 @@ def actualizar_variedad(conn: pyodbc.Connection, variedad_id: int, update: Varie
 
 # --- Operarios (t159_empleados) ---
 
-def get_operarios(conn: pyodbc.Connection, solo_activos: bool = True) -> List[Operario]:
+def get_operarios(conn: pyodbc.Connection, solo_activos: bool = True, solo_produccion: bool = True) -> List[Operario]:
     cursor = conn.cursor()
     try:
-        if solo_activos:
+        if solo_produccion:
+            # Filtro oficial de la empresa: Activos y pertenecientes al departamento de Producción (t159 / t171)
+            cursor.execute("""
+                SELECT e.t159_interno, e.t159_cedula, e.t159_nombre, e.t159_apellidos, e.t159_cargo
+                FROM t159_empleados e
+                WHERE e.t159_estado = True 
+                  AND (
+                    e.t159_depto IN (SELECT t89_interno FROM t89_mdeptos WHERE UCASE(t89_nomdepto) = 'PRODUCCION')
+                    OR e.t159_depto_trab IN (SELECT t89_interno FROM t89_mdeptos WHERE UCASE(t89_nomdepto) = 'PRODUCCION')
+                  )
+                UNION
+                SELECT e.t159_interno, e.t159_cedula, e.t159_nombre, e.t159_apellidos, det.t171_cargo
+                FROM t159_empleados e
+                INNER JOIN t171_detalle_empleados det ON e.t159_interno = det.t171_interno_t159
+                WHERE det.t171_estado = True 
+                  AND (
+                    det.t171_depto IN (SELECT t89_interno FROM t89_mdeptos WHERE UCASE(t89_nomdepto) = 'PRODUCCION')
+                    OR det.t171_depto_trab IN (SELECT t89_interno FROM t89_mdeptos WHERE UCASE(t89_nomdepto) = 'PRODUCCION')
+                  )
+                ORDER BY 3 ASC
+            """)
+        elif solo_activos:
             cursor.execute("""
                 SELECT t159_interno, t159_cedula, t159_nombre, t159_apellidos, t159_cargo 
                 FROM t159_empleados 
@@ -532,14 +553,14 @@ def get_operarios(conn: pyodbc.Connection, solo_activos: bool = True) -> List[Op
         rows = cursor.fetchall()
         operarios = []
         for r in rows:
-            nombre = str(r.t159_nombre).strip() if r.t159_nombre else ""
-            apellidos = str(r.t159_apellidos).strip() if r.t159_apellidos and str(r.t159_apellidos).strip() != "N/A" else ""
+            nombre = str(r[2]).strip() if r[2] else ""
+            apellidos = str(r[3]).strip() if r[3] and str(r[3]).strip() != "N/A" else ""
             full_name = f"{nombre} {apellidos}".strip() if apellidos else nombre
             operarios.append(Operario(
-                id=int(r.t159_interno) if r.t159_interno else 0,
-                cedula=str(r.t159_cedula).strip() if r.t159_cedula else "",
+                id=int(r[0]) if r[0] else 0,
+                cedula=str(r[1]).strip() if r[1] else "",
                 nombre_completo=full_name,
-                cargo=str(r.t159_cargo).strip() if r.t159_cargo else None
+                cargo=str(r[4]).strip() if r[4] else None
             ))
         return operarios
     except Exception as e:

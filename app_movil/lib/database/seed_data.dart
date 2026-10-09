@@ -797,7 +797,27 @@ final List<Map<String, dynamic>> kSeedVariedades = [
   {"id": 2275, "codigo": "0420103", "nombre": "PINK", "estado": 1, "familia_id": 262, "familia_nombre": "VERONICA", "color": "03", "color_nombre": "PK", "subvar_nombre": "SKYLER", "limite_esquejes": 750, "dias_ciclo": 70, "densidad_linea": 12},
 ];
 
+/// Lista oficial de IDs de empleados ACTIVOS del departamento PRODUCCIÓN (Filtro de Siembra)
+const Set<int> kOperariosProduccionIds = {
+  4411, 101, 2393, 4019, 324, 3661, 3448, 4114, 4304, 4370,
+  3540, 2383, 3923, 4292, 97, 4415, 269, 4390, 359, 262,
+  264, 3809, 3494, 3969, 3917, 4412, 4208, 110, 4267, 4350,
+  4236, 4371, 2496, 3550, 129, 3974, 4395, 4410, 4382, 265,
+  3649, 4097,
+};
+
 final List<Map<String, dynamic>> kSeedOperarios = [
+  {"id": 4411, "cedula": "1068813809", "nombre_completo": "ANA SOFIA MENDOZA PEREZ"},
+  {"id": 4370, "cedula": "1007440101", "nombre_completo": "GERARDO LUIS GALVIS MARTINEZ"},
+  {"id": 4415, "cedula": "1037122636", "nombre_completo": "KAREN YULIETH SOTELO HERNANDEZ"},
+  {"id": 4390, "cedula": "1083911970", "nombre_completo": "LEIDY MILENA BERRIO RESTREPO"},
+  {"id": 3494, "cedula": "1007547001", "nombre_completo": "LUIS FERNANDO GONZALEZ SIERRA"},
+  {"id": 4412, "cedula": "6975585", "nombre_completo": "MAIRIALIS ALICIA RODRIGUEZ VILLALOBOS"},
+  {"id": 4371, "cedula": "1020115229", "nombre_completo": "PAULA ANDREA ACEVEDO GONZALEZ"},
+  {"id": 3974, "cedula": "1005626927", "nombre_completo": "SELENE MARCELA JIMENEZ HERRERA"},
+  {"id": 4395, "cedula": "1026140825", "nombre_completo": "STIVEN GONZALEZ QUICENO"},
+  {"id": 4410, "cedula": "1193553721", "nombre_completo": "VANESSA MANDOZA VELAZQUEZ"},
+  {"id": 4382, "cedula": "5511209", "nombre_completo": "WILEIDY PAOLA FERNANDEZ IPUANA"},
   {"id": 188, "cedula": "12566001", "nombre_completo": "ABELARDO PANTOJA VARGAS"},
   {"id": 2483, "cedula": "5621994", "nombre_completo": "ADELIN COROMOTO A\u00d1EZ FERREIRA"},
   {"id": 4104, "cedula": "5622624", "nombre_completo": "ADRIAN ENRIQUE MEJIAS A\u00d1EZ"},

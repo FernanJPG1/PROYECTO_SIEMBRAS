@@ -66,9 +66,7 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
     _camas = List.from(widget.camas);
     _operarios = List.from(widget.operarios);
 
-    if (_siembras.isEmpty || _variedades.isEmpty || _operarios.isEmpty) {
-      _recargarDatos();
-    }
+    _recargarDatos();
   }
 
   Future<void> _recargarDatos() async {
@@ -339,11 +337,11 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
                     icon: Icons.badge_outlined,
                     iconBgColor: const Color(0xFFE1F5FE),
                     iconColor: const Color(0xFF0288D1),
-                    badgeText: _totalSembradoresActivos > 0 ? '$_totalSembradoresActivos EN SIEMBRA' : 'SIN CONFIGURAR',
+                    badgeText: _totalSembradoresActivos > 0 ? '$_totalSembradoresActivos EN SIEMBRA (PRODUCCIÓN)' : 'PRODUCCIÓN (42)',
                     badgeColor: const Color(0xFF0288D1),
                     title: 'Personal de Siembra (Sembradores)',
                     subtitle:
-                        'Filtra y selecciona de los ${_operarios.length} empleados de la empresa únicamente a los autorizados para registrar siembras y canastas de lirios en campo.',
+                        'Control del personal de campo: únicamente los empleados activos del departamento de Producción autorizados para registrar siembras y canastas de lirios.',
                     actionLabel: 'Gestionar Sembradores',
                     onTap: _abrirGestionSembradores,
                   ),
