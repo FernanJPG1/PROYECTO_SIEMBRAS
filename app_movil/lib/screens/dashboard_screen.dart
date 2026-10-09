@@ -1818,6 +1818,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     int selOperarioId = s.operarioId;
     int selVariedadId = s.variedadId;
 
+    final operariosSiembra = await _db.obtenerOperariosSiembra();
+    final opsDisponibles = List<Operario>.from(operariosSiembra);
+    if (!opsDisponibles.any((o) => o.id == s.operarioId)) {
+      final opActual = _operarios.firstWhere(
+        (o) => o.id == s.operarioId,
+        orElse: () => Operario(id: s.operarioId, cedula: '', nombreCompleto: 'Operario #${s.operarioId}'),
+      );
+      opsDisponibles.add(opActual);
+      opsDisponibles.sort((a, b) => a.nombreCompleto.compareTo(b.nombreCompleto));
+    }
+
+    if (!mounted) return;
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -1908,13 +1920,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 12),
 
                   DropdownButtonFormField<int>(
-                    initialValue: _operarios.any((o) => o.id == selOperarioId) ? selOperarioId : null,
+                    initialValue: opsDisponibles.any((o) => o.id == selOperarioId) ? selOperarioId : null,
                     decoration: InputDecoration(
-                      labelText: 'Empleado / Operario',
+                      labelText: 'Empleado / Operario (Siembra)',
                       prefixIcon: const Icon(Icons.person, color: Color(0xFF7CB342)),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    items: _operarios.map((o) {
+                    items: opsDisponibles.map((o) {
                       return DropdownMenuItem<int>(
                         value: o.id,
                         child: Text(o.nombreCompleto),

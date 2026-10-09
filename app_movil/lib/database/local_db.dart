@@ -242,6 +242,25 @@ class LocalDatabase {
                  OR familia_id IN (199, 204, 309, 255)
             )
           ''');
+
+          // Asegurar existencia y población de tb_sembradores_activos
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS tb_sembradores_activos (
+              operario_id INTEGER PRIMARY KEY,
+              fecha_asignacion TEXT NOT NULL
+            )
+          ''');
+
+          final cSembradores = await db.rawQuery('SELECT COUNT(*) as total FROM tb_sembradores_activos');
+          final totalSembradores = Sqflite.firstIntValue(cSembradores) ?? 0;
+          if (totalSembradores == 0) {
+            await db.execute('''
+              INSERT OR IGNORE INTO tb_sembradores_activos (operario_id, fecha_asignacion)
+              SELECT DISTINCT operario_id, datetime('now', 'localtime')
+              FROM tb_siembras
+              WHERE operario_id > 0
+            ''');
+          }
         } catch (_) {}
       },
     );
@@ -606,6 +625,19 @@ class LocalDatabase {
     }
 
     await batch.commit(noResult: true);
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS tb_sembradores_activos (
+        operario_id INTEGER PRIMARY KEY,
+        fecha_asignacion TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      INSERT OR IGNORE INTO tb_sembradores_activos (operario_id, fecha_asignacion)
+      SELECT DISTINCT operario_id, datetime('now', 'localtime')
+      FROM tb_siembras
+      WHERE operario_id > 0
+    ''');
   }
 
   /// CHECKPOINT (ASEGURADOR FÍSICO):

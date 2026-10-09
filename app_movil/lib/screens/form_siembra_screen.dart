@@ -58,7 +58,7 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
   Future<void> _cargarCatalogos() async {
     final b = await _db.obtenerBloques();
     final v = await _db.obtenerVariedades(soloActivas: true);
-    final o = await _db.obtenerOperarios();
+    final o = await _db.obtenerOperariosSiembra();
     final cfg = await _db.obtenerConfigAgronomica(cultivo: 'GENERAL');
 
     if (!mounted) return;

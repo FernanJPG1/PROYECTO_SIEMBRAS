@@ -978,6 +978,72 @@ class DbRepository {
     return result.map((json) => Operario.fromMap(json)).toList();
   }
 
+  /// Obtiene únicamente los operarios marcados como habilitados para Siembra.
+  /// Si la lista está vacía, devuelve todos los operarios para no bloquear la operación.
+  Future<List<Operario>> obtenerOperariosSiembra() async {
+    final db = await LocalDatabase.instance.database;
+    final result = await db.rawQuery('''
+      SELECT o.* 
+      FROM tb_operarios o
+      INNER JOIN tb_sembradores_activos s ON o.id = s.operario_id
+      ORDER BY o.nombre_completo ASC
+    ''');
+    if (result.isEmpty) {
+      return obtenerOperarios();
+    }
+    return result.map((json) => Operario.fromMap(json)).toList();
+  }
+
+  /// Obtiene el conjunto (Set) de IDs de operarios actualmente activos en siembra
+  Future<Set<int>> obtenerIdsSembradoresActivos() async {
+    final db = await LocalDatabase.instance.database;
+    try {
+      final res = await db.rawQuery('SELECT operario_id FROM tb_sembradores_activos');
+      return res.map((r) => r['operario_id'] as int).toSet();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// Obtiene un mapa con el total de siembras registradas por cada operario {operario_id: conteo}
+  Future<Map<int, int>> obtenerConteoSiembrasPorOperario() async {
+    final db = await LocalDatabase.instance.database;
+    try {
+      final res = await db.rawQuery('''
+        SELECT operario_id, COUNT(*) as total
+        FROM tb_siembras
+        WHERE operario_id > 0
+        GROUP BY operario_id
+      ''');
+      final Map<int, int> mapa = {};
+      for (final r in res) {
+        final id = r['operario_id'] as int;
+        final total = r['total'] as int;
+        mapa[id] = total;
+      }
+      return mapa;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// Guarda en lote la lista completa de sembradores activos
+  Future<void> guardarSembradoresBatch(Set<int> operarioIds) async {
+    final db = await LocalDatabase.instance.database;
+    await db.transaction((txn) async {
+      await txn.delete('tb_sembradores_activos');
+      final batch = txn.batch();
+      final nowStr = DateTime.now().toIso8601String();
+      for (final id in operarioIds) {
+        batch.insert('tb_sembradores_activos', {
+          'operario_id': id,
+          'fecha_asignacion': nowStr,
+        });
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
   // === MÉTODOS PARA SIEMBRAS Y CICLOS (Offline First) ===
 
   Future<int> registrarSiembraOffline(Siembra siembra) async {

@@ -117,7 +117,7 @@ class _RendimientoLiriosScreenState extends State<RendimientoLiriosScreen>
 
   Future<void> _cargarDatos() async {
     setState(() => _cargando = true);
-    final ops = await _db.obtenerOperarios();
+    final ops = await _db.obtenerOperariosSiembra();
     final canastas = await _db.obtenerCanastasLirios(fecha: _fechaStr);
 
     if (!mounted) return;

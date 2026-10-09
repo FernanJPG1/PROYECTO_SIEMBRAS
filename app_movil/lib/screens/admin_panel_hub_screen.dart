@@ -18,6 +18,7 @@ import 'package:app_movil/screens/reporte_dialog.dart';
 import 'package:app_movil/screens/rendimiento_dialog.dart';
 import 'package:app_movil/utils/calendario_util.dart';
 import 'package:app_movil/widgets/gestion_variedades_temporales_dialog.dart';
+import 'package:app_movil/widgets/gestion_sembradores_dialog.dart';
 import 'package:app_movil/utils/responsive.dart';
 
 class AdminPanelHubScreen extends StatefulWidget {
@@ -51,6 +52,7 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
   late List<Cama> _camas;
   late List<Operario> _operarios;
   int _totalTemporales = 0;
+  int _totalSembradoresActivos = 0;
   bool _cargando = false;
 
   @override
@@ -77,6 +79,7 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
     final camasDb = await db.obtenerCamas();
     final operariosDb = await db.obtenerOperarios();
     final tempsDb = await db.obtenerVariedadesTemporales();
+    final sembradoresDb = await db.obtenerIdsSembradoresActivos();
 
     if (mounted) {
       setState(() {
@@ -86,6 +89,7 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
         _camas = camasDb;
         _operarios = operariosDb;
         _totalTemporales = tempsDb.length;
+        _totalSembradoresActivos = sembradoresDb.length;
         _cargando = false;
       });
     }
@@ -97,6 +101,16 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
       builder: (context) => const GestionVariedadesTemporalesDialog(),
     );
     _recargarDatos();
+  }
+
+  void _abrirGestionSembradores() async {
+    final res = await showDialog<bool>(
+      context: context,
+      builder: (context) => const GestionSembradoresDialog(),
+    );
+    if (res == true) {
+      _recargarDatos();
+    }
   }
 
   void _abrirRendimiento() {
@@ -316,6 +330,22 @@ class _AdminPanelHubScreenState extends State<AdminPanelHubScreen> {
                         'Control de variedades creadas en campo para registrar rendimientos de corte y siembra antes de su registro oficial en Access, con vinculación y auto-reconciliación.',
                     actionLabel: 'Gestionar y Sincronizar Variedades',
                     onTap: _abrirGestionTemporales,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // OPCIÓN 4: GESTIÓN DE PERSONAL DE SIEMBRA (SEMBRADORES)
+                  _buildAdminCard(
+                    icon: Icons.badge_outlined,
+                    iconBgColor: const Color(0xFFE1F5FE),
+                    iconColor: const Color(0xFF0288D1),
+                    badgeText: _totalSembradoresActivos > 0 ? '$_totalSembradoresActivos EN SIEMBRA' : 'SIN CONFIGURAR',
+                    badgeColor: const Color(0xFF0288D1),
+                    title: 'Personal de Siembra (Sembradores)',
+                    subtitle:
+                        'Filtra y selecciona de los ${_operarios.length} empleados de la empresa únicamente a los autorizados para registrar siembras y canastas de lirios en campo.',
+                    actionLabel: 'Gestionar Sembradores',
+                    onTap: _abrirGestionSembradores,
                   ),
                 ],
               ),

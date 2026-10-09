@@ -203,7 +203,7 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
     final v = famIds.isNotEmpty
         ? await _db.obtenerVariedadesPorFamilia(famIds, soloActivas: true)
         : allV;
-    final o = await _db.obtenerOperarios();
+    final o = await _db.obtenerOperariosSiembra();
     final cfg = await _db.obtenerConfigAgronomica(cultivo: widget.cultivo);
 
     if (!mounted) return;
