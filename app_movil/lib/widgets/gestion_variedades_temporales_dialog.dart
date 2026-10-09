@@ -199,44 +199,118 @@ class _GestionVariedadesTemporalesDialogState extends State<GestionVariedadesTem
     final pinController = TextEditingController(); // EN BLANCO: sin nada predeterminado
     final bool? confirmar = await showDialog<bool>(
       context: context,
-      builder: (dCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.cloud_upload_rounded, color: Color(0xFF2E7D32)),
-            const SizedBox(width: 8),
-            const Expanded(child: Text('Crear Variedad en Access')),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Se enviará "${temp.nombre}" al servidor para darla de alta inmediatamente en Access (t11_mcolorsseries).'),
-              const SizedBox(height: 12),
-              TextField(
-                controller: pinController,
-                keyboardType: TextInputType.text,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Contraseña de Administrador',
-                  hintText: 'Ingresa la contraseña',
-                  border: OutlineInputBorder(),
-                ),
+      builder: (dCtx) {
+        final isLandscape = Responsive.isLandscape(dCtx);
+        final screenH = MediaQuery.of(dCtx).size.height;
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 480,
+              maxHeight: screenH * 0.92,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.cloud_upload_rounded, color: Color(0xFF2E7D32)),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Crear Variedad en Access',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => Navigator.pop(dCtx, false),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Se enviará "${temp.nombre}" al servidor para darla de alta inmediatamente en Access (t11_mcolorsseries).',
+                    style: TextStyle(fontSize: isLandscape ? 12.5 : 13.5, color: Colors.grey.shade700),
+                  ),
+                  const SizedBox(height: 12),
+                  if (isLandscape)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: pinController,
+                            keyboardType: TextInputType.text,
+                            obscureText: true,
+                            autofocus: true,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => Navigator.pop(dCtx, true),
+                            decoration: const InputDecoration(
+                              labelText: 'Contraseña de Administrador',
+                              hintText: 'Ingresa la contraseña',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2E7D32),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          ),
+                          onPressed: () => Navigator.pop(dCtx, true),
+                          child: const Text('Crear en Access'),
+                        ),
+                      ],
+                    )
+                  else ...[
+                    TextField(
+                      controller: pinController,
+                      keyboardType: TextInputType.text,
+                      obscureText: true,
+                      autofocus: true,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => Navigator.pop(dCtx, true),
+                      decoration: const InputDecoration(
+                        labelText: 'Contraseña de Administrador',
+                        hintText: 'Ingresa la contraseña',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dCtx, false),
+                          child: const Text('Cancelar'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2E7D32),
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => Navigator.pop(dCtx, true),
+                          child: const Text('Crear en Access'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancelar')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32), foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(dCtx, true),
-            child: const Text('Crear en Access'),
-          ),
-        ],
-      ),
+        );
+      },
     );
 
     if (confirmar == true) {
