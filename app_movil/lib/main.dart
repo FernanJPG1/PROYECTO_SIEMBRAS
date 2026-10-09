@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:app_movil/database/local_db.dart';
 import 'package:app_movil/screens/dashboard_screen.dart';
 import 'package:app_movil/services/persistent_backup_service.dart';
+import 'package:app_movil/widgets/firma_watermark.dart';
 import 'package:flutter/services.dart';
 
 /// PUNTO DE ARRANQUE: Al tocar el ícono en el teléfono, empieza aquí.
@@ -82,6 +83,19 @@ class _SiembrasAppState extends State<SiembrasApp> with WidgetsBindingObserver {
       ),
       home: const DashboardScreen(),
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            child ?? const SizedBox.shrink(),
+            const FirmaWatermark(
+              width: 50.0,
+              opacity: 0.22,
+              left: 10.0,
+              bottom: 10.0,
+            ),
+          ],
+        );
+      },
     );
   }
 }
