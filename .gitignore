@@ -6,6 +6,8 @@
 *.sqlite3
 *.bak
 backups_seguridad/
+siembras_respaldo_persistente.json
+*.json.bak
 
 # Environment variables & secrets
 *.env

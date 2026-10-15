@@ -160,6 +160,12 @@ class DbRepository {
       for (var o in operarios) {
         batch.insert('tb_operarios', o.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
       }
+      // Asegurar que el registro dummy id = 0 para siembras colectivas siempre se conserve
+      batch.insert('tb_operarios', {
+        'id': 0,
+        'cedula': '0',
+        'nombre_completo': 'Sin Sembrador (Colectiva)',
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
       await batch.commit(noResult: true);
 
       // Si los operarios sincronizados vienen del filtro oficial (Producción Activos),
@@ -982,7 +988,7 @@ class DbRepository {
 
   Future<List<Operario>> obtenerOperarios() async {
     final db = await LocalDatabase.instance.database;
-    final result = await db.query('tb_operarios', orderBy: 'nombre_completo ASC');
+    final result = await db.query('tb_operarios', where: 'id > 0', orderBy: 'nombre_completo ASC');
     return result.map((json) => Operario.fromMap(json)).toList();
   }
 
@@ -1025,16 +1031,22 @@ class DbRepository {
     try {
       var res = await db.rawQuery('SELECT operario_id FROM tb_sembradores_activos');
       if (res.isEmpty) {
-        // Auto-población automática con los empleados activos del departamento de Producción
+        // Intentar recuperar primero de la copia persistente blindada
+        final recuperados = await PersistentBackupService.instance.recuperarSembradoresActivos();
+        final Set<int> idsAUsar = (recuperados != null && recuperados.isNotEmpty)
+            ? recuperados
+            : kOperariosProduccionIds.toSet();
+
         final batch = db.batch();
         final nowStr = DateTime.now().toIso8601String();
-        for (final id in kOperariosProduccionIds) {
+        for (final id in idsAUsar) {
           batch.insert('tb_sembradores_activos', {
             'operario_id': id,
             'fecha_asignacion': nowStr,
           }, conflictAlgorithm: ConflictAlgorithm.ignore);
         }
         await batch.commit(noResult: true);
+        await PersistentBackupService.instance.resguardarSembradoresActivos(idsAUsar);
         res = await db.rawQuery('SELECT operario_id FROM tb_sembradores_activos');
       }
       return res.map((r) => r['operario_id'] as int).toSet();
@@ -1065,7 +1077,7 @@ class DbRepository {
     }
   }
 
-  /// Guarda en lote la lista completa de sembradores activos
+  /// Guarda en lote la lista completa de sembradores activos y la blinda de forma persistente
   Future<void> guardarSembradoresBatch(Set<int> operarioIds) async {
     final db = await LocalDatabase.instance.database;
     await db.transaction((txn) async {
@@ -1080,6 +1092,9 @@ class DbRepository {
       }
       await batch.commit(noResult: true);
     });
+
+    // Blindaje permanente en todos los directorios seguros (sobrevive reinicios, apagón y borrado de caché)
+    await PersistentBackupService.instance.resguardarSembradoresActivos(operarioIds);
   }
 
   // === MÉTODOS PARA SIEMBRAS Y CICLOS (Offline First) ===
@@ -1145,6 +1160,13 @@ class DbRepository {
 
     if (map['uuid'] == null || map['uuid'].toString().trim().isEmpty) {
       map['uuid'] = 'siembra-${DateTime.now().millisecondsSinceEpoch}-${siembra.camaId}';
+    }
+
+    if (siembra.operarioId <= 0) {
+      await db.execute('''
+        INSERT OR IGNORE INTO tb_operarios (id, cedula, nombre_completo)
+        VALUES (0, '0', 'Sin Sembrador (Colectiva)')
+      ''');
     }
 
     final id = await db.insert('tb_siembras', map);
@@ -1442,6 +1464,12 @@ class DbRepository {
       map['cont'] = null;
     }
     map['sincronizado'] = 0; // Marcar para re-sincronizar con backend Access
+    if (siembra.operarioId <= 0) {
+      await db.execute('''
+        INSERT OR IGNORE INTO tb_operarios (id, cedula, nombre_completo)
+        VALUES (0, '0', 'Sin Sembrador (Colectiva)')
+      ''');
+    }
     await db.update(
       'tb_siembras',
       map,

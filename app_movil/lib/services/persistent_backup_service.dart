@@ -54,6 +54,9 @@ class PersistentBackupService {
   static const String _archivoPrincipal = 'siembras_respaldo_persistente.json';
   static const String _archivoBak = 'siembras_respaldo_persistente.bak';
   static const String _archivoBorradores = 'borradores_formularios.json';
+  static const String _archivoSembradores = 'sembradores_activos_persistente.json';
+  static const String _archivoSembradoresBak = 'sembradores_activos_persistente.bak';
+  static const String _archivoOperarioRecordado = 'formulario_operario_recordado.json';
 
   /// Obtiene la lista de directorios de almacenamiento permanente seguros (NO caché)
   Future<List<Directory>> _obtenerDirectoriosSeguros() async {
@@ -466,5 +469,120 @@ class PersistentBackupService {
       'pendientes_respaldo': datos?['pendientes_sincronizacion'] ?? 0,
       'ubicaciones': listaUbicaciones,
     };
+  }
+
+  /// Resguarda la lista de IDs de sembradores autorizados en todas las ubicaciones seguras
+  /// Resistente a apagones de tablet, reinicios y borrado de caché de Android.
+  Future<bool> resguardarSembradoresActivos(Set<int> operarioIds) async {
+    try {
+      final Map<String, dynamic> data = {
+        'version': 1,
+        'fecha': DateTime.now().toIso8601String(),
+        'total': operarioIds.length,
+        'operario_ids': operarioIds.toList(),
+      };
+      final jsonStr = jsonEncode(data);
+      final directorios = await _obtenerDirectoriosSeguros();
+      int guardados = 0;
+
+      for (final dir in directorios) {
+        try {
+          if (!await dir.exists()) await dir.create(recursive: true);
+          final archivoFinal = File(p.join(dir.path, _archivoSembradores));
+          final archivoBak = File(p.join(dir.path, _archivoSembradoresBak));
+          final archivoTmp = File(p.join(dir.path, '$_archivoSembradores.tmp'));
+
+          await archivoTmp.writeAsString(jsonStr, flush: true, encoding: utf8);
+
+          if (await archivoFinal.exists()) {
+            try {
+              if (await archivoBak.exists()) await archivoBak.delete();
+              await archivoFinal.copy(archivoBak.path);
+            } catch (_) {}
+            await archivoFinal.delete();
+          }
+          await archivoTmp.rename(archivoFinal.path);
+          guardados++;
+        } catch (e) {
+          debugPrint('[PersistentBackup] Error guardando sembradores en ${dir.path}: $e');
+        }
+      }
+      debugPrint('[PersistentBackup] Sembradores autorizados (${operarioIds.length}) resguardados en $guardados ubicaciones.');
+      return guardados > 0;
+    } catch (e) {
+      debugPrint('[PersistentBackup] Error en resguardarSembradoresActivos: $e');
+      return false;
+    }
+  }
+
+  /// Recupera la lista de IDs de sembradores autorizados desde el almacenamiento seguro
+  Future<Set<int>?> recuperarSembradoresActivos() async {
+    final directorios = await _obtenerDirectoriosSeguros();
+    for (final dir in directorios) {
+      for (final nombre in [_archivoSembradores, _archivoSembradoresBak]) {
+        final archivo = File(p.join(dir.path, nombre));
+        if (await archivo.exists()) {
+          try {
+            final content = await archivo.readAsString(encoding: utf8);
+            if (content.trim().isNotEmpty) {
+              final data = jsonDecode(content) as Map<String, dynamic>;
+              if (data.containsKey('operario_ids')) {
+                final ids = (data['operario_ids'] as List)
+                    .map((e) => int.tryParse(e.toString()))
+                    .whereType<int>()
+                    .toSet();
+                if (ids.isNotEmpty) {
+                  debugPrint('[PersistentBackup] Recuperados ${ids.length} sembradores autorizados desde ${archivo.path}');
+                  return ids;
+                }
+              }
+            }
+          } catch (e) {
+            debugPrint('[PersistentBackup] Error leyendo sembradores desde ${archivo.path}: $e');
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Guarda el operario fijado/recordado en los formularios de siembra de forma permanente
+  Future<void> guardarOperarioRecordado({required int? operarioId, required bool recordar}) async {
+    try {
+      final Map<String, dynamic> data = {
+        'operario_id': operarioId,
+        'recordar': recordar,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+      final jsonStr = jsonEncode(data);
+      final directorios = await _obtenerDirectoriosSeguros();
+      for (final dir in directorios) {
+        try {
+          if (!await dir.exists()) await dir.create(recursive: true);
+          final f = File(p.join(dir.path, _archivoOperarioRecordado));
+          await f.writeAsString(jsonStr, flush: true, encoding: utf8);
+        } catch (_) {}
+      }
+      debugPrint('[PersistentBackup] Operario recordado ($operarioId, fijar: $recordar) guardado.');
+    } catch (e) {
+      debugPrint('[PersistentBackup] Error guardando operario recordado: $e');
+    }
+  }
+
+  /// Recupera el operario fijado/recordado para los formularios de siembra
+  Future<Map<String, dynamic>> recuperarOperarioRecordado() async {
+    final directorios = await _obtenerDirectoriosSeguros();
+    for (final dir in directorios) {
+      final f = File(p.join(dir.path, _archivoOperarioRecordado));
+      if (await f.exists()) {
+        try {
+          final content = await f.readAsString(encoding: utf8);
+          if (content.trim().isNotEmpty) {
+            return jsonDecode(content) as Map<String, dynamic>;
+          }
+        } catch (_) {}
+      }
+    }
+    return {'operario_id': null, 'recordar': false};
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
+import 'package:app_movil/services/persistent_backup_service.dart';
 import 'package:app_movil/utils/calendario_util.dart';
 import 'package:app_movil/utils/responsive.dart';
 import 'package:app_movil/widgets/crear_variedad_dialog.dart';
@@ -61,12 +62,27 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
     final o = await _db.obtenerOperariosSiembra();
     final cfg = await _db.obtenerConfigAgronomica(cultivo: 'GENERAL');
 
+    // Recuperar operario recordado persistente (permanece seleccionado tras reinicios y apagones)
+    final opRecordadoData = await PersistentBackupService.instance.recuperarOperarioRecordado();
+    final bool fijarOp = opRecordadoData['recordar'] == true;
+    final int? opIdRecordado = opRecordadoData['operario_id'] as int?;
+    Operario? opRestaurado;
+    if (fijarOp && opIdRecordado != null && opIdRecordado > 0) {
+      try {
+        opRestaurado = o.firstWhere((op) => op.id == opIdRecordado);
+      } catch (_) {}
+    }
+
     if (!mounted) return;
     setState(() {
       _bloques = b;
       _variedades = v;
       _operarios = o;
       _configAgronomica = cfg;
+      if (opRestaurado != null) {
+        _operarioSeleccionado = opRestaurado;
+        _recordarOperario = true;
+      }
     });
 
     if (_bloqueSeleccionado != null) {
@@ -668,6 +684,15 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
           _proveedorController.clear();
           if (!_recordarOperario) {
             _operarioSeleccionado = null;
+            PersistentBackupService.instance.guardarOperarioRecordado(
+              operarioId: null,
+              recordar: false,
+            );
+          } else if (_operarioSeleccionado != null) {
+            PersistentBackupService.instance.guardarOperarioRecordado(
+              operarioId: _operarioSeleccionado!.id,
+              recordar: true,
+            );
           }
           // Si la cama ya se llenó al 100%, deseleccionarla para que elijan otra cama disponible
           if (infoCama != null && infoCama.esCamaLlena) {
@@ -1081,7 +1106,15 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
                                 value: o,
                                 child: Text('${o.nombreCompleto} (${o.cedula})'),
                               )).toList(),
-                              onChanged: (val) => setState(() => _operarioSeleccionado = val),
+                              onChanged: (val) {
+                                setState(() => _operarioSeleccionado = val);
+                                if (_recordarOperario) {
+                                  PersistentBackupService.instance.guardarOperarioRecordado(
+                                    operarioId: val?.id,
+                                    recordar: true,
+                                  );
+                                }
+                              },
                             ),
                           ),
                         ),
@@ -1091,7 +1124,13 @@ class _FormularioSiembraScreenState extends State<FormularioSiembraScreen> {
                             const Text('Fijar', style: TextStyle(fontSize: 11, color: Colors.grey)),
                             Switch(
                               value: _recordarOperario,
-                              onChanged: (val) => setState(() => _recordarOperario = val),
+                              onChanged: (val) {
+                                setState(() => _recordarOperario = val);
+                                PersistentBackupService.instance.guardarOperarioRecordado(
+                                  operarioId: val ? _operarioSeleccionado?.id : null,
+                                  recordar: val,
+                                );
+                              },
                               activeThumbColor: const Color(0xFF7CB342),
                             ),
                           ],

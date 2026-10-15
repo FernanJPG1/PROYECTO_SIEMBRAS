@@ -48,12 +48,20 @@ def sync_siembras(
         )
 
     # 2. Insertar registros en la base de datos
-    insertadas = queries.insertar_siembras_batch(conn, request.push)
+    insertadas, committed_uuids = queries.insertar_siembras_batch(conn, request.push)
 
-    # Marcar como confirmadas (committed) para que la app móvil las marque sincronizadas
+    if request.push and not committed_uuids:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al sincronizar: Ninguna siembra pudo ser asentada en la base de datos empresarial de Access."
+        )
+
+    # Marcar como confirmadas (committed) ÚNICAMENTE las siembras efectivamente guardadas
+    committed_set = set(committed_uuids)
     committed_list = [
         SyncCommitted(uuid=s.uuid, server_id=idx + 1, version=s.version)
         for idx, s in enumerate(request.push)
+        if s.uuid in committed_set
     ]
 
     # Refrescar pull tras inserciones

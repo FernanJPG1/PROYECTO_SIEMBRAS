@@ -93,7 +93,7 @@ class _GestionSembradoresDialogState extends State<GestionSembradoresDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '✓ Personal de siembra actualizado: ${_seleccionados.length} empleado(s) autorizados.',
+              '✓ Personal de siembra blindado: ${_seleccionados.length} empleado(s) autorizados (permanente ante apagones o borrado de caché).',
             ),
             backgroundColor: const Color(0xFF2E7D32),
             behavior: SnackBarBehavior.floating,

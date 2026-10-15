@@ -569,12 +569,13 @@ def get_operarios(conn: pyodbc.Connection, solo_activos: bool = True, solo_produ
 
 # --- Sincronización de Siembras en Ecosistema de 5 Tablas (t49, t31, t50, t51, t102) ---
 
-def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]) -> int:
+def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]) -> tuple[int, List[str]]:
     """
     Sincroniza e inserta en lote las siembras de la app móvil en Microsoft Access.
     - Asegura que la tabla 't_siembras_app' exista (incluso si la BD se cambió por una de un servidor local).
     - Genera respaldo preventivo automático para proteger la base de datos de daños o corrupción.
     - Optimiza los contadores de secuencia (t31, t51, t102, t50) fuera del bucle para no bloquear Access.
+    - Retorna el conteo y la lista de UUIDs asentados de forma 100% verificada en Access.
     """
     # 1. Asegurar esquema y respaldo preventivo
     ensure_database_schema(conn)
@@ -582,9 +583,10 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
 
     cursor = conn.cursor()
     insertadas = 0
+    committed_uuids: List[str] = []
 
     if not siembras:
-        return 0
+        return 0, []
 
     # 2. Obtener contadores de secuencia iniciales UNA SOLA VEZ fuera del bucle
     # Esto elimina el escaneo repetitivo de tablas pesadas de 180MB en Access.
@@ -824,7 +826,6 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                 current_t31 += 1
                 current_t51 += 1
                 current_t102 += 1
-                current_t50 += 1
 
                 # 2. TABLA t31: t31_encnovcampo (Encabezado Novedades de Campo)
                 try:
@@ -930,6 +931,7 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
 
                 # 5. TABLA t50: t50_mcomposcama (Composición Activa de Cama)
                 try:
+                    current_t50 += 1
                     cursor.execute("""
                         INSERT INTO t50_mcomposcama 
                         (t50_interno, t50_cama, t50_referencia, t50_lineas, t50_pltasxlin, t50_fechasiembra, t50_observac, t50_plantas_alt, t50_dias_ic, t50_lote)
@@ -997,9 +999,17 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
                     logger.warning(f"Advertencia actualizando t49: {ex_t49}")
 
             insertadas += 1
+            committed_uuids.append(s.uuid)
         except Exception as e:
             logger.error(f"Error procesando siembra {s.uuid}: {e}")
-            # Continuar con las demás siembras del lote
+            err_msg = str(e)
+            if "42S02" in err_msg or "08S01" in err_msg or "HY000" in err_msg:
+                try:
+                    from app.db.connection import invalidate_connection
+                    invalidate_connection()
+                except Exception:
+                    pass
+                raise e
 
     try:
         conn.commit()
@@ -1008,7 +1018,7 @@ def insertar_siembras_batch(conn: pyodbc.Connection, siembras: List[SiembraSync]
         conn.rollback()
         raise e_commit
 
-    return insertadas
+    return insertadas, committed_uuids
 
 def eliminar_siembras_por_uuid(conn: pyodbc.Connection, uuids: List[str]) -> int:
     """

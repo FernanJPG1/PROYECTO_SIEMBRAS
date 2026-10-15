@@ -243,7 +243,7 @@ class LocalDatabase {
             )
           ''');
 
-          // Asegurar existencia y población de tb_sembradores_activos con los empleados activos de Producción
+          // Asegurar existencia y preservación permanente de tb_sembradores_activos
           try {
             await db.execute('''
               CREATE TABLE IF NOT EXISTS tb_sembradores_activos (
@@ -252,20 +252,46 @@ class LocalDatabase {
               )
             ''');
 
-            // Asegurar que contenga exactamente los 42 operarios activos del departamento de Producción
-            await db.delete(
-              'tb_sembradores_activos',
-              where: 'operario_id NOT IN (${kOperariosProduccionIds.join(",")})',
-            );
-            final batchSem = db.batch();
-            final nowStr = DateTime.now().toIso8601String();
-            for (final id in kOperariosProduccionIds) {
-              batchSem.insert('tb_sembradores_activos', {
-                'operario_id': id,
-                'fecha_asignacion': nowStr,
-              }, conflictAlgorithm: ConflictAlgorithm.ignore);
+            // Comprobar cuántos sembradores están registrados actualmente
+            final countRes = await db.rawQuery('SELECT COUNT(*) as total FROM tb_sembradores_activos');
+            final count = (countRes.isNotEmpty ? countRes.first['total'] as int? : 0) ?? 0;
+
+            if (count == 0) {
+              // Si la tabla está vacía (reinstalación, borrado de base de datos o datos),
+              // recuperar inmediatamente del resguardo persistente blindado
+              final idsPersistentes = await PersistentBackupService.instance.recuperarSembradoresActivos();
+              final Set<int> idsAInsertar = (idsPersistentes != null && idsPersistentes.isNotEmpty)
+                  ? idsPersistentes
+                  : kOperariosProduccionIds.toSet();
+
+              final batchSem = db.batch();
+              final nowStr = DateTime.now().toIso8601String();
+              for (final id in idsAInsertar) {
+                batchSem.insert('tb_sembradores_activos', {
+                  'operario_id': id,
+                  'fecha_asignacion': nowStr,
+                }, conflictAlgorithm: ConflictAlgorithm.ignore);
+              }
+              await batchSem.commit(noResult: true);
+              // Respaldar a disco persistente
+              await PersistentBackupService.instance.resguardarSembradoresActivos(idsAInsertar);
+            } else {
+              // SI YA HAY REGISTROS: ¡JAMÁS SOBREESCRIBIRLOS NI BORRARLOS!
+              // La selección del usuario se respeta 100% ante apagones y reinicios
+              try {
+                final rowsSem = await db.rawQuery('SELECT operario_id FROM tb_sembradores_activos');
+                final idsActuales = rowsSem.map((r) => r['operario_id'] as int).toSet();
+                PersistentBackupService.instance.resguardarSembradoresActivos(idsActuales);
+              } catch (_) {}
             }
-            await batchSem.commit(noResult: true);
+          } catch (_) {}
+
+          // Asegurar existencia del registro dummy id = 0 para siembras colectivas sin operario (evitar error de FOREIGN KEY)
+          try {
+            await db.execute('''
+              INSERT OR IGNORE INTO tb_operarios (id, cedula, nombre_completo)
+              VALUES (0, '0', 'Sin Sembrador (Colectiva)')
+            ''');
           } catch (_) {}
         } catch (_) {}
       },
@@ -638,15 +664,23 @@ class LocalDatabase {
         fecha_asignacion TEXT NOT NULL
       )
     ''');
+    // Si existe un respaldo persistente previo (por ejemplo tras borrar caché o reinstalar),
+    // recuperar la selección personalizada del usuario; de lo contrario inicializar con Producción
+    final idsPersistentes = await PersistentBackupService.instance.recuperarSembradoresActivos();
+    final Set<int> idsAInsertar = (idsPersistentes != null && idsPersistentes.isNotEmpty)
+        ? idsPersistentes
+        : kOperariosProduccionIds.toSet();
+
     final batchSem = db.batch();
     final nowStr = DateTime.now().toIso8601String();
-    for (final id in kOperariosProduccionIds) {
+    for (final id in idsAInsertar) {
       batchSem.insert('tb_sembradores_activos', {
         'operario_id': id,
         'fecha_asignacion': nowStr,
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
     await batchSem.commit(noResult: true);
+    await PersistentBackupService.instance.resguardarSembradoresActivos(idsAInsertar);
   }
 
   /// CHECKPOINT (ASEGURADOR FÍSICO):

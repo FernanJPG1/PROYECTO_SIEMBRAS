@@ -60,18 +60,32 @@ async def log_requests(request: Request, call_next):
 
 @app.on_event("startup")
 def startup_event():
-    from app.db.connection import get_connection_string, ensure_database_schema, safe_backup_database
-    import pyodbc
+    from app.db.connection import get_or_create_connection, safe_backup_database
+    from app.core.network_beacon import start_beacon
     logger.info("Iniciando backend de Siembras...")
     logger.info(f"Ruta de base de datos configurada: {settings.ACCESS_DB_PATH}")
     try:
-        conn = pyodbc.connect(get_connection_string(), timeout=10)
-        ensure_database_schema(conn)
+        conn = get_or_create_connection()
         safe_backup_database()
-        conn.close()
-        logger.info("✓ Conexión a base de datos y esquema verificados exitosamente.")
+        logger.info("✓ Conexión persistente con base de datos remota lista y operativa.")
     except Exception as e:
         logger.error(f"⚠️ Advertencia al conectar con la base de datos en el inicio: {e}")
+    
+    # Iniciar faro de autodescubrimiento para tablets en red LAN/Wi-Fi
+    try:
+        start_beacon()
+    except Exception as e:
+        logger.warning(f"No se pudo iniciar el faro de red: {e}")
+
+@app.on_event("shutdown")
+def shutdown_event():
+    from app.core.network_beacon import stop_beacon
+    logger.info("Deteniendo backend de Siembras...")
+    try:
+        stop_beacon()
+    except Exception:
+        pass
+
 
 from app.api.endpoints import health
 

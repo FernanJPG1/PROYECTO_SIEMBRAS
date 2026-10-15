@@ -807,6 +807,7 @@ const Set<int> kOperariosProduccionIds = {
 };
 
 final List<Map<String, dynamic>> kSeedOperarios = [
+  {"id": 0, "cedula": "0", "nombre_completo": "Sin Sembrador (Colectiva)"},
   {"id": 4411, "cedula": "1068813809", "nombre_completo": "ANA SOFIA MENDOZA PEREZ"},
   {"id": 4370, "cedula": "1007440101", "nombre_completo": "GERARDO LUIS GALVIS MARTINEZ"},
   {"id": 4415, "cedula": "1037122636", "nombre_completo": "KAREN YULIETH SOTELO HERNANDEZ"},

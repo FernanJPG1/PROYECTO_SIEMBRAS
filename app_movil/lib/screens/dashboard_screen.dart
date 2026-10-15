@@ -107,8 +107,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _cargarDatos();
     _networkService = NetworkService(
       onNetworkRestored: () {
-        // Modo manual: No auto-sincronizar automáticamente en segundo plano.
-        // La sincronización se realiza únicamente cuando el usuario presiona el botón.
+        // Modo manual: No romper compatibilidad
+      },
+      onWifiOfficeConnected: () async {
+        // Sistema nuevo: Si el usuario tiene activa la sincronización por Wi-Fi de oficina
+        final autoSyncEnabled = (await _db.obtenerAjuste('auto_sync_wifi')) != 'false';
+        if (!autoSyncEnabled) return;
+        final pendientes = await _db.obtenerSiembrasPendientesSync();
+        if (pendientes.isNotEmpty && !_sincronizando && mounted) {
+          _autoSincronizar(silencioso: true);
+        }
       },
     );
   }
@@ -689,7 +697,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  Future<void> _autoSincronizar() async {
+  Future<void> _autoSincronizar({bool silencioso = false}) async {
     if (_sincronizando) return;
 
     final syncSvc = app_sync.SyncService();
@@ -697,16 +705,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Row(
             children: [
-              SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
-              SizedBox(width: 12),
-              Text('Sincronizando con Servidor Empresarial...'),
+              const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(silencioso
+                    ? 'Wi-Fi Oficina: Sincronizando datos automáticamente...'
+                    : 'Sincronizando con Servidor Empresarial...'),
+              ),
             ],
           ),
-          duration: Duration(seconds: 2),
-          backgroundColor: Color(0xFF558B2F),
+          duration: const Duration(seconds: 3),
+          backgroundColor: const Color(0xFF558B2F),
         ),
       );
     }
@@ -730,7 +742,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Sincronización Completa (${_variedades.length} Variedades, ${_camas.length} Camas) ✓\nConectado a: $urlUsada',
+                    silencioso
+                        ? '✓ Auto-Sincronización Completa: Datos cargados a la oficina ($urlUsada)'
+                        : 'Sincronización Completa (${_variedades.length} Variedades, ${_camas.length} Camas) ✓\nConectado a: $urlUsada',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -740,7 +754,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             duration: const Duration(seconds: 4),
           ),
         );
-      } else {
+      } else if (!silencioso) {
+        // En modo manual, mostrar el detalle completo del error y botón para configurar IP
         final String url = syncSvc.ultimaUrlProbada ?? 'http://192.168.1.39:8000/api';
         final String detalleError = syncSvc.ultimoError != null ? '\nDetalle: ${syncSvc.ultimoError}' : '';
         ScaffoldMessenger.of(context).showSnackBar(
@@ -779,6 +794,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         );
+      } else {
+        print('[AutoSync Silencioso] Servidor no disponible en segundo plano: ${syncSvc.ultimoError}');
       }
     }
     setState(() => _sincronizando = false);
@@ -1155,7 +1172,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 6,
+                      runSpacing: 6,
                       children: [
+                        ActionChip(
+                          avatar: probando
+                              ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5))
+                              : const Icon(Icons.radar, size: 14, color: Color(0xFF1E88E5)),
+                          label: const Text('Autodetectar Servidor (Gateway)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0D47A1))),
+                          backgroundColor: const Color(0xFFE3F2FD),
+                          onPressed: probando
+                              ? null
+                              : () async {
+                                  setDialogState(() {
+                                    probando = true;
+                                    estadoConexion = 'Buscando servidor en la red Wi-Fi (Faro UDP y Subred)...';
+                                  });
+                                  final foundUrl = await syncSvc.autodescubrirServidor();
+                                  setDialogState(() {
+                                    probando = false;
+                                    if (foundUrl != null) {
+                                      urlController.text = foundUrl;
+                                      estadoConexion = '✓ Servidor encontrado en $foundUrl';
+                                    } else {
+                                      estadoConexion = '✗ No se detectó servidor en la subred actual';
+                                    }
+                                  });
+                                },
+                        ),
                         ActionChip(
                           avatar: const Icon(Icons.wifi, size: 14, color: Color(0xFF33691E)),
                           label: const Text('Wi-Fi PC (192.168.1.39)', style: TextStyle(fontSize: 11)),
@@ -1178,6 +1221,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           },
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    FutureBuilder<String?>(
+                      future: _db.obtenerAjuste('auto_sync_wifi'),
+                      builder: (context, snapshot) {
+                        final autoSyncActivo = snapshot.data != 'false';
+                        return SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: const Text('Sincronizar automáticamente al llegar a la oficina (Wi-Fi)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF33691E))),
+                          subtitle: const Text('Detecta la puerta de enlace y sube las siembras en segundo plano', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                          value: autoSyncActivo,
+                          activeThumbColor: const Color(0xFF558B2F),
+                          onChanged: (val) async {
+                            await _db.guardarAjuste('auto_sync_wifi', val ? 'true' : 'false');
+                            setDialogState(() {});
+                          },
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
                     Row(

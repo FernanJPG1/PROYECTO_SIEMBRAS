@@ -24,7 +24,9 @@
 //    para que también la anule en el sistema contable Access.
 // ============================================================================
 
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'package:app_movil/models/entidades.dart';
@@ -32,9 +34,11 @@ import 'package:app_movil/repositories/db_repository.dart';
 
 /// [SyncService]: El Mensajero que comunica el celular con el computador de la oficina.
 class SyncService {
-  // Las direcciones de la oficina (la IP de la red Wi-Fi o del emulador)
+  // Las direcciones tradicionales de la oficina (la IP estática de LAN o del emulador)
   static const String defaultUrl = 'http://10.0.2.2:8000/api';
   static const String fallbackLanUrl = 'http://192.168.1.39:8000/api';
+  static const int discoveryUdpPort = 8001;
+  static const int serverHttpPort = 8000;
   static String? _cachedBaseUrl;
 
   String? ultimoError;
@@ -59,11 +63,17 @@ class SyncService {
   }
 
   /// Resuelve automáticamente la mejor URL activa verificando respuesta rápida
-  Future<String> resolverUrlActiva() async {
-    // 1. Probar la URL guardada previamente si existe
+  /// Sistema Híbrido:
+  /// 1. Probar URL manual guardada
+  /// 2. Probar LAN tradicional 192.168.1.39
+  /// 3. Probar Emulador 10.0.2.2
+  /// 4. Probar Autodescubrimiento por Faro UDP (Port 8001)
+  /// 5. Probar Sondeo de Puerta de Enlace y Subred Local
+  Future<String> resolverUrlActiva({bool forzarAutodescubrimiento = false}) async {
+    // 1. Probar la URL guardada previamente si existe (rápido en 2 seg)
     final saved = await dbRepo.obtenerAjuste('server_url');
-    if (saved != null && saved.trim().isNotEmpty) {
-      final res = await probarConexion(saved.trim());
+    if (saved != null && saved.trim().isNotEmpty && !forzarAutodescubrimiento) {
+      final res = await probarConexion(saved.trim(), 2);
       if (res['exito'] == true) {
         _cachedBaseUrl = saved.trim();
         ultimaUrlProbada = _cachedBaseUrl;
@@ -71,28 +81,195 @@ class SyncService {
       }
     }
 
-    // 2. Probar LAN Wi-Fi (usada por dispositivos Android en campo)
-    final resLan = await probarConexion(fallbackLanUrl);
-    if (resLan['exito'] == true) {
-      _cachedBaseUrl = fallbackLanUrl;
-      ultimaUrlProbada = fallbackLanUrl;
-      await dbRepo.guardarAjuste('server_url', fallbackLanUrl);
-      return fallbackLanUrl;
+    // 2. Probar LAN Wi-Fi tradicional (192.168.1.39) (rápido en 2 seg)
+    if (!forzarAutodescubrimiento) {
+      final resLan = await probarConexion(fallbackLanUrl, 2);
+      if (resLan['exito'] == true) {
+        _cachedBaseUrl = fallbackLanUrl;
+        ultimaUrlProbada = fallbackLanUrl;
+        await dbRepo.guardarAjuste('server_url', fallbackLanUrl);
+        return fallbackLanUrl;
+      }
     }
 
     // 3. Probar Emulador Android (10.0.2.2)
-    final resEmu = await probarConexion(defaultUrl);
-    if (resEmu['exito'] == true) {
-      _cachedBaseUrl = defaultUrl;
-      ultimaUrlProbada = defaultUrl;
-      await dbRepo.guardarAjuste('server_url', defaultUrl);
-      return defaultUrl;
+    if (!forzarAutodescubrimiento) {
+      final resEmu = await probarConexion(defaultUrl, 1);
+      if (resEmu['exito'] == true) {
+        _cachedBaseUrl = defaultUrl;
+        ultimaUrlProbada = defaultUrl;
+        await dbRepo.guardarAjuste('server_url', defaultUrl);
+        return defaultUrl;
+      }
     }
 
-    // Si ninguna respondió, devolver la configurada o fallback
+    // 4. NUEVO: Autodescubrimiento por Faro UDP (Responde en < 1.5s)
+    final udpFound = await _descubrirPorBeaconUDP();
+    if (udpFound != null) {
+      final res = await probarConexion(udpFound, 2);
+      if (res['exito'] == true) {
+        _cachedBaseUrl = udpFound;
+        ultimaUrlProbada = udpFound;
+        await dbRepo.guardarAjuste('server_url', udpFound);
+        return udpFound;
+      }
+    }
+
+    // 5. NUEVO: Sondeo inteligente de Puerta de Enlace y Subred Local
+    final subnetFound = await _escanearSubredLocal();
+    if (subnetFound != null) {
+      _cachedBaseUrl = subnetFound;
+      ultimaUrlProbada = subnetFound;
+      await dbRepo.guardarAjuste('server_url', subnetFound);
+      return subnetFound;
+    }
+
+    // Si ninguna respondió, devolver la configurada o fallback para preservar el sistema previo
     final fallback = (saved != null && saved.trim().isNotEmpty) ? saved.trim() : fallbackLanUrl;
     ultimaUrlProbada = fallback;
     return fallback;
+  }
+
+  /// Método explícito para que el usuario o el diálogo busquen el servidor en la red Wi-Fi
+  Future<String?> autodescubrirServidor() async {
+    // 1. Intentar por UDP Beacon
+    final udp = await _descubrirPorBeaconUDP();
+    if (udp != null) {
+      final res = await probarConexion(udp, 2);
+      if (res['exito'] == true) {
+        await setBaseUrl(udp);
+        return udp;
+      }
+    }
+
+    // 2. Intentar por escaneo de subred / puerta de enlace
+    final sub = await _escanearSubredLocal();
+    if (sub != null) {
+      await setBaseUrl(sub);
+      return sub;
+    }
+    return null;
+  }
+
+  /// Busca el servidor emitiendo una solicitud broadcast en el puerto UDP 8001
+  Future<String?> _descubrirPorBeaconUDP({Duration timeout = const Duration(milliseconds: 1800)}) async {
+    RawDatagramSocket? socket;
+    try {
+      socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+      socket.broadcastEnabled = true;
+
+      final query = utf8.encode('DONDE_ESTA_EL_SERVIDOR_SIEMBRAS');
+      socket.send(query, InternetAddress('255.255.255.255'), discoveryUdpPort);
+
+      final completer = Completer<String?>();
+      final timer = Timer(timeout, () {
+        if (!completer.isCompleted) completer.complete(null);
+      });
+
+      socket.listen((RawSocketEvent event) {
+        if (event == RawSocketEvent.read) {
+          final dg = socket?.receive();
+          if (dg != null) {
+            final msg = utf8.decode(dg.data, allowMalformed: true);
+            if (msg.contains('AQUI_ESTA_EL_SERVIDOR_SIEMBRAS')) {
+              String ip = dg.address.address;
+              int port = serverHttpPort;
+              try {
+                final parsed = jsonDecode(msg);
+                if (parsed['server_ip'] != null && parsed['server_ip'].toString().isNotEmpty) {
+                  ip = parsed['server_ip'].toString();
+                }
+                if (parsed['port'] != null) {
+                  port = int.tryParse(parsed['port'].toString()) ?? serverHttpPort;
+                }
+              } catch (_) {}
+              final candidateUrl = 'http://$ip:$port/api';
+              if (!completer.isCompleted) {
+                timer.cancel();
+                completer.complete(candidateUrl);
+              }
+            }
+          }
+        }
+      });
+
+      return await completer.future;
+    } catch (e) {
+      print('[SyncService] Error en búsqueda UDP: $e');
+      return null;
+    } finally {
+      try {
+        socket?.close();
+      } catch (_) {}
+    }
+  }
+
+  /// Detecta la IP local del dispositivo e inspecciona las IPs candidatas de la misma subred
+  Future<String?> _escanearSubredLocal() async {
+    try {
+      final interfaces = await NetworkInterface.list(
+        type: InternetAddressType.IPv4,
+        includeLinkLocal: false,
+      );
+
+      String? localIp;
+      for (final iface in interfaces) {
+        for (final addr in iface.addresses) {
+          if (!addr.isLoopback &&
+              (addr.address.startsWith('192.168.') ||
+                  addr.address.startsWith('10.') ||
+                  addr.address.startsWith('172.'))) {
+            localIp = addr.address;
+            break;
+          }
+        }
+        if (localIp != null) break;
+      }
+
+      if (localIp == null) return null;
+
+      final parts = localIp.split('.');
+      if (parts.length != 4) return null;
+      final subnetPrefix = '${parts[0]}.${parts[1]}.${parts[2]}';
+
+      // Lista priorizada de candidatos (IP fija habitual .39, gateway .1, servidores .2 a .50)
+      final List<String> candidatos = [];
+      final prioritarios = [39, 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 100, 200];
+      for (final p in prioritarios) {
+        candidatos.add('http://$subnetPrefix.$p:$serverHttpPort/api');
+      }
+      for (int i = 1; i <= 60; i++) {
+        final candidate = 'http://$subnetPrefix.$i:$serverHttpPort/api';
+        if (!candidatos.contains(candidate)) {
+          candidatos.add(candidate);
+        }
+      }
+
+      // Sondeo paralelo en lotes pequeños (10 simultáneos) con 1 seg de timeout
+      const batchSize = 10;
+      for (int i = 0; i < candidatos.length; i += batchSize) {
+        final batch = candidatos.sublist(
+          i,
+          (i + batchSize > candidatos.length) ? candidatos.length : i + batchSize,
+        );
+
+        final results = await Future.wait(batch.map((url) async {
+          final res = await probarConexion(url, 1);
+          if (res['exito'] == true) return url;
+          return null;
+        }));
+
+        for (final r in results) {
+          if (r != null) {
+            print('[SyncService] Servidor encontrado por escaneo de subred: $r');
+            return r;
+          }
+        }
+      }
+    } catch (e) {
+      print('[SyncService] Error en escaneo de subred: $e');
+    }
+    return null;
   }
 
   /// Normaliza cualquier URL dada para garantizar que termine en /api y no tenga barras sobrantes
@@ -115,7 +292,7 @@ class SyncService {
   }
 
   /// Prueba la conectividad con el backend
-  Future<Map<String, dynamic>> probarConexion([String? customUrl]) async {
+  Future<Map<String, dynamic>> probarConexion([String? customUrl, int timeoutSeconds = 12]) async {
     final rawTarget = customUrl?.trim() ?? await getBaseUrl();
     final targetUrl = normalizarUrl(rawTarget);
     final stopwatch = Stopwatch()..start();
@@ -125,7 +302,7 @@ class SyncService {
       final resp = await http.get(
         uri,
         headers: {'X-API-Key': apiKey},
-      ).timeout(const Duration(seconds: 8));
+      ).timeout(Duration(seconds: timeoutSeconds));
       stopwatch.stop();
       if (resp.statusCode == 200) {
         return {
@@ -152,6 +329,7 @@ class SyncService {
       };
     }
   }
+
 
   /// Descarga todos los catálogos empresariales y los guarda localmente en SQLite
   Future<bool> descargarCatalogos() async {
@@ -378,19 +556,36 @@ class SyncService {
       }
 
       if (response.statusCode == 200) {
-        for (var s in pendientes) {
-          if (s.idLocal != null) {
-            await dbRepo.marcarSiembraComoSincronizada(s.idLocal!);
+        final respData = jsonDecode(response.body);
+        final Set<String> committedUuids = {};
+        if (respData is Map && respData['committed'] != null && respData['committed'] is List) {
+          for (var item in respData['committed']) {
+            if (item is Map && item['uuid'] != null) {
+              committedUuids.add(item['uuid'].toString());
+            }
           }
         }
+
+        int marcados = 0;
+        for (var s in pendientes) {
+          if (s.idLocal != null && s.uuid != null && committedUuids.contains(s.uuid)) {
+            await dbRepo.marcarSiembraComoSincronizada(s.idLocal!);
+            marcados++;
+          }
+        }
+
+        if (pendientes.isNotEmpty && marcados == 0 && committedUuids.isEmpty) {
+          ultimoError = 'El servidor no confirmó el guardado de ninguna siembra en la base de datos empresarial.';
+          return false;
+        }
+
         if (eliminaciones.isNotEmpty) {
           await dbRepo.limpiarEliminacionesPendientes(eliminaciones);
         }
 
         // Integración de pull bidireccional (siembras activas desde el servidor)
         try {
-          final respData = jsonDecode(response.body);
-          if (respData['pull'] != null && respData['pull'] is List) {
+          if (respData is Map && respData['pull'] != null && respData['pull'] is List) {
             await dbRepo.integrarSiembrasDesdeServidor(respData['pull'] as List);
           }
         } catch (_) {}
@@ -398,7 +593,14 @@ class SyncService {
         ultimoError = null;
         return true;
       } else {
-        ultimoError = 'Error del servidor: HTTP ${response.statusCode}';
+        String detalleError = 'Error del servidor: HTTP ${response.statusCode}';
+        try {
+          final errorJson = jsonDecode(response.body);
+          if (errorJson is Map && errorJson['detail'] != null) {
+            detalleError = errorJson['detail'].toString();
+          }
+        } catch (_) {}
+        ultimoError = detalleError;
         return false;
       }
     } catch (e) {

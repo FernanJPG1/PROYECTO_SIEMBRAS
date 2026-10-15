@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS tb_operarios (
   cedula TEXT NOT NULL,
   nombre_completo TEXT NOT NULL
 );
+-- Nota: id = 0 está reservado para 'Sin Sembrador (Colectiva)' en siembras grupales sin operario directo en cama (ej: Lirios).
 
 -- ----------------------------------------------------------------------------
 -- 5. TABLA: tb_config_agronomica (Límites de Densidad y Ciclos Agronómicos)

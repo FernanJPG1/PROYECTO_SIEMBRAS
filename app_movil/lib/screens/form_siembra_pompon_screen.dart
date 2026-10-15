@@ -33,6 +33,7 @@
 import 'package:flutter/material.dart';
 import 'package:app_movil/models/entidades.dart';
 import 'package:app_movil/repositories/db_repository.dart';
+import 'package:app_movil/services/persistent_backup_service.dart';
 import 'package:app_movil/utils/calendario_util.dart';
 import 'package:app_movil/utils/responsive.dart';
 import 'package:app_movil/widgets/crear_variedad_dialog.dart';
@@ -206,6 +207,17 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
     final o = await _db.obtenerOperariosSiembra();
     final cfg = await _db.obtenerConfigAgronomica(cultivo: widget.cultivo);
 
+    // Recuperar operario recordado persistente (permanece seleccionado tras reinicios)
+    final opRecordadoData = await PersistentBackupService.instance.recuperarOperarioRecordado();
+    final bool fijarOp = opRecordadoData['recordar'] == true;
+    final int? opIdRecordado = opRecordadoData['operario_id'] as int?;
+    Operario? opRestaurado;
+    if (fijarOp && opIdRecordado != null && opIdRecordado > 0) {
+      try {
+        opRestaurado = o.firstWhere((op) => op.id == opIdRecordado);
+      } catch (_) {}
+    }
+
     if (!mounted) return;
     setState(() {
       _bloques = b;
@@ -213,6 +225,10 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
       _todasLasVariedades = allV;
       _operarios = o;
       _configAgronomica = cfg;
+      if (opRestaurado != null) {
+        _operarioSeleccionado = opRestaurado;
+        _recordarOperario = true;
+      }
     });
   }
 
@@ -958,6 +974,15 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
         _observacionesController.clear();
         if (!_recordarOperario) {
           _operarioSeleccionado = null;
+          PersistentBackupService.instance.guardarOperarioRecordado(
+            operarioId: null,
+            recordar: false,
+          );
+        } else if (_operarioSeleccionado != null) {
+          PersistentBackupService.instance.guardarOperarioRecordado(
+            operarioId: _operarioSeleccionado!.id,
+            recordar: true,
+          );
         }
         // Si la cama ya se llenó al 100%, deseleccionarla para que elijan otra cama disponible
         if (infoCama != null && infoCama.esCamaLlena) {
@@ -1333,7 +1358,13 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                   child: Switch(
                     value: _recordarOperario,
                     activeThumbColor: const Color(0xFF7CB342),
-                    onChanged: (val) => setState(() => _recordarOperario = val),
+                    onChanged: (val) {
+                      setState(() => _recordarOperario = val);
+                      PersistentBackupService.instance.guardarOperarioRecordado(
+                        operarioId: val ? _operarioSeleccionado?.id : null,
+                        recordar: val,
+                      );
+                    },
                   ),
                 ),
               ],
@@ -1362,7 +1393,15 @@ class _FormSiembraPomponScreenState extends State<FormSiembraPomponScreen> {
                   ),
                 );
               }).toList(),
-              onChanged: (val) => setState(() => _operarioSeleccionado = val),
+              onChanged: (val) {
+                setState(() => _operarioSeleccionado = val);
+                if (_recordarOperario) {
+                  PersistentBackupService.instance.guardarOperarioRecordado(
+                    operarioId: val?.id,
+                    recordar: true,
+                  );
+                }
+              },
             ),
           ),
         ),

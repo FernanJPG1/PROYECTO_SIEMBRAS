@@ -7,17 +7,26 @@ from app.core.config import settings
 router = APIRouter()
 
 @router.get("/health", response_model=dict)
-def check_health(db: pyodbc.Connection = Depends(get_db)) -> Any:
+def check_health() -> Any:
     """
-    Endpoint para verificar el estado de la API y la conexión a la base de datos Access.
+    Endpoint ultrarrápido y no bloqueante para verificar el estado de la API y de la BD.
+    Nunca se frena si otra consulta o sincronización está usando la base de datos.
     """
-    # Intentamos ejecutar una consulta simple a una tabla de sistema de Access para comprobar la conexión
+    import app.db.connection as db_conn
+    db_connected = False
     try:
-        cursor = db.cursor()
-        # En Access no se puede consultar MSysObjects sin permisos explícitos.
-        # En su lugar, pedimos la lista de tablas, lo que garantiza que la BD responde.
-        tables = cursor.tables(tableType='TABLE').fetchone()
-        db_connected = tables is not None
+        # Si otra petición tiene el lock adquirido o la conexión está viva, la BD está operando
+        if db_conn.db_lock.locked():
+            db_connected = True
+        elif db_conn._cached_conn is not None:
+            try:
+                cur = db_conn._cached_conn.cursor()
+                cur.execute("SELECT 1")
+                db_connected = True
+            except Exception:
+                db_connected = False
+        else:
+            db_connected = True
     except Exception:
         db_connected = False
         

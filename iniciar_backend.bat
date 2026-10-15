@@ -1,23 +1,22 @@
 @echo off
-title Servidor Backend - Siembras Buenavista Flowers
-color 2F
-echo =====================================================================
-echo    SERVIDOR EMPRESARIAL DE SIEMBRAS - BUENAVISTA FLOWERS
-echo =====================================================================
+title Servidor Backend Siembras (FastAPI + Microsoft Access)
+color 0A
+echo ======================================================================
+echo          INICIANDO SERVIDOR BACKEND SIEMBRAS (FASTAPI)
+echo ======================================================================
 echo.
-echo  Detectando direccion IP local para dispositivos Android...
-for /f "tokens=4" %%a in ('route print ^| findstr 0.0.0.0 ^| findstr /v "0.0.0.0.*0.0.0.0"') do (
-    set LOCAL_IP=%%a
-)
+echo   IP Local de este Servidor : 192.168.1.39:8000
+echo   Base de Datos Empresarial : D:\PROYECTO SIEMBRAS\bmempresarial2021.accdb
 echo.
-echo  [OK] El servidor estara disponible en la red Wi-Fi en:
-echo       http://192.168.1.39:8000/api
+echo   La tablet se conecta automaticamente a este servidor para:
+echo     - Descargar catalogos actualizados (variedades, camas, operarios)
+echo     - Sincronizar las siembras directamente a Microsoft Access
 echo.
-echo  (Asegurate de que los dispositivos Android esten conectados a la misma red Wi-Fi)
+echo   [!] NO CIERRES ESTA VENTANA mientras se use la app en las tablets.
+echo ======================================================================
 echo.
-echo =====================================================================
-echo.
+
 cd /d "%~dp0backend"
 python run.py
-pause
 
+pause
